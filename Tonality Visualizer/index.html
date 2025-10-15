@@ -1,0 +1,1074 @@
+<!-- Copyright (c) 2025 Yusuke Yoshida — MIT License
+-->
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Polar Pitch Map — Disk physics, MIDI In + MIDI File</title>
+<style>
+  html,body{margin:0;height:100%;background:#111;color:#ddd;font:14px system-ui}
+  :root{ --ui-scale:1; }
+  #ui{position:fixed;top:75px;left:8px;gap:12px;display:flex;flex-wrap:wrap;align-items:center;z-index:2;
+       transform-origin:top left; transform:scale(var(--ui-scale));}
+  canvas{display:block;width:100vw;height:100vh}
+  label{display:flex;gap:6px;align-items:center}
+  input[type=range]{width:180px}
+  button,select{padding:6px 10px}
+  .sep{width:1px;height:22px;background:#444;margin:0 4px}
+
+  /* UI show/hide トグル */
+  #uiToggle{position:fixed;top:50px;right:8px;z-index:3;opacity:0.8}
+  #uiToggle:hover{opacity:1}
+</style>
+
+<button id="uiToggle" aria-pressed="false">UI隠す</button>
+
+<div id="ui">
+  <!-- language -->
+  <label id="langWrap" data-lbl="language">
+    <select id="lang">
+      <option value="en">English</option>
+      <option value="ja" selected>日本語</option>
+    </select>
+  </label>
+
+  <!-- anchor: 水面固定 or ディスク固定 -->
+  <label id="anchorWrap" data-lbl="anchor">
+    <select id="anchor">
+      <option value="water">水面固定</option>
+      <option value="disk">ディスク固定</option>
+    </select>
+  </label>
+
+  <!-- MIDI inputs（常時） -->
+  <label id="devWrap" data-lbl="device">
+    <select id="midiDev"></select>
+  </label>
+  <label id="allWrap" data-lbl="allInputs">
+    <input id="midiAll" type="checkbox" checked>
+  </label>
+
+  <!-- ライブ入力の音声再生ON/OFF -->
+  <label id="liveMonWrap" data-lbl="liveSound">
+    <input id="liveMon" type="checkbox" checked>
+  </label>
+
+  <!-- torque scope -->
+  <label id="excludeWrap" data-lbl="torqueExclude">
+    <select id="exclude">
+      <option value="filled">塗りつぶし</option>
+      <option value="unfilled" selected>非塗りつぶし</option>
+    </select>
+  </label>
+
+  <!-- ω max（対数目盛：0.01〜100 rad/s） -->
+  <label id="omaxWrap" data-lbl="omegaMax">
+    <input id="omegaMax" type="range" min="-2" max="2" step="0.01" value="0.301" list="omTicks">
+    <datalist id="omTicks">
+      <option value="-2"><option value="-1"><option value="0"><option value="1"><option value="2">
+    </datalist>
+    <span id="omegaMaxVal">2.00 rad/s</span>
+  </label>
+
+  <!-- damping（対数目盛：1.000〜99.999 %/s） -->
+  <label id="dampWrap" data-lbl="damping">
+    <input id="damp" type="range" min="-3" max="2" step="0.001" value="0" list="dampTicks">
+    <datalist id="dampTicks">
+      <option value="-3"><option value="-2"><option value="-1"><option value="0"><option value="1"><option value="2">
+    </datalist>
+    <span id="dampVal">99.000%/s</span>
+  </label>
+
+  <!-- UI opacity -->
+  <label id="uiopWrap" data-lbl="uiOpacity">
+    <input id="uiop" type="range" min="10" max="100" step="1" value="85">
+    <span id="uiopVal">85%</span>
+  </label>
+
+  <!-- disk physics -->
+  <label id="massWrap" data-lbl="diskMass">
+    <input id="mass" type="range" min="-2" max="2" step="0.001" value="-0.431">
+    <span id="massVal">M=0.37</span>
+  </label>
+
+  <!-- visuals -->
+  <label id="lineAWrap" data-lbl="lineAlpha">
+    <input id="lineA" type="range" min="0" max="100" step="1" value="50">
+    <span id="lineAVal">50%</span>
+  </label>
+
+  <label id="waterAWrap" data-lbl="waterAlpha">
+    <input id="waterA" type="range" min="0" max="100" step="1" value="12">
+    <span id="waterAVal">12%</span>
+  </label>
+
+  <label id="movNumAWrap" data-lbl="movNumAlpha">
+    <input id="movNumA" type="range" min="0" max="100" step="1" value="28">
+    <span id="movNumAVal">28%</span>
+  </label>
+
+  <label id="movNumSizeWrap" data-lbl="movNumSize">
+    <input id="movNumSize" type="range" min="10" max="60" step="1" value="28">
+    <span id="movNumSizeVal">28px</span>
+  </label>
+
+  <label id="labelSizeWrap" data-lbl="labelSize">
+    <input id="labelSize" type="range" min="8" max="36" step="1" value="12">
+    <span id="labelSizeVal">12px</span>
+  </label>
+
+  <label id="labelBGWrap" data-lbl="labelBG">
+    <input id="labelBG" type="range" min="0" max="100" step="1" value="60">
+    <span id="labelBGVal">60%</span>
+  </label>
+
+  <!-- MIDI File controls（常時表示） -->
+  <span class="sep"></span>
+  <label id="fileWrap" data-lbl="midiFile">
+    <input id="midiFile" type="file" accept=".mid,.midi,audio/midi,audio/x-midi">
+  </label>
+  <label id="fileOpWrap" data-lbl="fileOp">
+    <select id="fileOp">
+      <option value="play">再生</option>
+      <option value="train" selected>トレーナー</option>
+    </select>
+  </label>
+  <span id="playBtns">
+    <button id="btnPlay">▶︎</button>
+    <button id="btnPause">⏸</button>
+    <button id="btnStop">⏹</button>
+  </span>
+  <span id="trainBtns">
+    <button id="btnStartTrain">開始/リスタート</button>
+    <button id="btnPrev">◀︎</button>
+    <button id="btnNext">▶︎</button>
+  </span>
+
+  <span id="info">idle</span>
+  <span id="midiStat" style="min-width:280px">MIDI: 未初期化</span>
+  <span id="midiLast">最後: –</span>
+  <span id="fileInfo">file: –</span>
+  <span id="trainerStat">step: –</span>
+</div>
+
+<canvas id="cv"></canvas>
+
+<script>
+/* ===== Canvas ===== */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+function resize(){ cv.width = innerWidth*devicePixelRatio; cv.height = innerHeight*devicePixelRatio; }
+addEventListener('resize', resize); resize();
+
+/* ===== Music constants ===== */
+const F_LOW = 27.5, F_HIGH = 4186.009;
+const OCTAVES = Math.ceil(Math.log2(F_HIGH/F_LOW));
+const MARGIN = 80;                               // 余白を広めに
+const ANG0 = Math.PI/2;                          // Cを上（0°相当）
+const GRAV_ABS = ANG0;                           // 重力方向=0°固定
+const EXCLUDE_PAD_RAD = 1 * Math.PI / 180;       // 無効領域+1°
+const LABEL_ENH = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"};
+const FIFTH_ORDER_PCS = (()=>{ let a=[],pc=0; for(let k=0;k<12;k++){ a.push(pc); pc=(pc+7)%12; } return a; })();
+const FIFTH_INDEX = (()=>{ const m=Array(12).fill(0); FIFTH_ORDER_PCS.forEach((pc,i)=>m[pc]=i); return m; })();
+const FIFTH_LABELS = FIFTH_ORDER_PCS.map(pc=>LABEL_ENH[pc]);
+const NOTE_BG = {0:[191,28,28],1:[191,109,28],2:[191,191,28],3:[109,191,28],4:[28,191,28],5:[28,191,109],6:[28,191,191],7:[28,109,191],8:[28,28,191],9:[109,28,191],10:[191,28,191],11:[191,28,109]};
+
+/* ===== UI refs ===== */
+const uiPanel = document.getElementById('ui');
+const uiToggle = document.getElementById('uiToggle');
+const anchorSel = document.getElementById('anchor');
+const devWrap = document.getElementById('devWrap');
+const midiDev = document.getElementById('midiDev');
+const allWrap = document.getElementById('allWrap');
+const midiAll = document.getElementById('midiAll');
+const liveMon = document.getElementById('liveMon');
+
+const excludeSel = document.getElementById('exclude');
+const uiopSlider = document.getElementById('uiop'); const uiopVal = document.getElementById('uiopVal');
+const massSlider = document.getElementById('mass'); const massVal = document.getElementById('massVal');
+const dampSlider = document.getElementById('damp'); const dampVal = document.getElementById('dampVal');
+const info = document.getElementById('info');
+const midiStat = document.getElementById('midiStat'); const midiLast = document.getElementById('midiLast');
+const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
+const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
+const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
+const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
+const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
+const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
+
+const omegaMaxSlider = document.getElementById('omegaMax'); const omegaMaxVal = document.getElementById('omegaMaxVal');
+
+const midiFileInput = document.getElementById('midiFile');
+const fileOp = document.getElementById('fileOp');
+const btnPlay = document.getElementById('btnPlay');
+const btnPause = document.getElementById('btnPause');
+const btnStop = document.getElementById('btnStop');
+const btnStartTrain = document.getElementById('btnStartTrain');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const fileInfo = document.getElementById('fileInfo');
+const trainerStat = document.getElementById('trainerStat');
+
+/* ===== i18n + persist ===== */
+const I18N = {
+  en:{
+    language:"language", device:"device", allInputs:"All inputs",
+    anchor:"anchor", waterFixed:"water fixed", diskFixed:"disk fixed",
+    liveSound:"monitor live MIDI",
+    torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
+    uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
+    lineAlpha:"line α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
+    labelSize:"label size", labelBG:"label bg α",
+    omegaMax:"ω max",
+    midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
+    midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
+    midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
+    midiInputStatPrefix:"input:", midiNoDevice:"no device",
+    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer"
+  },
+  ja:{
+    language:"言語", device:"デバイス", allInputs:"全入力",
+    anchor:"固定", waterFixed:"水面固定", diskFixed:"ディスク固定",
+    liveSound:"MIDI入力の音声再生",
+    torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
+    uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
+    lineAlpha:"線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字α", movNumSize:"移動ド数字サイズ",
+    labelSize:"ラベルサイズ", labelBG:"ラベル背景α",
+    omegaMax:"最大回転速度",
+    midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
+    midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
+    midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
+    midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
+    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー"
+  }
+};
+const SETTINGS_KEY = 'ppm:v6';
+
+let uiScale = 0.95;
+let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
+function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
+function setLabelText(labelEl, key){
+  if(!labelEl) return;
+  if(labelEl.firstChild && labelEl.firstChild.nodeType===Node.TEXT_NODE){
+    labelEl.firstChild.nodeValue = t(key)+' ';
+  }else{
+    labelEl.prepend(document.createTextNode(t(key)+' '));
+  }
+}
+function applyUIScale(){ document.documentElement.style.setProperty('--ui-scale', uiScale); }
+function applyI18N(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-lbl]').forEach(el=> setLabelText(el, el.getAttribute('data-lbl')));
+  anchorSel.querySelector('option[value="water"]').textContent = t('waterFixed');
+  anchorSel.querySelector('option[value="disk"]').textContent  = t('diskFixed');
+  excludeSel.querySelector('option[value="filled"]').textContent   = t('filled');
+  excludeSel.querySelector('option[value="unfilled"]').textContent = t('unfilled');
+  fileOp.querySelector('option[value="play"]').textContent = t('play');
+  fileOp.querySelector('option[value="train"]').textContent = t('train');
+  uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
+  document.getElementById('lang').value = lang;
+  info.textContent = t('idle');
+  midiStat.textContent = t('midiNotInit');
+  midiLast.textContent = t('last') + ' –';
+}
+document.getElementById('lang').addEventListener('change', e=>{
+  lang = e.target.value==='ja' ? 'ja' : 'en';
+  applyI18N(); saveSettings();
+});
+
+function saveSettings(){
+  const s = {
+    lang, uiScale,
+    anchor: anchorSel.value, midiAll: midiAll.checked, liveMon: liveMon.checked,
+    uiop: uiopSlider.value, mass: massSlider.value,
+    lineA: lineASlider.value, waterA: waterASlider.value,
+    movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
+    labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
+    exclude: excludeSel.value,
+    omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
+    dampExp: dampSlider.value,          // log10(100 - p)
+    fileOp: fileOp.value,
+    uiHidden: !uiVisible
+  };
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }catch{}
+}
+function loadSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    if(s.lang) lang = s.lang;
+    if(s.uiScale){ uiScale = s.uiScale; }
+    if(s.anchor){ anchorSel.value = s.anchor; }
+    if(s.midiAll!=null){ midiAll.checked = !!s.midiAll; }
+    if(s.liveMon!=null){ liveMon.checked = !!s.liveMon; }
+    if(s.uiop){ uiopSlider.value = s.uiop; applyUIOpacity(); }
+    if(s.mass){ massSlider.value = s.mass; updateMass(); }
+    if(s.lineA){ lineASlider.value = s.lineA; lineASlider.oninput(); }
+    if(s.waterA){ waterASlider.value = s.waterA; waterASlider.oninput(); }
+    if(s.movNumA){ movNumASlider.value = s.movNumA; movNumASlider.oninput(); }
+    if(s.movNumSize){ movNumSizeSlider.value = s.movNumSize; movNumSizeSlider.oninput(); }
+    if(s.labelSize){ labelSizeSlider.value = s.labelSize; labelSizeSlider.oninput(); }
+    if(s.labelBG){ labelBGSlider.value = s.labelBG; labelBGSlider.oninput(); }
+    if(s.exclude){ excludeSel.value = s.exclude; }
+    if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
+    if(s.dampExp!=null){ dampSlider.value = s.dampExp; }
+    if(s.fileOp){ fileOp.value = s.fileOp; }
+    if(s.uiHidden){ uiVisible = false; updateUIVisibility(); }
+  }catch{}
+  applyUIScale();
+  applyI18N();
+  updateFileOpUI();
+}
+
+/* ===== UI show/hide ===== */
+let uiVisible = true;
+function updateUIVisibility(){
+  uiPanel.style.display = uiVisible ? '' : 'none';
+  uiToggle.setAttribute('aria-pressed', String(!uiVisible));
+  uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
+}
+uiToggle.onclick = ()=>{ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); };
+addEventListener('keydown', e=>{ if(e.key==='u' || e.key==='U'){ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); }});
+
+/* ファイル操作UIの表示切替（再生 or トレーナー） */
+function updateFileOpUI(){
+  const isPlay = (fileOp.value === 'play');
+  document.getElementById('playBtns').style.display  = isPlay ? '' : 'none';
+  document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
+}
+fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
+
+/* ===== Helpers ===== */
+function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
+function ringParams(){ const rMax = Math.min(cv.width,cv.height)/2 - MARGIN; const step = rMax / OCTAVES; return {rMax, step}; }
+function baseAngleFromFifthIndex(i){ return ANG0 + 2*Math.PI*(i%12)/12; }
+function angleForMidiAbs(m){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + diskAngle; } // 物理用
+function angleForMidiDraw(m, drawRot){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + drawRot; } // 描画用
+function radiusFromFreq(f, rMax, step){ const oc = Math.max(0, Math.min(OCTAVES, Math.log2(f/F_LOW))); return rMax - step*oc; }
+function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.sin(th) }; }
+function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
+function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
+
+/* 表示系 */
+let linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent=`${Math.round(linkAlpha*100)}%`;
+lineASlider.oninput = ()=>{ linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent=`${Math.round(linkAlpha*100)}%`; saveSettings(); };
+
+let waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent=`${Math.round(waterAlpha*100)}%`;
+waterASlider.oninput = ()=>{ waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent=`${Math.round(waterAlpha*100)}%`; saveSettings(); };
+
+let movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent=`${Math.round(movNumAlpha*100)}%`;
+movNumASlider.oninput = ()=>{ movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent=`${Math.round(movNumAlpha*100)}%`; saveSettings(); };
+
+let movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`;
+movNumSizeSlider.oninput = ()=>{ movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`; saveSettings(); };
+
+let labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`;
+labelSizeSlider.oninput = ()=>{ labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`; saveSettings(); };
+
+let labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`;
+labelBGSlider.oninput = ()=>{ labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`; saveSettings(); };
+
+/* ===== Global state ===== */
+let worldRot = 0;          // 描画用回転（anchorにより決定）
+let diskAngle = 0, diskOmega = 0;
+let diskMass = Math.pow(10, parseFloat(massSlider.value));
+let excludeMode = excludeSel.value;
+excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
+
+/* ωmax（log10軸） */
+function fmtOmega(v){
+  if (v >= 10) return v.toFixed(0);
+  if (v >= 1)  return v.toFixed(2);
+  if (v >= 0.1) return v.toFixed(3);
+  return v.toFixed(4);
+}
+let omegaMaxExp = parseFloat(omegaMaxSlider.value);
+let omegaMax = Math.pow(10, omegaMaxExp);
+omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
+omegaMaxSlider.oninput = ()=>{
+  omegaMaxExp = parseFloat(omegaMaxSlider.value);
+  omegaMax = Math.pow(10, omegaMaxExp);
+  omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
+  saveSettings();
+};
+
+/* ダンピング（対数目盛）。q = (100 - p) をlogで操作 → p%/s */
+let dampPerSec = 0.99; // 初期（99%/s）
+function fmtPct(p){ return p.toFixed(3); }
+function updateDampFromSlider(){
+  let exp = parseFloat(dampSlider.value);                 // [-3, 2]
+  let q = Math.pow(10, exp);                              // q = 10^exp
+  if (q < 0.001) q = 0.001;                               // 下限 → 99.999%/s
+  if (q > 99)   q = 99;                                   // 上限 → 1.000%/s
+  const p = 100 - q;                                      // p%/s
+  dampPerSec = p / 100;                                   // 0.010〜0.99999
+  dampVal.textContent = `${fmtPct(p)}%/s`;
+}
+updateDampFromSlider();
+dampSlider.oninput = ()=>{ updateDampFromSlider(); saveSettings(); };
+
+/* UI opacity / mass */
+function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent=`${Math.round(a*100)}%`; }
+applyUIOpacity(); uiopSlider.oninput = ()=>{ applyUIOpacity(); saveSettings(); };
+function updateMass(){ const lg=parseFloat(massSlider.value); diskMass=Math.pow(10,lg); massVal.textContent=`M=${diskMass.toFixed(2)}`; }
+updateMass(); massSlider.oninput = ()=>{ updateMass(); saveSettings(); };
+
+/* ===== Note state ===== */
+const liveNotes = new Map();     // ハードMIDI入力の現在押下
+const fileNotes = new Map();     // 再生中のMIDIファイル由来
+
+/* ===== Drawing ===== */
+function drawNotes(points, drawRot){
+  if(!points.length) return;
+  const {rMax, step}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+
+  let low=null, high=null;
+  for(const p of points){
+    const f=midiToHz(p.midi);
+    if(!low || f<low.f) low={midi:p.midi, vel:p.vel, f};
+    if(!high|| f>high.f) high={midi:p.midi, vel:p.vel, f};
+  }
+  function ring(p, color, label){
+    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(midiToHz(p.midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
+    ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(label, x, y-22*devicePixelRatio);
+  }
+  if(low)  ring(low,'rgba(0,200,255,0.95)','LOW');
+  if(high) ring(high,'rgba(255,160,0,0.95)','HIGH');
+
+  for(const p of points){
+    const theta=angleForMidiDraw(p.midi, drawRot);
+    const rAbs=radiusFromFreq(midiToHz(p.midi), rMax, step), {x,y}=polarToXY(cx,cy,rAbs,theta);
+    const radius=4+12*p.vel, alpha=0.3+0.6*p.vel;
+    ctx.beginPath(); ctx.fillStyle=`rgba(255,255,255,${alpha})`; ctx.arc(x,y,radius,0,2*Math.PI); ctx.fill();
+  }
+
+  if(points.length>=2){
+    const xs = points.map(p=>({m:p.midi,f:midiToHz(p.midi)})).sort((a,b)=>a.f-b.f);
+    ctx.lineWidth=2; ctx.strokeStyle=`rgba(255,255,255,${linkAlpha})`;
+    for(let i=0;i<xs.length-1;i++){
+      const m0=xs[i].m,f0=xs[i].f,m1=xs[i+1].m,f1=xs[i+1].f;
+      const r0=radiusFromFreq(f0,rMax,step), th0=angleForMidiDraw(m0, drawRot);
+      const r1=radiusFromFreq(f1,rMax,step), th1=angleForMidiDraw(m1, drawRot);
+      const dth = shortestDelta(th0, th1);
+      const steps=48; ctx.beginPath();
+      for(let s=0;s<=steps;s++){ const t=s/steps, r=r0+t*(r1-r0), th=th0+t*dth; const {x,y}=polarToXY(cx,cy,r,th); if(s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+      ctx.stroke();
+    }
+  }
+}
+
+/* ターゲット描画（トレーナー） */
+function drawTargetNotes(targets, drawRot){
+  if(!targets || !targets.length) return;
+  const {rMax, step}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+  for(const midi of targets){
+    const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(midiToHz(midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,20*devicePixelRatio,0,2*Math.PI); ctx.stroke();
+    ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText('TARGET', x, y+22*devicePixelRatio);
+  }
+}
+
+/* 移動ド数字（水面回転と同期） */
+function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
+  const r = rMax * 0.78;
+  const fontPx = Math.round(Math.max(12, movNumSizePx) * devicePixelRatio);
+  const pf=ctx.font, pa=ctx.globalAlpha, ps=ctx.fillStyle, pal=ctx.textAlign, pb=ctx.textBaseline;
+  ctx.font = `${fontPx}px system-ui`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.globalAlpha = movNumAlpha;
+  ctx.fillStyle = 'rgba(255,220,70,1)';
+  const seq = ['7','3','6','2','5','1','4','-7','-3','-6','-2','+4'];
+  const start = halfCenter - Math.PI/2; // 水面右端
+  for(let i=0;i<12;i++){
+    const theta = start + i*(Math.PI/6);
+    const x = cx + r*Math.cos(theta), y = cy + r*Math.sin(theta);
+    ctx.fillText(seq[i], x, y);
+  }
+  ctx.font=pf; ctx.globalAlpha=pa; ctx.fillStyle=ps; ctx.textAlign=pal; ctx.textBaseline=pb;
+}
+
+/* ===== Main draw loop ===== */
+let prevT=null;
+function draw(){
+  const w=cv.width, h=cv.height, cx=w/2, cy=h/2;
+  const {rMax, step} = ringParams();
+  const now = performance.now()/1000;
+  const dt = prevT? Math.max(1/240, Math.min(0.25, now-prevT)) : 1/60;
+  prevT = now;
+
+  ctx.clearRect(0,0,w,h);
+
+  // 物理に使う入力
+  // - 再生: ファイル由来 + ライブ入力
+  // - トレーナ: ライブ入力のみ（ターゲットは描画だけ）
+  const physicsPoints = (fileOp.value==='play')
+    ? [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v})),
+       ...Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}))]
+    : [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}))];
+
+  const hasPhysInput = physicsPoints.length>0;
+
+  // 物理
+  const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, excludeMode) : 0;
+  const alpha = tau / Math.max(1e-6, diskMass);
+  diskOmega += alpha * dt;
+
+  // ダンピング：1秒あたり (1 - p%)^dt
+  const k = Math.max(0, Math.min(1, 1 - dampPerSec));
+  diskOmega *= Math.pow(k, dt);
+
+  // 最大回転速度（対数スライダで設定）
+  if(diskOmega > omegaMax) diskOmega = omegaMax;
+  else if(diskOmega < -omegaMax) diskOmega = -omegaMax;
+
+  diskAngle += diskOmega * dt;
+
+  // 表示回転と水面中心
+  const anchor = anchorSel.value;                 // 'water' | 'disk'
+  const drawRot = (anchor==='water') ? diskAngle : 0;
+  const halfCenter = (anchor==='water') ? GRAV_ABS : (GRAV_ABS + diskAngle);
+  worldRot = drawRot;
+
+  info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
+
+  // 放射線
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.strokeStyle='rgba(255,255,255,0.10)'; ctx.lineWidth=1;
+  for(let k2=0;k2<12;k2++){
+    const ang = baseAngleFromFifthIndex(k2) - drawRot;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo((rMax+6)*Math.cos(ang),(rMax+6)*Math.sin(ang)); ctx.stroke();
+  }
+  ctx.restore();
+
+  // 同心円
+  ctx.strokeStyle='rgba(255,255,255,0.14)';
+  for(let i=0;i<=OCTAVES;i++){ const r=rMax - i*step; ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke(); }
+
+  // 外周ラベル
+  const fontPx = labelFontPx * devicePixelRatio * 0.95;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font = `${fontPx}px system-ui`;
+  for(let k2=0;k2<12;k2++){
+    const ang = baseAngleFromFifthIndex(k2) + drawRot;
+    const tx = cx + (rMax+18)*Math.cos(ang), ty = cy - (rMax+18)*Math.sin(ang);
+    const text = FIFTH_LABELS[k2];
+    const pc = FIFTH_ORDER_PCS[k2]; const [r,g,b] = NOTE_BG[pc];
+    const m = ctx.measureText(text);
+    const padX = 6*devicePixelRatio, padY = 3*devicePixelRatio;
+    const wbg = m.width + padX*2, hbg = fontPx + padY*2;
+    const vx = tx - cx, vy = ty - cy;
+    const safeX = (w/2) - (wbg/2 + 2*devicePixelRatio);
+    const safeY = (h/2) - (hbg/2 + 2*devicePixelRatio);
+    const sx = Math.min(1, Math.abs(vx)>0 ? safeX/Math.abs(vx) : 1);
+    const sy = Math.min(1, Math.abs(vy)>0 ? safeY/Math.abs(vy) : 1);
+    const s  = Math.min(sx, sy);
+    const tx2 = cx + vx*s, ty2 = cy + vy*s;
+    ctx.fillStyle = `rgba(${r},${g},${b},${labelBgAlpha})`;
+    ctx.fillRect(tx2 - wbg/2, ty2 - hbg/2, wbg, hbg);
+    ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.fillText(text, tx2, ty2);
+  }
+
+  // 水面半円＋移動ド数字
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2, false);
+  ctx.closePath();
+  ctx.fillStyle=`rgba(0,128,255,${waterAlpha})`; ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2);
+  ctx.strokeStyle=`rgba(0,128,255,${waterAlpha})`; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+  drawMovableDoNumbers(halfCenter, rMax, cx, cy);
+
+  // 入力の可視化
+  const livePts = Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}));
+  const filePts = Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}));
+
+  if(livePts.length) drawNotes(livePts, drawRot);
+  if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
+
+  // ★トレーナーのターゲット表示（trainer.currentNotesを直接描画）
+  if(fileOp.value==='train' && trainer && trainer.active){
+    const tn = trainer.currentNotes();
+    if(tn && tn.length) drawTargetNotes(tn, drawRot);
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+/* ===== Audio ctx & synth ===== */
+let audioCtx=null;
+function ensureCtx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000}); return audioCtx; }
+class PolySynth{
+  constructor(ctx){ this.ctx=ctx; this.master=ctx.createGain(); this.master.gain.value=0.9; this.master.connect(ctx.destination); this.voices=new Map(); }
+  noteOn(midi, vel=1, when=null){
+    const t = (when!=null)? when : this.ctx.currentTime;
+    if(this.voices.has(midi)) this.noteOff(midi, t);
+    const f=midiToHz(midi);
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(0,t);
+    const o1=this.ctx.createOscillator(), o2=this.ctx.createOscillator();
+    o1.type='sawtooth'; o2.type='square'; o1.frequency.setValueAtTime(f,t); o2.frequency.setValueAtTime(f,t); o2.detune.setValueAtTime(+3,t);
+    const flt=this.ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.setValueAtTime(3000,t); flt.Q.setValueAtTime(0.7,t);
+    o1.connect(flt); o2.connect(flt); flt.connect(g); g.connect(this.master);
+    const A=0.005,D=0.12,S=0.25+0.5*vel,R=0.32,peak=0.8*vel;
+    g.gain.linearRampToValueAtTime(peak, t+A);
+    g.gain.linearRampToValueAtTime(S*peak, t+A+D);
+    o1.start(t); o2.start(t);
+    this.voices.set(midi,{o1,o2,g,flt,R});
+  }
+  noteOff(midi, when=null){
+    const v=this.voices.get(midi); if(!v) return;
+    const t=(when!=null)? when : this.ctx.currentTime, R=v.R;
+    v.g.gain.setTargetAtTime(0,t,R/3);
+    try { v.o1.stop(t+R+0.05); v.o2.stop(t+R+0.05); } catch(e){}
+    setTimeout(()=>{ try{ v.g.disconnect(); v.flt.disconnect(); }catch{} }, (R+0.1)*1000);
+    this.voices.delete(midi);
+  }
+  allNotesOff(){ for(const m of Array.from(this.voices.keys())) this.noteOff(m); }
+}
+let synth=null;
+
+/* ===== Web MIDI In（常時） ===== */
+let midiAccess=null;
+const attachedInputs = new Set();
+
+function hex(n){ return n.toString(16).padStart(2,'0'); }
+function logMidi(ev){
+  const d = Array.from(ev.data||[]).map(hex).join(' ');
+  const name = ev.currentTarget && (ev.currentTarget.name||ev.currentTarget.id||'input');
+  midiLast.textContent = `${t('last')} ${name}  ${d}`;
+}
+function midiMessageHandler(ev){
+  logMidi(ev);
+  const d=ev.data;
+  if(!d || d.length<3) return;
+  const st=d[0]&0xf0, note=d[1], vel=d[2];
+  if(st===0x90){
+    if(vel>0){
+      liveNotes.set(note, vel/127);
+      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); synth.noteOn(note, vel/127); }
+    }else{
+      liveNotes.delete(note);
+      if(synth) synth.noteOff(note);
+    }
+  }else if(st===0x80){
+    liveNotes.delete(note);
+    if(synth) synth.noteOff(note);
+  }
+
+  // ★トレーナー：離鍵必須のエッジ検出でステップ進行
+  if(fileOp.value==='train' && trainer && trainer.active){
+    trainer.considerAdvance(liveNotes);
+    updateTrainerUI();
+  }
+}
+async function setupMIDIInputs(){
+  if(!isSecureContext && !window.__NATIVE_APP__){ updateMIDIStat(t('midiNeedSecure')); return; }
+  if(!('requestMIDIAccess' in navigator)){ updateMIDIStat(t('midiUnsupported')); return; }
+  try{
+    midiAccess = await navigator.requestMIDIAccess({sysex:false, software:true});
+    midiAccess.onstatechange = refreshMIDIInputs;
+    await refreshMIDIInputs();
+    updateMIDIStat(`${t('midiReady')} (${midiAccess.inputs.size})`);
+  }catch(e){
+    updateMIDIStat(`${t('midiInitFailed')}: ${e.name||e.message}`);
+  }
+}
+async function refreshMIDIInputs(){
+  if(!midiAccess) return;
+  midiDev.innerHTML='';
+  const inputs = Array.from(midiAccess.inputs.values());
+  for(const inp of inputs){
+    const opt=document.createElement('option'); opt.value=inp.id; opt.textContent=inp.name||inp.id; midiDev.appendChild(opt);
+  }
+  await connectMIDIAccordingToUI();
+}
+function detachAllInputs(){
+  for(const inp of attachedInputs){
+    try{ inp.onmidimessage=null; if(inp.removeEventListener) inp.removeEventListener('midimessage', midiMessageHandler); }catch{}
+  }
+  attachedInputs.clear();
+}
+async function attachInput(inp){
+  try{ await inp.open(); }catch{}
+  inp.onmidimessage = midiMessageHandler;
+  if(inp.addEventListener) inp.addEventListener('midimessage', midiMessageHandler);
+  attachedInputs.add(inp);
+}
+async function connectMIDIAccordingToUI(){
+  if(!midiAccess) return;
+  detachAllInputs();
+  const inputs = Array.from(midiAccess.inputs.values());
+  if(midiAll.checked || !midiDev.value){
+    for(const inp of inputs) await attachInput(inp);
+    updateMIDIStat(`${t('midiAllInputsStat')} (${inputs.length})`);
+  }else{
+    const target = midiAccess.inputs.get(midiDev.value);
+    if(target){ await attachInput(target); updateMIDIStat(`${t('midiInputStatPrefix')} ${target.name||target.id}`); }
+    else{ updateMIDIStat(t('midiNoDevice')); }
+  }
+}
+midiDev.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
+midiAll.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
+liveMon.onchange = ()=>{ saveSettings(); };
+
+/* ===== 自動開始 ===== */
+function autoStart(){
+  ensureCtx();
+  setupMIDIInputs().then(connectMIDIAccordingToUI);
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadSettings();
+  updateUIVisibility();
+  updateFileOpUI();
+  autoStart();
+});
+
+// iOS: ユーザー操作でAudioContextを復帰
+['pointerdown','keydown','touchstart'].forEach(ev=>{
+  addEventListener(ev, ()=>{ try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch{} }, {once:true});
+});
+
+/* ===== Disk torque ===== */
+function torqueFromPoints(points, gravAbs, rMax, excludeMode){
+  let tau = 0;
+  for(const p of points){
+    const thAbs = angleForMidiAbs(p.midi);  // ディスク絶対角
+    const r = radiusFromFreq(midiToHz(p.midi), rMax, ringParams().step);
+    const rn = r / rMax;
+    const d = shortestDelta(gravAbs, thAbs);
+    const absd = Math.abs(d);
+
+    // 除外側だけを±1°だけ広げる
+    let excluded;
+    if (excludeMode === 'filled'){
+      excluded = absd <= (Math.PI/2 + EXCLUDE_PAD_RAD);
+    }else{
+      excluded = absd >= (Math.PI/2 - EXCLUDE_PAD_RAD);
+    }
+    if (excluded) continue;
+
+    const m = Math.max(0, Math.min(1, p.vel));
+    tau += m * rn * Math.sin(d);
+  }
+  return tau;
+}
+
+/* ===== MIDI File loader / parser ===== */
+let midiData = null; // {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+function uiLog(msg){ fileInfo.textContent = msg; }
+
+async function fileToArrayBuffer(file){
+  if (file && file.arrayBuffer) {
+    try { return await file.arrayBuffer(); } catch(e) { /* fallback */ }
+  }
+  return await new Promise((resolve, reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=> resolve(fr.result);
+    fr.onerror = ()=> reject(fr.error || new Error('FileReader error'));
+    fr.readAsArrayBuffer(file);
+  });
+}
+async function handlePickedFile(file){
+  try{
+    uiLog(`picked: ${file?.name || '(no name)'}  type:${file?.type || 'unknown'}  size:${file?.size || 0}B`);
+    if(!file) throw new Error('no file');
+    const ab = await fileToArrayBuffer(file);
+    if(!ab) throw new Error('arrayBuffer empty');
+
+    const parsed = parseMIDI(ab);
+    if(!parsed || !parsed.notes) throw new Error('parse failed');
+    midiData = parsed;
+
+    const trks = (Array.isArray(midiData.tracks) ? midiData.tracks.length : (midiData.tracks ?? 0));
+    uiLog(`OK: ${file.name}  trks:${trks}  ppq:${midiData.ppq}  len:${midiData.lengthSec.toFixed(2)}s  notes:${midiData.notes.length}`);
+
+    trainer = new Trainer(midiData);
+    updateTrainerUI();
+  }catch(err){
+    uiLog(`解析失敗: ${err && err.message ? err.message : err}`);
+    console.error(err);
+  }
+}
+function onFileInput(e){
+  const f = e.target && e.target.files && e.target.files[0];
+  if(f) handlePickedFile(f);
+}
+midiFileInput.addEventListener('change', onFileInput);
+midiFileInput.addEventListener('input',  onFileInput);
+
+// D&D
+addEventListener('dragover', e=>{ e.preventDefault(); });
+addEventListener('drop', e=>{
+  e.preventDefault();
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f && /\.mid(i)?$/i.test(f.name)) handlePickedFile(f);
+});
+
+/* ---- Simple Standard MIDI parser (format 0/1) ---- */
+function parseMIDI(ab){
+  const u8 = new Uint8Array(ab);
+  let p = 0;
+  function rdU32(){ const v=((u8[p]<<24)|(u8[p+1]<<16)|(u8[p+2]<<8)|u8[p+3])>>>0; p+=4; return v; }
+  function rdU16(){ const v=((u8[p]<<8)|u8[p+1])>>>0; p+=2; return v; }
+  function rdStr(n){ const s=String.fromCharCode.apply(null, u8.slice(p,p+n)); p+=n; return s; }
+  function rdVLQ(){ let v=0; let b; do{ b=u8[p++]; v=(v<<7)|(b&0x7f); }while(b&0x80); return v; }
+
+  function expect(tag){ const s=rdStr(4); if(s!==tag) throw new Error(`expect ${tag}, got ${s}`); }
+  expect('MThd'); const len=rdU32(); const pHdr=p; const format=rdU16(); const ntrks=rdU16(); const division=rdU16(); p=pHdr+len;
+
+  if(division & 0x8000) throw new Error('SMPTE time not supported');
+  const ppq = division;
+
+  const tracks=[];
+  for(let t=0;t<ntrks;t++){
+    expect('MTrk'); const tlen=rdU32(); const end=p+tlen; let tick=0; let running=0; const evs=[];
+    let tempoEvents=[];
+    while(p<end){
+      const dt = rdVLQ(); tick += dt;
+      let st = u8[p++];
+      if(st<0x80){ p--; st = running; } else { running = st; }
+      if(st===0xFF){
+        const type=u8[p++]; const len=rdVLQ(); const data=u8.slice(p,p+len); p+=len;
+        if(type===0x51 && len===3){ const usPerQ = (data[0]<<16)|(data[1]<<8)|data[2]; tempoEvents.push({tick, usPerQ}); }
+      }else if(st===0xF0 || st===0xF7){
+        const len=rdVLQ(); p+=len;
+      }else{
+        const hi=st&0xF0, ch=st&0x0F;
+        function d(){ return u8[p++]; }
+        if(hi===0xC0 || hi===0xD0){ d(); }
+        else{
+          const d1=d(), d2=d();
+          if(hi===0x90){ const note=d1, vel=d2; evs.push({type:(vel>0)?'on':'off', tick, ch, note, vel}); }
+          else if(hi===0x80){ evs.push({type:'off', tick, ch, note:d1, vel:d2}); }
+        }
+      }
+    }
+    tracks.push({events:evs, tempos:tempoEvents});
+  }
+
+  let tempos = tracks.flatMap(tr=>tr.tempos);
+  tempos.sort((a,b)=>a.tick-b.tick);
+  if(!tempos.length || tempos[0].tick!==0) tempos.unshift({tick:0, usPerQ:500000});
+
+  const segments = [];
+  let lastTick=0, curUsPerQ=tempos[0].usPerQ, accSec=0;
+  segments.push({tick:0, usPerQ:curUsPerQ, timeSec:0});
+  for(let i=1;i<tempos.length;i++){
+    const T = tempos[i].tick;
+    accSec += ((T-lastTick) * curUsPerQ) / 1e6 / ppq;
+    segments.push({tick:T, usPerQ:tempos[i].usPerQ, timeSec:accSec});
+    lastTick = T; curUsPerQ = tempos[i].usPerQ;
+  }
+  function ticksToSec(t){
+    let lo=0, hi=segments.length-1, idx=0;
+    while(lo<=hi){ const mid=(lo+hi)>>1; if(segments[mid].tick<=t){ idx=mid; lo=mid+1; } else hi=mid-1; }
+    const s=segments[idx];
+    return s.timeSec + ((t - s.tick) * s.usPerQ) / 1e6 / ppq;
+  }
+
+  const all = tracks.flatMap(tr=>tr.events);
+  all.sort((a,b)=> (a.tick-b.tick) || (a.type==='off'?1:-1));
+  const onStack = Array.from({length:16}, ()=>Array(128).fill(null));
+  const notes = [];
+  let lastTickAll = 0;
+  for(const e of all){
+    lastTickAll = Math.max(lastTickAll, e.tick);
+    if(e.type==='on'){
+      onStack[e.ch][e.note] = onStack[e.ch][e.note] || [];
+      onStack[e.ch][e.note].push({tick:e.tick, vel:e.vel});
+    }else if(e.type==='off'){
+      const st = onStack[e.ch][e.note];
+      if(st && st.length){
+        const on = st.shift();
+        notes.push({note:e.note, chan:e.ch, vel:Math.max(1,on.vel), startTick:on.tick, endTick:e.tick});
+      }
+    }
+  }
+  for(let ch=0; ch<16; ch++){
+    for(let n=0;n<128;n++){
+      const st = onStack[ch][n];
+      if(st && st.length){
+        for(const on of st){
+          notes.push({note:n, chan:ch, vel:Math.max(1,on.vel), startTick:on.tick, endTick:lastTickAll});
+        }
+      }
+    }
+  }
+  for(const n of notes){ n.startSec = ticksToSec(n.startTick); n.endSec = ticksToSec(n.endTick); }
+  const lengthSec = notes.reduce((m,n)=>Math.max(m, n.endSec), 0);
+
+  const onsets = new Map();
+  for(const n of notes){ const arr = onsets.get(n.startTick) || []; arr.push({note:n.note, vel:n.vel}); onsets.set(n.startTick, arr); }
+  const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
+
+  return { ppq, tracks, tempos, segments, ticksToSec, notes, lengthSec, onsets, onsetTicks };
+}
+
+/* ===== Player ===== */
+class Player{
+  constructor(ctx, notes){
+    this.ctx=ctx; this.notes=notes;
+    this.events = [];
+    for(const n of notes){
+      this.events.push({time:n.startSec, type:'on', note:n.note, vel:n.vel/127});
+      this.events.push({time:n.endSec,   type:'off', note:n.note});
+    }
+    this.events.sort((a,b)=>a.time-b.time);
+    this.nextIdx = 0;
+    this.posSec = 0;
+    this.t0Ctx = 0;
+    this.timer = null;
+    this.lookahead = 0.1; // s
+    this.running = false;
+    this.timeouts = new Set();
+  }
+  scheduleUntil(tCut){
+    const ctx=this.ctx;
+    if(!synth) synth=new PolySynth(ctx);
+    while(this.nextIdx < this.events.length && this.events[this.nextIdx].time <= tCut){
+      const ev = this.events[this.nextIdx++];
+      const whenAbs = this.t0Ctx + ev.time;
+      if(ev.type==='on'){
+        synth.noteOn(ev.note, ev.vel||0.8, whenAbs);
+        const delay = Math.max(0, (whenAbs - ctx.currentTime))*1000;
+        const to = setTimeout(()=>{ fileNotes.set(ev.note, ev.vel||0.8); }, delay);
+        this.timeouts.add(to);
+      }else{
+        synth.noteOff(ev.note, whenAbs);
+        const delay = Math.max(0, (whenAbs - ctx.currentTime))*1000;
+        const to = setTimeout(()=>{ fileNotes.delete(ev.note); }, delay+5);
+        this.timeouts.add(to);
+      }
+    }
+  }
+  tick = ()=>{
+    if(!this.running) return;
+    const now = this.ctx.currentTime - this.t0Ctx;
+    this.scheduleUntil(now + this.lookahead);
+    if(now >= this.totalLength()){ this.stop(); return; }
+    this.timer = setTimeout(this.tick, 20);
+  }
+  totalLength(){ return this.events.length? this.events[this.events.length-1].time : 0; }
+  play(){
+    if(this.running) return;
+    this.t0Ctx = this.ctx.currentTime - this.posSec;
+    this.running = true;
+    this.tick();
+  }
+  pause(){ if(!this.running) return; this.posSec = this.ctx.currentTime - this.t0Ctx; this.running = false; if(this.timer) clearTimeout(this.timer); }
+  stop(){
+    this.running = false; this.posSec = 0; this.nextIdx = 0;
+    if(this.timer) clearTimeout(this.timer);
+    for(const to of this.timeouts) clearTimeout(to);
+    this.timeouts.clear();
+    fileNotes.clear();
+    if(synth) synth.allNotesOff();
+  }
+}
+let player = null;
+
+/* ===== Trainer（離鍵必須のエッジ検出） ===== */
+class Trainer{
+  constructor(midi){
+    this.midi = midi;
+    this.steps = midi.onsetTicks.map(tk => ({tick:tk, notes: midi.onsets.get(tk).map(o=>o.note)}));
+    this.idx = 0;
+    this.active = false;
+    this.gateReady = true; // 成立の立ち上がりのみ許可するゲート
+  }
+
+  currentNotes(){ return (this.steps[this.idx]?.notes || []).slice().sort((a,b)=>a-b); }
+
+  satisfied(live){
+    const t = this.currentNotes();
+    if(!t.length) return true;
+    for(const n of t){ if(!live.has(n)) return false; }
+    return true;
+  }
+
+  armAccordingToState(live){
+    this.gateReady = !this.satisfied(live); // 既に成立していたら離鍵を要求
+  }
+
+  start(live = liveNotes){
+    this.idx = 0;
+    this.active = true;
+    this.armAccordingToState(live);
+  }
+
+  next(live = liveNotes){
+    if(!this.active) return;
+    this.idx++;
+    if(this.idx >= this.steps.length){ this.finish(); return; }
+    this.armAccordingToState(live);
+  }
+
+  prev(live = liveNotes){
+    if(!this.active) return;
+    this.idx = Math.max(0, this.idx-1);
+    this.armAccordingToState(live);
+  }
+
+  finish(){ this.active = false; }
+
+  considerAdvance(live = liveNotes){
+    if(!this.active) return;
+    const ok = this.satisfied(live);
+    if(!this.gateReady){
+      if(!ok) this.gateReady = true; // 一度“不成立”になったら武装
+      return;
+    }
+    if(ok){
+      this.gateReady = false;        // 次は必ず離鍵
+      this.next(live);
+    }
+  }
+}
+let trainer = null;
+
+/* ===== UI actions ===== */
+btnPlay.onclick = ()=>{
+  if(!midiData){ fileInfo.textContent='file: –'; return; }
+  const ctx = ensureCtx();
+  try{ if(ctx.state==='suspended') ctx.resume(); }catch{}
+  if(player) player.stop();
+  player = new Player(ctx, midiData.notes);
+  player.play();
+};
+btnPause.onclick = ()=>{ if(player) player.pause(); };
+btnStop.onclick = ()=>{ if(player) player.stop(); };
+
+btnStartTrain.onclick = ()=>{
+  if(!midiData){ fileInfo.textContent='file: –'; return; }
+  if(player) player.stop();
+  trainer = new Trainer(midiData);
+  trainer.start(liveNotes);   // 開始時点の押下状態でゲート初期化
+  updateTrainerUI();
+};
+btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(liveNotes); updateTrainerUI(); } };
+btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(liveNotes); updateTrainerUI(); } };
+
+function updateTrainerUI(){
+  if(trainer && trainer.active){
+    const tn = trainer.currentNotes();
+    trainerStat.textContent = `step: ${trainer.idx+1}/${trainer.steps.length}  notes: [${tn.join(', ')}]`;
+  }else if(trainer && !trainer.active){
+    trainerStat.textContent = `step: done (${trainer?.steps?.length||0})`;
+  }else{
+    trainerStat.textContent = 'step: –';
+  }
+}
+
+/* ===== Keyboard shortcuts ===== */
+addEventListener('keydown', e=>{
+  if(fileOp.value==='train' && trainer && trainer.active){
+    if(e.key==='ArrowLeft'){ trainer.prev(liveNotes); updateTrainerUI(); }
+    else if(e.key==='ArrowRight'){ trainer.next(liveNotes); updateTrainerUI(); }
+  }
+});
+</script>
