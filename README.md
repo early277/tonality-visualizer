@@ -40,7 +40,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 
 - Licensed under the **MIT License**.  
 - You are free to use, modify, and distribute this software.  
-- See [`LICENSE`](./LICENSE.txt) for details.  
+- See [`LICENSE`](./LICENSE) for details.  
 - Uses Apple system frameworks (WebKit, CoreMIDI, UniformTypeIdentifiers).
 
 
@@ -98,7 +98,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 
 - 本プロジェクトは **MIT License** で公開されています。  
 - ソースコードの一部または全体を自由に利用・改変できます。  
-- 詳細は [`LICENSE`](./LICENSE.txt) を参照してください。  
+- 詳細は [`LICENSE`](./LICENSE) を参照してください。  
 - Appleのシステムフレームワーク（WebKit, CoreMIDI, UniformTypeIdentifiers）を使用しています。
 
 ---
