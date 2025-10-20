@@ -555,16 +555,18 @@ function draw(){
     const ang = baseAngleFromFifthIndex(k2) - drawRot;
     const isA = (k2 === highlightAIndex);
     ctx.beginPath();
-    ctx.strokeStyle = isA ? 'rgba(00,100,100,0.85)' : 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = isA ? 3 : 1;
+    ctx.strokeStyle = isA ? 'rgba(0,140,140,0.95)' : 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = isA ? 3 : 1.5;
     ctx.moveTo(0,0); ctx.lineTo((rMax+6)*Math.cos(ang),(rMax+6)*Math.sin(ang));
     ctx.stroke();
   }
   ctx.restore();
 
   // 同心円
-  ctx.strokeStyle='rgba(255,255,255,0.14)';
+  ctx.strokeStyle='rgba(255,255,255,0.22)';
+  ctx.lineWidth = 1.5;
   for(let i=0;i<=OCTAVES;i++){ const r=rMax - i*step; ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke(); }
+  ctx.lineWidth = 1;
 
   const r440 = radiusFromFreq(440, rMax, step);
   ctx.beginPath();
