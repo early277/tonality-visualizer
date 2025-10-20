@@ -10,6 +10,7 @@ extension WebView {
         private var client = MIDIClientRef()
         private var inputPort = MIDIPortRef()
         private var connected = Set<MIDIEndpointRef>()
+        private var didLoadDefaultMIDI = false
 
         func setupMIDI() {
             MIDIClientCreateWithBlock("PolarPitchMIDI" as CFString, &client) { [weak self] _ in
@@ -88,6 +89,20 @@ extension WebView {
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
             if let h = objc_getAssociatedObject(controller, &WebViewAssocKey) as? ([URL]?)->Void { h(nil) }
             objc_setAssociatedObject(controller, &WebViewAssocKey, nil, .OBJC_ASSOCIATION_ASSIGN)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            guard !didLoadDefaultMIDI,
+                  let url = Bundle.main.url(forResource: "sample", withExtension: "mid"),
+                  let data = try? Data(contentsOf: url) else { return }
+            didLoadDefaultMIDI = true
+            let base64 = data.base64EncodedString()
+            guard let argsData = try? JSONSerialization.data(withJSONObject: [base64, "sample.mid"]),
+                  let args = String(data: argsData, encoding: .utf8) else { return }
+            let js = "(() => { const args = " + args + "; window.__loadMIDIFromNative && window.__loadMIDIFromNative(args[0], args[1]); })();"
+            DispatchQueue.main.async {
+                webView.evaluateJavaScript(js, completionHandler: nil)
+            }
         }
 
         @available(iOS 15.0, *)

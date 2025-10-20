@@ -825,6 +825,32 @@ async function handlePickedFile(file){
     console.error(err);
   }
 }
+
+async function loadMIDIFromNative(base64, fileName = 'sample.mid'){
+  try{
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for(let i = 0; i < len; i++){ bytes[i] = binary.charCodeAt(i); }
+    const blob = new Blob([bytes], { type: 'audio/midi' });
+    let fileLike;
+    try{
+      fileLike = new File([blob], fileName, { type: blob.type || 'audio/midi', lastModified: Date.now() });
+    }catch{
+      fileLike = {
+        name: fileName,
+        type: blob.type || 'audio/midi',
+        size: blob.size,
+        arrayBuffer: () => blob.arrayBuffer()
+      };
+    }
+    await handlePickedFile(fileLike);
+  }catch(err){
+    console.warn('failed to load MIDI from native:', err);
+  }
+}
+window.__loadMIDIFromNative = loadMIDIFromNative;
+
 function onFileInput(e){
   const f = e.target && e.target.files && e.target.files[0];
   if(f) handlePickedFile(f);
@@ -834,6 +860,9 @@ midiFileInput.addEventListener('input',  onFileInput);
 
 async function loadDefaultMIDI(){
   if(midiData) return;
+  if(window.__NATIVE_APP__){
+    return;
+  }
   try{
     uiLog('loading: sample.mid');
     const res = await fetch('sample.mid');
