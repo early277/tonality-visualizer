@@ -555,7 +555,7 @@ function draw(){
     const ang = baseAngleFromFifthIndex(k2) - drawRot;
     const isA = (k2 === highlightAIndex);
     ctx.beginPath();
-    ctx.strokeStyle = isA ? 'rgba(230,230,230,0.85)' : 'rgba(255,255,255,0.10)';
+    ctx.strokeStyle = isA ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.10)';
     ctx.lineWidth = isA ? 3 : 1;
     ctx.moveTo(0,0); ctx.lineTo((rMax+6)*Math.cos(ang),(rMax+6)*Math.sin(ang));
     ctx.stroke();
@@ -568,7 +568,7 @@ function draw(){
 
   const r440 = radiusFromFreq(440, rMax, step);
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(230,230,230,0.9)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 3;
   ctx.arc(cx, cy, r440, 0, 2*Math.PI);
   ctx.stroke();
