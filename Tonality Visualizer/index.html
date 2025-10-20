@@ -230,7 +230,8 @@ const I18N = {
     midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
-    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer"
+    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
+    trainStart:"start / restart"
   },
   ja:{
     language:"言語", device:"デバイス", allInputs:"全入力",
@@ -245,7 +246,8 @@ const I18N = {
     midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
-    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー"
+    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
+    trainStart:"開始/リスタート"
   }
 };
 const SETTINGS_KEY = 'ppm:v6';
@@ -271,6 +273,7 @@ function applyI18N(){
   excludeSel.querySelector('option[value="unfilled"]').textContent = t('unfilled');
   fileOp.querySelector('option[value="play"]').textContent = t('play');
   fileOp.querySelector('option[value="train"]').textContent = t('train');
+  btnStartTrain.textContent = t('trainStart');
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
   document.getElementById('lang').value = lang;
   info.textContent = t('idle');
