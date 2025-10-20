@@ -756,6 +756,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   updateUIVisibility();
   updateFileOpUI();
   autoStart();
+  loadDefaultMIDI();
 });
 
 // iOS: ユーザー操作でAudioContextを復帰
@@ -830,6 +831,32 @@ function onFileInput(e){
 }
 midiFileInput.addEventListener('change', onFileInput);
 midiFileInput.addEventListener('input',  onFileInput);
+
+async function loadDefaultMIDI(){
+  if(midiData) return;
+  try{
+    uiLog('loading: sample.mid');
+    const res = await fetch('sample.mid');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const type = blob.type || 'audio/midi';
+    const fileName = 'sample.mid';
+    let fileLike;
+    try{
+      fileLike = new File([blob], fileName, { type, lastModified: Date.now() });
+    }catch{
+      fileLike = {
+        name: fileName,
+        type,
+        size: blob.size,
+        arrayBuffer: () => blob.arrayBuffer()
+      };
+    }
+    await handlePickedFile(fileLike);
+  }catch(err){
+    console.warn('failed to load default MIDI file:', err);
+  }
+}
 
 // D&D
 addEventListener('dragover', e=>{ e.preventDefault(); });
