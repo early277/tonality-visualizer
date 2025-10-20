@@ -122,11 +122,6 @@
     <span id="labelBGVal">60%</span>
   </label>
 
-  <label id="labelAlphaWrap" data-lbl="labelAlpha">
-    <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelAlphaVal">0%</span>
-  </label>
-
   <!-- MIDI File controls（常時表示） -->
   <span class="sep"></span>
   <label id="fileWrap" data-lbl="midiFile">
@@ -198,7 +193,6 @@ const lineASlider = document.getElementById('lineA'); const lineAVal = document.
 const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
 const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
-const labelAlphaSlider = document.getElementById('labelAlpha'); const labelAlphaVal = document.getElementById('labelAlphaVal');
 const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
 const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
 
@@ -224,7 +218,7 @@ const I18N = {
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     lineAlpha:"line α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
-    labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
+    labelSize:"label size", labelBG:"label bg α",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
     midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
@@ -239,7 +233,7 @@ const I18N = {
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     lineAlpha:"線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字α", movNumSize:"移動ド数字サイズ",
-    labelSize:"ラベルサイズ", labelBG:"ラベル背景α", labelAlpha:"音名の不透明度",
+    labelSize:"ラベルサイズ", labelBG:"ラベル背景α",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
     midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
@@ -290,7 +284,6 @@ function saveSettings(){
     lineA: lineASlider.value, waterA: waterASlider.value,
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
-    labelAlpha: labelAlphaSlider.value,
     exclude: excludeSel.value,
     omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
     dampExp: dampSlider.value,          // log10(100 - p)
@@ -315,7 +308,6 @@ function loadSettings(){
     if(s.movNumSize){ movNumSizeSlider.value = s.movNumSize; movNumSizeSlider.oninput(); }
     if(s.labelSize){ labelSizeSlider.value = s.labelSize; labelSizeSlider.oninput(); }
     if(s.labelBG){ labelBGSlider.value = s.labelBG; labelBGSlider.oninput(); }
-    if(s.labelAlpha!=null){ labelAlphaSlider.value = s.labelAlpha; labelAlphaSlider.oninput(); }
     if(s.exclude){ excludeSel.value = s.exclude; }
     if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
     if(s.dampExp!=null){ dampSlider.value = s.dampExp; }
@@ -374,13 +366,6 @@ labelSizeSlider.oninput = ()=>{ labelFontPx = parseInt(labelSizeSlider.value,10)
 
 let labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`;
 labelBGSlider.oninput = ()=>{ labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`; saveSettings(); };
-
-let labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100; labelAlphaVal.textContent=`${Math.round(labelTextAlpha*100)}%`;
-labelAlphaSlider.oninput = ()=>{
-  labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100;
-  labelAlphaVal.textContent = `${Math.round(labelTextAlpha*100)}%`;
-  saveSettings();
-};
 
 /* ===== Global state ===== */
 let worldRot = 0;          // 描画用回転（anchorにより決定）
@@ -550,29 +535,16 @@ function draw(){
 
   // 放射線
   ctx.save(); ctx.translate(cx,cy);
-  const highlightAIndex = FIFTH_INDEX[9];
+  ctx.strokeStyle='rgba(255,255,255,0.10)'; ctx.lineWidth=1;
   for(let k2=0;k2<12;k2++){
     const ang = baseAngleFromFifthIndex(k2) - drawRot;
-    const isA = (k2 === highlightAIndex);
-    ctx.beginPath();
-    ctx.strokeStyle = isA ? 'rgba(255,200,80,0.85)' : 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = isA ? 3 : 1;
-    ctx.moveTo(0,0); ctx.lineTo((rMax+6)*Math.cos(ang),(rMax+6)*Math.sin(ang));
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo((rMax+6)*Math.cos(ang),(rMax+6)*Math.sin(ang)); ctx.stroke();
   }
   ctx.restore();
 
   // 同心円
   ctx.strokeStyle='rgba(255,255,255,0.14)';
   for(let i=0;i<=OCTAVES;i++){ const r=rMax - i*step; ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke(); }
-
-  const r440 = radiusFromFreq(440, rMax, step);
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(255,120,80,0.9)';
-  ctx.lineWidth = 3;
-  ctx.arc(cx, cy, r440, 0, 2*Math.PI);
-  ctx.stroke();
-  ctx.lineWidth = 1;
 
   // 外周ラベル
   const fontPx = labelFontPx * devicePixelRatio * 0.95;
@@ -595,10 +567,8 @@ function draw(){
     const tx2 = cx + vx*s, ty2 = cy + vy*s;
     ctx.fillStyle = `rgba(${r},${g},${b},${labelBgAlpha})`;
     ctx.fillRect(tx2 - wbg/2, ty2 - hbg/2, wbg, hbg);
-    if(labelTextAlpha>0){
-      ctx.fillStyle=`rgba(255,255,255,${labelTextAlpha})`;
-      ctx.fillText(text, tx2, ty2);
-    }
+    ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.fillText(text, tx2, ty2);
   }
 
   // 水面半円＋移動ド数字
