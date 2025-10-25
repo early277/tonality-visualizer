@@ -482,23 +482,6 @@ function drawNotes(points, drawRot){
   if(low)  ring(low,'rgba(0,200,255,0.95)','LOW','bottom');
   if(high) ring(high,'rgba(255,160,0,0.95)','HIGH','top');
 
-  if(points.length){
-    const strongestByMidi = new Map();
-    for(const p of points){
-      const current = strongestByMidi.get(p.midi);
-      if(!current || p.vel > current.vel){
-        strongestByMidi.set(p.midi, p);
-      }
-    }
-    const ranked = Array.from(strongestByMidi.values())
-      .sort((a,b)=> midiToHz(a.midi) - midiToHz(b.midi));
-    for(let i=0;i<ranked.length;i++){
-      const p = ranked[i];
-      if((low && p.midi === low.midi) || (high && p.midi === high.midi)) continue;
-      ring(p, 'rgba(220,220,220,0.9)', String(i+1), 'top');
-    }
-  }
-
   for(const p of points){
     const theta=angleForMidiDraw(p.midi, drawRot);
     const rAbs=radiusFromFreq(midiToHz(p.midi), rMax, step), {x,y}=polarToXY(cx,cy,rAbs,theta);
