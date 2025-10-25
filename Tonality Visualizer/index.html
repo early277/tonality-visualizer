@@ -176,7 +176,7 @@ const OCTAVES = Math.ceil(Math.log2(F_HIGH/F_LOW));
 const MARGIN = 80;                               // 余白を広めに
 const ANG0 = Math.PI/2;                          // Cを上（0°相当）
 const GRAV_ABS = ANG0;                           // 重力方向=0°固定
-const EXCLUDE_PAD_RAD = 1 * Math.PI / 180;       // 無効領域+1°
+const EXCLUDE_PAD_RAD = 0.1 * Math.PI / 180;       // 無効領域+0.1°
 const LABEL_ENH = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"};
 const FIFTH_ORDER_PCS = (()=>{ let a=[],pc=0; for(let k=0;k<12;k++){ a.push(pc); pc=(pc+7)%12; } return a; })();
 const FIFTH_INDEX = (()=>{ const m=Array(12).fill(0); FIFTH_ORDER_PCS.forEach((pc,i)=>m[pc]=i); return m; })();
