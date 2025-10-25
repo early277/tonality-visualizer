@@ -482,7 +482,7 @@ function drawTargetNotes(targets, drawRot){
   const {rMax, step}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
   for(const midi of targets){
     const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(midiToHz(midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
-    ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,20*devicePixelRatio,0,2*Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
     ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText('TARGET', x, y+22*devicePixelRatio);
   }
