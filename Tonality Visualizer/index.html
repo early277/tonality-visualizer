@@ -96,6 +96,22 @@
     <span id="massVal">M=0.37</span>
   </label>
 
+  <label id="lowCutWrap" data-lbl="lowCut">
+    <input id="lowCut" type="range" min="0" max="6" step="1" value="0" list="lowCutTicks">
+    <datalist id="lowCutTicks">
+      <option value="0"><option value="1"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6">
+    </datalist>
+    <span id="lowCutVal">0</span>
+  </label>
+
+  <label id="highCutWrap" data-lbl="highCut">
+    <input id="highCut" type="range" min="0" max="6" step="1" value="0" list="highCutTicks">
+    <datalist id="highCutTicks">
+      <option value="0"><option value="1"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6">
+    </datalist>
+    <span id="highCutVal">0</span>
+  </label>
+
   <!-- visuals -->
   <label id="lineAWrap" data-lbl="lineAlpha">
     <input id="lineA" type="range" min="0" max="100" step="1" value="50">
@@ -200,6 +216,8 @@ const dampSlider = document.getElementById('damp'); const dampVal = document.get
 const snapAlphaCheckbox = document.getElementById('snapAlpha');
 const info = document.getElementById('info');
 const midiStat = document.getElementById('midiStat'); const midiLast = document.getElementById('midiLast');
+const lowCutSlider = document.getElementById('lowCut'); const lowCutVal = document.getElementById('lowCutVal');
+const highCutSlider = document.getElementById('highCut'); const highCutVal = document.getElementById('highCutVal');
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
 const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
@@ -232,6 +250,7 @@ const I18N = {
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
+    lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
     midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
@@ -249,6 +268,7 @@ const I18N = {
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字α", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景α", labelAlpha:"音名の不透明度",
+    lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
     midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
@@ -283,6 +303,7 @@ function applyI18N(){
   fileOp.querySelector('option[value="train"]').textContent = t('train');
   btnStartTrain.textContent = t('trainStart');
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
+  updateCutDisplays();
   document.getElementById('lang').value = lang;
   info.textContent = t('idle');
   midiStat.textContent = t('midiNotInit');
@@ -303,6 +324,8 @@ function saveSettings(){
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
     exclude: excludeSel.value,
+    lowCut: lowCutOct,
+    highCut: highCutOct,
     omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
     dampPct: dampSlider.value,          // 0〜99
     snapZeroAlpha: snapAlphaCheckbox.checked,
@@ -329,6 +352,8 @@ function loadSettings(){
     if(s.labelBG!=null){ labelBGSlider.value = s.labelBG; labelBGSlider.oninput(); }
     if(s.labelAlpha!=null){ labelAlphaSlider.value = s.labelAlpha; labelAlphaSlider.oninput(); }
     if(s.exclude){ excludeSel.value = s.exclude; }
+    if(s.lowCut!=null){ applyLowCut(parseInt(s.lowCut,10) || 0, false); }
+    if(s.highCut!=null){ applyHighCut(parseInt(s.highCut,10) || 0, false); }
     if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
     if(s.dampPct!=null){
       dampSlider.value = s.dampPct;
@@ -371,11 +396,21 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
-function ringParams(){ const rMax = Math.min(cv.width,cv.height)/2 - MARGIN; const step = rMax / OCTAVES; return {rMax, step}; }
+function ringParams(){
+  const rMax = Math.min(cv.width,cv.height)/2 - MARGIN;
+  const octaves = activeOctaveCount();
+  const step = rMax / octaves;
+  return {rMax, step, octaves, minFreq: minDisplayFreq(), maxFreq: maxDisplayFreq()};
+}
 function baseAngleFromFifthIndex(i){ return ANG0 + 2*Math.PI*(i%12)/12; }
 function angleForMidiAbs(m){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + diskAngle; } // 物理用
 function angleForMidiDraw(m, drawRot){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + drawRot; } // 描画用
-function radiusFromFreq(f, rMax, step){ const oc = Math.max(0, Math.min(OCTAVES, Math.log2(f/F_LOW))); return rMax - step*oc; }
+function radiusFromFreq(f, rMax, step){
+  const octaves = activeOctaveCount();
+  const oc = Math.log2(f / minDisplayFreq());
+  const ocClamped = Math.max(0, Math.min(octaves, oc));
+  return rMax - step*ocClamped;
+}
 function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.sin(th) }; }
 function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
@@ -451,6 +486,57 @@ applyUIOpacity(); uiopSlider.oninput = ()=>{ applyUIOpacity(); saveSettings(); }
 function updateMass(){ const lg=parseFloat(massSlider.value); diskMass=Math.pow(10,lg); massVal.textContent=`M=${diskMass.toFixed(2)}`; }
 updateMass(); massSlider.oninput = ()=>{ updateMass(); saveSettings(); };
 
+const CUT_MAX = 6;
+let lowCutOct = Math.max(0, Math.min(CUT_MAX, parseInt(lowCutSlider.value,10) || 0));
+let highCutOct = Math.max(0, Math.min(CUT_MAX, parseInt(highCutSlider.value,10) || 0));
+function activeOctaveCount(){ return Math.max(1, OCTAVES - lowCutOct - highCutOct); }
+function minDisplayFreq(){ return F_LOW * Math.pow(2, lowCutOct); }
+function maxDisplayFreq(){ return F_LOW * Math.pow(2, lowCutOct + activeOctaveCount()); }
+function formatCutValue(v){ return lang==='ja' ? `${v}オクターブ` : `${v} oct`; }
+function updateCutDisplays(){
+  lowCutVal.textContent = formatCutValue(lowCutOct);
+  highCutVal.textContent = formatCutValue(highCutOct);
+}
+function clampLowCut(value){
+  const maxAllowed = Math.min(CUT_MAX, Math.max(0, OCTAVES - 1 - highCutOct));
+  return Math.max(0, Math.min(maxAllowed, value));
+}
+function clampHighCut(value){
+  const maxAllowed = Math.min(CUT_MAX, Math.max(0, OCTAVES - 1 - lowCutOct));
+  return Math.max(0, Math.min(maxAllowed, value));
+}
+function applyLowCut(value, shouldSave = true){
+  const clamped = clampLowCut(Number.isNaN(value) ? 0 : value);
+  if(String(clamped) !== lowCutSlider.value) lowCutSlider.value = String(clamped);
+  if(lowCutOct !== clamped){
+    lowCutOct = clamped;
+    if(shouldSave) saveSettings();
+  }else if(shouldSave){
+    saveSettings();
+  }
+  updateCutDisplays();
+}
+function applyHighCut(value, shouldSave = true){
+  const clamped = clampHighCut(Number.isNaN(value) ? 0 : value);
+  if(String(clamped) !== highCutSlider.value) highCutSlider.value = String(clamped);
+  if(highCutOct !== clamped){
+    highCutOct = clamped;
+    if(shouldSave) saveSettings();
+  }else if(shouldSave){
+    saveSettings();
+  }
+  updateCutDisplays();
+}
+updateCutDisplays();
+lowCutSlider.addEventListener('input', ()=>{
+  const value = parseInt(lowCutSlider.value,10);
+  applyLowCut(Number.isNaN(value) ? 0 : value);
+});
+highCutSlider.addEventListener('input', ()=>{
+  const value = parseInt(highCutSlider.value,10);
+  applyHighCut(Number.isNaN(value) ? 0 : value);
+});
+
 /* ===== Note state ===== */
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
 const fileNotes = new Map();     // 再生中のMIDIファイル由来
@@ -458,16 +544,24 @@ const fileNotes = new Map();     // 再生中のMIDIファイル由来
 /* ===== Drawing ===== */
 function drawNotes(points, drawRot){
   if(!points.length) return;
-  const {rMax, step}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+  const {rMax, step, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+
+  const filtered = [];
+  for(const p of points){
+    const f = midiToHz(p.midi);
+    if(f < displayMinFreq || f > displayMaxFreq) continue;
+    filtered.push({midi:p.midi, vel:p.vel, f});
+  }
+  if(!filtered.length) return;
 
   let low=null, high=null;
-  for(const p of points){
-    const f=midiToHz(p.midi);
-    if(!low || f<low.f) low={midi:p.midi, vel:p.vel, f};
-    if(!high|| f>high.f) high={midi:p.midi, vel:p.vel, f};
+  for(const p of filtered){
+    if(!low || p.f<low.f) low=p;
+    if(!high|| p.f>high.f) high=p;
   }
   function ring(p, color, label, position = 'top'){
-    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(midiToHz(p.midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
+    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step), {x,y}=polarToXY(cx,cy,r,th);
     ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
     ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
     const labelOffset = 22 * devicePixelRatio;
@@ -480,7 +574,8 @@ function drawNotes(points, drawRot){
     }
   }
   function labelOnly(p, label, position = 'top', color = 'rgba(220,220,220,0.9)'){
-    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(midiToHz(p.midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
+    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step), {x,y}=polarToXY(cx,cy,r,th);
     ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
     const labelOffset = 18 * devicePixelRatio;
     if(position === 'bottom'){
@@ -494,16 +589,16 @@ function drawNotes(points, drawRot){
   if(low)  ring(low,'rgba(0,200,255,0.95)','LOW','bottom');
   if(high) ring(high,'rgba(255,160,0,0.95)','HIGH','top');
 
-  if(points.length){
+  if(filtered.length){
     const strongestByMidi = new Map();
-    for(const p of points){
+    for(const p of filtered){
       const current = strongestByMidi.get(p.midi);
       if(!current || p.vel > current.vel){
         strongestByMidi.set(p.midi, p);
       }
     }
     const ranked = Array.from(strongestByMidi.values())
-      .sort((a,b)=> midiToHz(a.midi) - midiToHz(b.midi));
+      .sort((a,b)=> a.f - b.f);
     for(let i=0;i<ranked.length;i++){
       const p = ranked[i];
       if((low && p.midi === low.midi) || (high && p.midi === high.midi)) continue;
@@ -511,15 +606,15 @@ function drawNotes(points, drawRot){
     }
   }
 
-  for(const p of points){
+  for(const p of filtered){
     const theta=angleForMidiDraw(p.midi, drawRot);
-    const rAbs=radiusFromFreq(midiToHz(p.midi), rMax, step), {x,y}=polarToXY(cx,cy,rAbs,theta);
+    const rAbs=radiusFromFreq(p.f, rMax, step), {x,y}=polarToXY(cx,cy,rAbs,theta);
     const radius=4+12*p.vel, alpha=0.3+0.6*p.vel;
     ctx.beginPath(); ctx.fillStyle=`rgba(255,255,255,${alpha})`; ctx.arc(x,y,radius,0,2*Math.PI); ctx.fill();
   }
 
-  if(points.length>=2){
-    const xs = points.map(p=>({m:p.midi,f:midiToHz(p.midi)})).sort((a,b)=>a.f-b.f);
+  if(filtered.length>=2){
+    const xs = filtered.map(p=>({m:p.midi,f:p.f})).sort((a,b)=>a.f-b.f);
     ctx.lineWidth=2; ctx.strokeStyle=`rgba(255,255,255,${linkAlpha})`;
     for(let i=0;i<xs.length-1;i++){
       const m0=xs[i].m,f0=xs[i].f,m1=xs[i+1].m,f1=xs[i+1].f;
@@ -536,9 +631,11 @@ function drawNotes(points, drawRot){
 /* ターゲット描画（トレーナー） */
 function drawTargetNotes(targets, drawRot){
   if(!targets || !targets.length) return;
-  const {rMax, step}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+  const {rMax, step, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
   for(const midi of targets){
-    const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(midiToHz(midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    const freq = midiToHz(midi);
+    if(freq < displayMinFreq || freq > displayMaxFreq) continue;
+    const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(freq,rMax,step), {x,y}=polarToXY(cx,cy,r,th);
     ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
     ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText('TARGET', x, y+22*devicePixelRatio);
@@ -568,7 +665,7 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
 let prevT=null;
 function draw(){
   const w=cv.width, h=cv.height, cx=w/2, cy=h/2;
-  const {rMax, step} = ringParams();
+  const {rMax, step, octaves, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
   const now = performance.now()/1000;
   const dt = prevT? Math.max(1/240, Math.min(0.25, now-prevT)) : 1/60;
   prevT = now;
@@ -586,7 +683,7 @@ function draw(){
   const hasPhysInput = physicsPoints.length>0;
 
   // 物理
-  const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, excludeMode) : 0;
+  const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, step, displayMinFreq, displayMaxFreq, excludeMode) : 0;
   const alpha = tau / Math.max(1e-6, diskMass);
   if (snapZeroAlpha && Math.abs(alpha) < 1e-6){
     diskOmega = 0;
@@ -629,15 +726,17 @@ function draw(){
   // 同心円
   ctx.strokeStyle='rgba(255,255,255,0.22)';
   ctx.lineWidth = 1.5;
-  for(let i=0;i<=OCTAVES;i++){ const r=rMax - i*step; ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke(); }
+  for(let i=0;i<=octaves;i++){ const r=rMax - i*step; ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.stroke(); }
   ctx.lineWidth = 1;
 
-  const r440 = radiusFromFreq(440, rMax, step);
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(00,100,100,0.9)';
-  ctx.lineWidth = 3;
-  ctx.arc(cx, cy, r440, 0, 2*Math.PI);
-  ctx.stroke();
+  if(440 >= displayMinFreq && 440 <= displayMaxFreq){
+    const r440 = radiusFromFreq(440, rMax, step);
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(00,100,100,0.9)';
+    ctx.lineWidth = 3;
+    ctx.arc(cx, cy, r440, 0, 2*Math.PI);
+    ctx.stroke();
+  }
   ctx.lineWidth = 1;
 
   // 外周ラベル
@@ -831,11 +930,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 /* ===== Disk torque ===== */
-function torqueFromPoints(points, gravAbs, rMax, excludeMode){
+function torqueFromPoints(points, gravAbs, rMax, step, minFreq, maxFreq, excludeMode){
   let tau = 0;
   for(const p of points){
     const thAbs = angleForMidiAbs(p.midi);  // ディスク絶対角
-    const r = radiusFromFreq(midiToHz(p.midi), rMax, ringParams().step);
+    const freq = midiToHz(p.midi);
+    if(freq < minFreq || freq > maxFreq) continue;
+    const r = radiusFromFreq(freq, rMax, step);
     const rn = r / rMax;
     const d = shortestDelta(gravAbs, thAbs);
     const absd = Math.abs(d);
