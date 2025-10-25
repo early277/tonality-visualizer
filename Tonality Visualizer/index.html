@@ -79,6 +79,11 @@
     <span id="dampVal">99.000%/s</span>
   </label>
 
+  <!-- snap ω when α=0 -->
+  <label id="snapAlphaWrap" data-lbl="snapZeroAlpha">
+    <input id="snapAlpha" type="checkbox">
+  </label>
+
   <!-- UI opacity -->
   <label id="uiopWrap" data-lbl="uiOpacity">
     <input id="uiop" type="range" min="10" max="100" step="1" value="85">
@@ -192,6 +197,7 @@ const excludeSel = document.getElementById('exclude');
 const uiopSlider = document.getElementById('uiop'); const uiopVal = document.getElementById('uiopVal');
 const massSlider = document.getElementById('mass'); const massVal = document.getElementById('massVal');
 const dampSlider = document.getElementById('damp'); const dampVal = document.getElementById('dampVal');
+const snapAlphaCheckbox = document.getElementById('snapAlpha');
 const info = document.getElementById('info');
 const midiStat = document.getElementById('midiStat'); const midiLast = document.getElementById('midiLast');
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
@@ -223,6 +229,7 @@ const I18N = {
     liveSound:"monitor live MIDI",
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
+    snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
     omegaMax:"ω max",
@@ -239,6 +246,7 @@ const I18N = {
     liveSound:"MIDI入力の音声再生",
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
+    snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字α", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景α", labelAlpha:"音名の不透明度",
     omegaMax:"最大回転速度",
@@ -297,6 +305,7 @@ function saveSettings(){
     exclude: excludeSel.value,
     omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
     dampExp: dampSlider.value,          // log10(100 - p)
+    snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
     uiHidden: !uiVisible
   };
@@ -322,11 +331,13 @@ function loadSettings(){
     if(s.exclude){ excludeSel.value = s.exclude; }
     if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
     if(s.dampExp!=null){ dampSlider.value = s.dampExp; }
+    if(s.snapZeroAlpha!=null){ snapAlphaCheckbox.checked = !!s.snapZeroAlpha; }
     if(s.fileOp){ fileOp.value = s.fileOp; }
     if(s.uiHidden){ uiVisible = false; updateUIVisibility(); }
   }catch{}
   applyUIScale();
   applyI18N();
+  snapZeroAlpha = snapAlphaCheckbox.checked;
   updateFileOpUI();
 }
 
@@ -423,6 +434,9 @@ function updateDampFromSlider(){
 }
 updateDampFromSlider();
 dampSlider.oninput = ()=>{ updateDampFromSlider(); saveSettings(); };
+
+let snapZeroAlpha = snapAlphaCheckbox.checked;
+snapAlphaCheckbox.onchange = ()=>{ snapZeroAlpha = snapAlphaCheckbox.checked; saveSettings(); };
 
 /* UI opacity / mass */
 function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent=`${Math.round(a*100)}%`; }
@@ -531,7 +545,11 @@ function draw(){
   // 物理
   const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, excludeMode) : 0;
   const alpha = tau / Math.max(1e-6, diskMass);
-  diskOmega += alpha * dt;
+  if (snapZeroAlpha && Math.abs(alpha) < 1e-6){
+    diskOmega = 0;
+  }else{
+    diskOmega += alpha * dt;
+  }
 
   // ダンピング：1秒あたり (1 - p%)^dt
   const k = Math.max(0, Math.min(1, 1 - dampPerSec));
