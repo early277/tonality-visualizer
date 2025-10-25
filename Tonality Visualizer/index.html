@@ -70,18 +70,18 @@
     <span id="omegaMaxVal">2.00 rad/s</span>
   </label>
 
-  <!-- damping（対数目盛：1.000〜99.999 %/s） -->
+  <!-- damping（比例：0〜99 %/s） -->
   <label id="dampWrap" data-lbl="damping">
-    <input id="damp" type="range" min="-3" max="2" step="0.001" value="0" list="dampTicks">
+    <input id="damp" type="range" min="0" max="99" step="0.001" value="99" list="dampTicks">
     <datalist id="dampTicks">
-      <option value="-3"><option value="-2"><option value="-1"><option value="0"><option value="1"><option value="2">
+      <option value="0"><option value="25"><option value="50"><option value="75"><option value="99">
     </datalist>
     <span id="dampVal">99.000%/s</span>
   </label>
 
   <!-- snap ω when α=0 -->
   <label id="snapAlphaWrap" data-lbl="snapZeroAlpha">
-    <input id="snapAlpha" type="checkbox">
+    <input id="snapAlpha" type="checkbox" checked>
   </label>
 
   <!-- UI opacity -->
@@ -304,7 +304,7 @@ function saveSettings(){
     labelAlpha: labelAlphaSlider.value,
     exclude: excludeSel.value,
     omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
-    dampExp: dampSlider.value,          // log10(100 - p)
+    dampPct: dampSlider.value,          // 0〜99
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
     uiHidden: !uiVisible
@@ -330,7 +330,16 @@ function loadSettings(){
     if(s.labelAlpha!=null){ labelAlphaSlider.value = s.labelAlpha; labelAlphaSlider.oninput(); }
     if(s.exclude){ excludeSel.value = s.exclude; }
     if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
-    if(s.dampExp!=null){ dampSlider.value = s.dampExp; }
+    if(s.dampPct!=null){
+      dampSlider.value = s.dampPct;
+    }else if(s.dampExp!=null){
+      const exp = parseFloat(s.dampExp);
+      if(!Number.isNaN(exp)){
+        const q = Math.min(99, Math.max(0.001, Math.pow(10, exp)));
+        const p = 100 - q;
+        dampSlider.value = Math.min(99, Math.max(0, p));
+      }
+    }
     if(s.snapZeroAlpha!=null){ snapAlphaCheckbox.checked = !!s.snapZeroAlpha; }
     if(s.fileOp){ fileOp.value = s.fileOp; }
     if(s.uiHidden){ uiVisible = false; updateUIVisibility(); }
@@ -338,6 +347,7 @@ function loadSettings(){
   applyUIScale();
   applyI18N();
   snapZeroAlpha = snapAlphaCheckbox.checked;
+  updateDampFromSlider();
   updateFileOpUI();
 }
 
@@ -420,16 +430,13 @@ omegaMaxSlider.oninput = ()=>{
   saveSettings();
 };
 
-/* ダンピング（対数目盛）。q = (100 - p) をlogで操作 → p%/s */
+/* ダンピング（比例）。スライダー値 = p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
 function fmtPct(p){ return p.toFixed(3); }
 function updateDampFromSlider(){
-  let exp = parseFloat(dampSlider.value);                 // [-3, 2]
-  let q = Math.pow(10, exp);                              // q = 10^exp
-  if (q < 0.001) q = 0.001;                               // 下限 → 99.999%/s
-  if (q > 99)   q = 99;                                   // 上限 → 1.000%/s
-  const p = 100 - q;                                      // p%/s
-  dampPerSec = p / 100;                                   // 0.010〜0.99999
+  const raw = parseFloat(dampSlider.value);
+  const p = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(99, raw));
+  dampPerSec = p / 100;                                   // 0.00〜0.99
   dampVal.textContent = `${fmtPct(p)}%/s`;
 }
 updateDampFromSlider();
