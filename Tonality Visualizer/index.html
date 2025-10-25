@@ -466,14 +466,21 @@ function drawNotes(points, drawRot){
     if(!low || f<low.f) low={midi:p.midi, vel:p.vel, f};
     if(!high|| f>high.f) high={midi:p.midi, vel:p.vel, f};
   }
-  function ring(p, color, label){
+  function ring(p, color, label, position = 'top'){
     const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(midiToHz(p.midi),rMax,step), {x,y}=polarToXY(cx,cy,r,th);
     ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    ctx.fillText(label, x, y-22*devicePixelRatio);
+    ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
+    const labelOffset = 22 * devicePixelRatio;
+    if(position === 'bottom'){
+      ctx.textBaseline='top';
+      ctx.fillText(label, x, y + labelOffset);
+    }else{
+      ctx.textBaseline='bottom';
+      ctx.fillText(label, x, y - labelOffset);
+    }
   }
-  if(low)  ring(low,'rgba(0,200,255,0.95)','LOW');
-  if(high) ring(high,'rgba(255,160,0,0.95)','HIGH');
+  if(low)  ring(low,'rgba(0,200,255,0.95)','LOW','bottom');
+  if(high) ring(high,'rgba(255,160,0,0.95)','HIGH','top');
 
   for(const p of points){
     const theta=angleForMidiDraw(p.midi, drawRot);
