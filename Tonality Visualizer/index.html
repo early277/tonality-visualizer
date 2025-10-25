@@ -79,10 +79,6 @@
     <span id="dampVal">99.000%/s</span>
   </label>
 
-  <label id="snapOmegaWrap" data-lbl="snapOmega">
-    <input id="snapOmega" type="checkbox">
-  </label>
-
   <!-- UI opacity -->
   <label id="uiopWrap" data-lbl="uiOpacity">
     <input id="uiop" type="range" min="10" max="100" step="1" value="85">
@@ -196,7 +192,6 @@ const excludeSel = document.getElementById('exclude');
 const uiopSlider = document.getElementById('uiop'); const uiopVal = document.getElementById('uiopVal');
 const massSlider = document.getElementById('mass'); const massVal = document.getElementById('massVal');
 const dampSlider = document.getElementById('damp'); const dampVal = document.getElementById('dampVal');
-const snapOmegaToggle = document.getElementById('snapOmega');
 const info = document.getElementById('info');
 const midiStat = document.getElementById('midiStat'); const midiLast = document.getElementById('midiLast');
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
@@ -228,7 +223,6 @@ const I18N = {
     liveSound:"monitor live MIDI",
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
-    snapOmega:"zero ω when α=0",
     lineAlpha:"line α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
     omegaMax:"ω max",
@@ -245,7 +239,6 @@ const I18N = {
     liveSound:"MIDI入力の音声再生",
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
-    snapOmega:"α=0で角速度0固定",
     lineAlpha:"線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字α", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景α", labelAlpha:"音名の不透明度",
     omegaMax:"最大回転速度",
@@ -304,7 +297,6 @@ function saveSettings(){
     exclude: excludeSel.value,
     omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
     dampExp: dampSlider.value,          // log10(100 - p)
-    snapOmega: snapOmegaToggle.checked,
     fileOp: fileOp.value,
     uiHidden: !uiVisible
   };
@@ -328,7 +320,6 @@ function loadSettings(){
     if(s.labelBG!=null){ labelBGSlider.value = s.labelBG; labelBGSlider.oninput(); }
     if(s.labelAlpha!=null){ labelAlphaSlider.value = s.labelAlpha; labelAlphaSlider.oninput(); }
     if(s.exclude){ excludeSel.value = s.exclude; }
-    if(s.snapOmega!=null){ snapOmegaToggle.checked = !!s.snapOmega; updateSnapOmegaBehavior(); }
     if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
     if(s.dampExp!=null){ dampSlider.value = s.dampExp; }
     if(s.fileOp){ fileOp.value = s.fileOp; }
@@ -420,7 +411,6 @@ omegaMaxSlider.oninput = ()=>{
 
 /* ダンピング（対数目盛）。q = (100 - p) をlogで操作 → p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
-let snapOmegaEnabled = false;
 function fmtPct(p){ return p.toFixed(3); }
 function updateDampFromSlider(){
   let exp = parseFloat(dampSlider.value);                 // [-3, 2]
@@ -433,10 +423,6 @@ function updateDampFromSlider(){
 }
 updateDampFromSlider();
 dampSlider.oninput = ()=>{ updateDampFromSlider(); saveSettings(); };
-
-function updateSnapOmegaBehavior(){ snapOmegaEnabled = snapOmegaToggle.checked; }
-updateSnapOmegaBehavior();
-snapOmegaToggle.onchange = ()=>{ updateSnapOmegaBehavior(); saveSettings(); };
 
 /* UI opacity / mass */
 function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent=`${Math.round(a*100)}%`; }
@@ -545,10 +531,6 @@ function draw(){
   // 物理
   const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, excludeMode) : 0;
   const alpha = tau / Math.max(1e-6, diskMass);
-  const hasOutsideWater = snapOmegaEnabled && hasSoundOutsideWater(physicsPoints, GRAV_ABS);
-  if(snapOmegaEnabled && !hasOutsideWater && Math.abs(alpha) < 1e-6){
-    diskOmega = 0;
-  }
   diskOmega += alpha * dt;
 
   // ダンピング：1秒あたり (1 - p%)^dt
@@ -810,17 +792,6 @@ function torqueFromPoints(points, gravAbs, rMax, excludeMode){
     tau += m * rn * Math.sin(d);
   }
   return tau;
-}
-
-function hasSoundOutsideWater(points, gravAbs){
-  for(const p of points){
-    const thAbs = angleForMidiAbs(p.midi);
-    const d = shortestDelta(gravAbs, thAbs);
-    if(Math.abs(d) > Math.PI/2 + 1e-6){
-      return true;
-    }
-  }
-  return false;
 }
 
 /* ===== MIDI File loader / parser ===== */
