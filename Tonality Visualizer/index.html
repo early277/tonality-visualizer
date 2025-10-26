@@ -565,7 +565,8 @@ function drawNotes(points, drawRot){
   if(!inRange.length && !belowRange.length && !aboveRange.length) return;
 
   let low=null, high=null;
-  for(const p of inRange){
+  const allPoints = [...inRange, ...belowRange, ...aboveRange];
+  for(const p of allPoints){
     if(!low || p.f<low.f) low=p;
     if(!high|| p.f>high.f) high=p;
   }
