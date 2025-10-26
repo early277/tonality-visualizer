@@ -547,10 +547,36 @@ function drawNotes(points, drawRot){
   const {rMax, step, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
 
   const filtered = [];
+  function mapFreqWithinDisplayRange(freq){
+    if(freq >= displayMinFreq && freq <= displayMaxFreq){
+      return {freq, shift:0, clamped:false};
+    }
+
+    const logMin = Math.log2(displayMinFreq / freq);
+    const logMax = Math.log2(displayMaxFreq / freq);
+    const nMin = Math.ceil(logMin);
+    const nMax = Math.floor(logMax);
+
+    if(nMin <= nMax){
+      const shift = freq < displayMinFreq ? nMin : nMax;
+      const mapped = freq * Math.pow(2, shift);
+      const clampedFreq = Math.min(Math.max(mapped, displayMinFreq), displayMaxFreq);
+      return {freq: clampedFreq, shift, clamped:true};
+    }
+
+    return {freq: freq < displayMinFreq ? displayMinFreq : displayMaxFreq, shift:0, clamped:true};
+  }
+
   for(const p of points){
-    const f = midiToHz(p.midi);
-    if(f < displayMinFreq || f > displayMaxFreq) continue;
-    filtered.push({midi:p.midi, vel:p.vel, f});
+    const originalFreq = midiToHz(p.midi);
+    const mapped = mapFreqWithinDisplayRange(originalFreq);
+    if(!mapped) continue;
+    filtered.push({
+      midi: p.midi,
+      vel: p.vel,
+      f: mapped.freq,
+      clamped: mapped.clamped
+    });
   }
   if(!filtered.length) return;
 
@@ -602,7 +628,8 @@ function drawNotes(points, drawRot){
     for(let i=0;i<ranked.length;i++){
       const p = ranked[i];
       if((low && p.midi === low.midi) || (high && p.midi === high.midi)) continue;
-      labelOnly(p, String(i+1), 'top');
+      const color = p.clamped ? 'rgba(255,200,120,0.9)' : 'rgba(220,220,220,0.9)';
+      labelOnly(p, String(i+1), 'top', color);
     }
   }
 
@@ -610,7 +637,8 @@ function drawNotes(points, drawRot){
     const theta=angleForMidiDraw(p.midi, drawRot);
     const rAbs=radiusFromFreq(p.f, rMax, step), {x,y}=polarToXY(cx,cy,rAbs,theta);
     const radius=4+12*p.vel, alpha=0.3+0.6*p.vel;
-    ctx.beginPath(); ctx.fillStyle=`rgba(255,255,255,${alpha})`; ctx.arc(x,y,radius,0,2*Math.PI); ctx.fill();
+    const fillColor = p.clamped ? `rgba(120,200,255,${alpha})` : `rgba(255,255,255,${alpha})`;
+    ctx.beginPath(); ctx.fillStyle=fillColor; ctx.arc(x,y,radius,0,2*Math.PI); ctx.fill();
   }
 
   if(filtered.length>=2){
