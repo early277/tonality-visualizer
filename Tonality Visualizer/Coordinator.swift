@@ -11,6 +11,16 @@ extension WebView {
         private var inputPort = MIDIPortRef()
         private var connected = Set<MIDIEndpointRef>()
         private var didLoadDefaultMIDI = false
+        private let allowedBasePath: String
+
+        init(allowedBasePath: String) {
+            if allowedBasePath.isEmpty || allowedBasePath.hasSuffix("/") {
+                self.allowedBasePath = allowedBasePath
+            } else {
+                self.allowedBasePath = allowedBasePath + "/"
+            }
+            super.init()
+        }
 
         func setupMIDI() {
             MIDIClientCreateWithBlock("PolarPitchMIDI" as CFString, &client) { [weak self] _ in
@@ -111,12 +121,37 @@ extension WebView {
                      initiatedByFrame frame: WKFrameInfo,
                      type: WKMediaCaptureType,
                      decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            guard origin.protocol == "file",
+                  let currentURL = webView.url,
+                  isAllowedNavigationURL(currentURL) else {
+                decisionHandler(.deny)
+                return
+            }
             decisionHandler(.grant)
         }
 
         private func topController() -> UIViewController? {
             guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
             return scene.windows.first { $0.isKeyWindow }?.rootViewController
+        }
+
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor navigationAction: WKNavigationAction,
+                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            guard let url = navigationAction.request.url,
+                  isAllowedNavigationURL(url) else {
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
+        private func isAllowedNavigationURL(_ url: URL) -> Bool {
+            if url.scheme == "about" { return true }
+            guard url.isFileURL else { return false }
+            guard !allowedBasePath.isEmpty else { return false }
+            let standardizedPath = url.standardizedFileURL.path
+            return standardizedPath.hasPrefix(allowedBasePath)
         }
     }
 }

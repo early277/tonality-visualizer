@@ -2,7 +2,10 @@ import SwiftUI
 import WebKit
 
 struct WebView: UIViewRepresentable {
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    func makeCoordinator() -> Coordinator {
+        let basePath = Bundle.main.resourceURL?.standardizedFileURL.path ?? ""
+        return Coordinator(allowedBasePath: basePath)
+    }
 
     func makeUIView(context: Context) -> WKWebView {
         let uc = WKUserContentController()
