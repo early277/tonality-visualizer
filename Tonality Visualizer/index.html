@@ -396,33 +396,6 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
-function remapMidiToDisplayRange(midi, minFreq, maxFreq){
-  const originalFreq = midiToHz(midi);
-  if(originalFreq >= minFreq && originalFreq <= maxFreq) return {midi, freq: originalFreq};
-  if(!(minFreq > 0) || !(maxFreq > 0) || minFreq > maxFreq) return null;
-  const minMidi = 69 + 12*Math.log2(minFreq/440);
-  const maxMidi = 69 + 12*Math.log2(maxFreq/440);
-  if(minMidi > maxMidi) return null;
-  const minK = Math.ceil((minMidi - midi)/12);
-  const maxK = Math.floor((maxMidi - midi)/12);
-  if(minK > maxK) return null;
-  let bestMidi = null;
-  let bestFreq = null;
-  let bestDiff = Infinity;
-  for(let k=minK;k<=maxK;k++){
-    const candMidi = midi + 12*k;
-    const candFreq = midiToHz(candMidi);
-    if(candFreq < minFreq || candFreq > maxFreq) continue;
-    const diff = Math.abs(candFreq - originalFreq);
-    if(diff < bestDiff){
-      bestDiff = diff;
-      bestMidi = candMidi;
-      bestFreq = candFreq;
-    }
-  }
-  if(bestMidi == null) return null;
-  return {midi: bestMidi, freq: bestFreq};
-}
 function ringParams(){
   const rMax = Math.min(cv.width,cv.height)/2 - MARGIN;
   const octaves = activeOctaveCount();
@@ -661,19 +634,10 @@ function drawTargetNotes(targets, drawRot){
   const {rMax, step, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
   for(const midi of targets){
     const freq = midiToHz(midi);
-    let drawMidi = midi;
-    let drawFreq = freq;
-    let color = 'rgba(100,255,120,0.95)';
-    if(freq < displayMinFreq || freq > displayMaxFreq){
-      const remapped = remapMidiToDisplayRange(midi, displayMinFreq, displayMaxFreq);
-      if(!remapped) continue;
-      drawMidi = remapped.midi;
-      drawFreq = remapped.freq;
-      color = 'rgba(255,200,120,0.95)';
-    }
-    const th=angleForMidiDraw(drawMidi, drawRot), r=radiusFromFreq(drawFreq,rMax,step), {x,y}=polarToXY(cx,cy,r,th);
-    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
+    if(freq < displayMinFreq || freq > displayMaxFreq) continue;
+    const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(freq,rMax,step), {x,y}=polarToXY(cx,cy,r,th);
+    ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
+    ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText('TARGET', x, y+22*devicePixelRatio);
   }
 }
