@@ -12,6 +12,7 @@ extension WebView {
         private var connected = Set<MIDIEndpointRef>()
         private var didLoadDefaultMIDI = false
         private let allowedBasePath: String
+        private var securityScopedURLs: [URL] = []
 
         init(allowedBasePath: String) {
             if allowedBasePath.isEmpty || allowedBasePath.hasSuffix("/") {
@@ -20,6 +21,13 @@ extension WebView {
                 self.allowedBasePath = allowedBasePath + "/"
             }
             super.init()
+        }
+
+        deinit {
+            for url in securityScopedURLs {
+                url.stopAccessingSecurityScopedResource()
+            }
+            securityScopedURLs.removeAll()
         }
 
         func setupMIDI() {
@@ -81,13 +89,15 @@ extension WebView {
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             
             // 以前のアクセスを解放
-            for u in securityScopedURLs { u.stopAccessingSecurityScopedResource() }
+            for url in securityScopedURLs {
+                url.stopAccessingSecurityScopedResource()
+            }
             securityScopedURLs.removeAll()
 
             // 新規URLに対してアクセス開始（スコープ付与）
-            for u in urls {
-                if u.startAccessingSecurityScopedResource() {
-                    securityScopedURLs.append(u)
+            for url in urls {
+                if url.startAccessingSecurityScopedResource() {
+                    securityScopedURLs.append(url)
                 }
             }
 
@@ -157,6 +167,4 @@ extension WebView {
 }
 
 private var WebViewAssocKey: UInt8 = 0
-// 取得中のセキュリティスコープ付きURLを保持
-private var securityScopedURLs: [URL] = []
 
