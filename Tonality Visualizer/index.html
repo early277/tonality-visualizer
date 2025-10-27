@@ -397,7 +397,12 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
 function ringParams(){
-  const rMax = Math.min(cv.width,cv.height)/2 - MARGIN;
+  const half = Math.max(1, Math.min(cv.width, cv.height) / 2);
+  const safeHalf = Math.max(1, half - 4);
+  let rMax = half - MARGIN;
+  if(!Number.isFinite(rMax)) rMax = safeHalf;
+  if(rMax < 1) rMax = safeHalf;
+  rMax = Math.max(1, Math.min(rMax, safeHalf));
   const octaves = activeOctaveCount();
   const minRadius = (highCutOct > 0) ? rMax * 0.1 : 0;
   const span = Math.max(0, rMax - minRadius);
