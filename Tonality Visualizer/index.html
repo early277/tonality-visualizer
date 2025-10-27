@@ -180,6 +180,12 @@
 <canvas id="cv"></canvas>
 
 <script>
+/* ===== UI scaling ===== */
+const isIPhone = /iPhone/i.test(navigator.userAgent);
+if (isIPhone) {
+  document.documentElement.style.setProperty('--ui-scale', '0.75');
+}
+
 /* ===== Canvas ===== */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
