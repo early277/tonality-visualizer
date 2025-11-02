@@ -32,6 +32,8 @@
     </select>
   </label>
 
+  <button id="resetSettings" type="button">初期設定に戻す</button>
+
   <!-- anchor: 水面固定 or ディスク固定 -->
   <label id="anchorWrap" data-lbl="anchor">
     <select id="anchor">
@@ -214,6 +216,7 @@ const midiDev = document.getElementById('midiDev');
 const allWrap = document.getElementById('allWrap');
 const midiAll = document.getElementById('midiAll');
 const liveMon = document.getElementById('liveMon');
+const resetBtn = document.getElementById('resetSettings');
 
 const excludeSel = document.getElementById('exclude');
 const uiopSlider = document.getElementById('uiop'); const uiopVal = document.getElementById('uiopVal');
@@ -263,7 +266,8 @@ const I18N = {
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
-    trainStart:"start / restart"
+    trainStart:"start / restart",
+    resetDefaults:"reset settings"
   },
   ja:{
     language:"言語", device:"デバイス", allInputs:"全入力",
@@ -281,10 +285,12 @@ const I18N = {
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
-    trainStart:"開始/リスタート"
+    trainStart:"開始/リスタート",
+    resetDefaults:"初期設定に戻す"
   }
 };
 const SETTINGS_KEY = 'ppm:v6';
+let DEFAULT_SETTINGS = null;
 
 let uiScale = 0.95;
 let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
@@ -308,6 +314,7 @@ function applyI18N(){
   fileOp.querySelector('option[value="play"]').textContent = t('play');
   fileOp.querySelector('option[value="train"]').textContent = t('train');
   btnStartTrain.textContent = t('trainStart');
+  if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
   updateCutDisplays();
   document.getElementById('lang').value = lang;
@@ -320,8 +327,8 @@ document.getElementById('lang').addEventListener('change', e=>{
   applyI18N(); saveSettings();
 });
 
-function saveSettings(){
-  const s = {
+function collectSettingsFromUI(){
+  return {
     lang, uiScale,
     anchor: anchorSel.value, midiAll: midiAll.checked, liveMon: liveMon.checked,
     uiop: uiopSlider.value, mass: massSlider.value,
@@ -332,49 +339,115 @@ function saveSettings(){
     exclude: excludeSel.value,
     lowCut: lowCutOct,
     highCut: highCutOct,
-    omegaMaxExp: omegaMaxSlider.value,  // log10(ωmax)
-    dampPct: dampSlider.value,          // 0〜99
+    omegaMaxExp: omegaMaxSlider.value,
+    dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
     uiHidden: !uiVisible
   };
-  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }catch{}
 }
-function loadSettings(){
-  try{
-    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-    if(s.lang) lang = s.lang;
-    if(s.uiScale){ uiScale = s.uiScale; }
-    if(s.anchor){ anchorSel.value = s.anchor; }
-    if(s.midiAll!=null){ midiAll.checked = !!s.midiAll; }
-    if(s.liveMon!=null){ liveMon.checked = !!s.liveMon; }
-    if(s.uiop){ uiopSlider.value = s.uiop; applyUIOpacity(); }
-    if(s.mass){ massSlider.value = s.mass; updateMass(); }
-    if(s.lineA){ lineASlider.value = s.lineA; lineASlider.oninput(); }
-    if(s.waterA){ waterASlider.value = s.waterA; waterASlider.oninput(); }
-    if(s.movNumA){ movNumASlider.value = s.movNumA; movNumASlider.oninput(); }
-    if(s.movNumSize){ movNumSizeSlider.value = s.movNumSize; movNumSizeSlider.oninput(); }
-    if(s.labelSize){ labelSizeSlider.value = s.labelSize; labelSizeSlider.oninput(); }
-    if(s.labelBG!=null){ labelBGSlider.value = s.labelBG; labelBGSlider.oninput(); }
-    if(s.labelAlpha!=null){ labelAlphaSlider.value = s.labelAlpha; labelAlphaSlider.oninput(); }
-    if(s.exclude){ excludeSel.value = s.exclude; }
-    if(s.lowCut!=null){ applyLowCut(parseInt(s.lowCut,10) || 0, false); }
-    if(s.highCut!=null){ applyHighCut(parseInt(s.highCut,10) || 0, false); }
-    if(s.omegaMaxExp!=null){ omegaMaxSlider.value = s.omegaMaxExp; }
-    if(s.dampPct!=null){
-      dampSlider.value = s.dampPct;
-    }else if(s.dampExp!=null){
-      const exp = parseFloat(s.dampExp);
-      if(!Number.isNaN(exp)){
-        const q = Math.min(99, Math.max(0.001, Math.pow(10, exp)));
-        const p = 100 - q;
-        dampSlider.value = Math.min(99, Math.max(0, p));
-      }
+
+function saveSettings(){
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettingsFromUI())); }catch{}
+}
+function applySettings(settings, {force = false} = {}){
+  const s = (settings && typeof settings === 'object') ? settings : {};
+  const has = key => force ? (key in s) : (s[key] != null);
+
+  if(has('lang')){
+    lang = s.lang === 'ja' ? 'ja' : 'en';
+  }
+  if(has('uiScale')){
+    const parsed = parseFloat(s.uiScale);
+    if(!Number.isNaN(parsed)) uiScale = parsed;
+  }
+  if(has('anchor') && s.anchor){
+    anchorSel.value = s.anchor;
+  }
+  if(has('midiAll')){
+    midiAll.checked = !!s.midiAll;
+  }
+  if(has('liveMon')){
+    liveMon.checked = !!s.liveMon;
+  }
+  if(has('uiop')){
+    uiopSlider.value = s.uiop;
+    applyUIOpacity();
+  }
+  if(has('mass')){
+    massSlider.value = s.mass;
+    updateMass();
+  }
+  if(has('lineA')){
+    lineASlider.value = s.lineA;
+    lineASlider.oninput();
+  }
+  if(has('waterA')){
+    waterASlider.value = s.waterA;
+    waterASlider.oninput();
+  }
+  if(has('movNumA')){
+    movNumASlider.value = s.movNumA;
+    movNumASlider.oninput();
+  }
+  if(has('movNumSize')){
+    movNumSizeSlider.value = s.movNumSize;
+    movNumSizeSlider.oninput();
+  }
+  if(has('labelSize')){
+    labelSizeSlider.value = s.labelSize;
+    labelSizeSlider.oninput();
+  }
+  if(has('labelBG')){
+    labelBGSlider.value = s.labelBG;
+    labelBGSlider.oninput();
+  }
+  if(has('labelAlpha')){
+    labelAlphaSlider.value = s.labelAlpha;
+    labelAlphaSlider.oninput();
+  }
+  if(has('exclude')){
+    excludeSel.value = s.exclude;
+  }
+  if(has('lowCut')){
+    const value = parseInt(s.lowCut,10);
+    applyLowCut(Number.isNaN(value) ? 0 : value, false);
+  }
+  if(has('highCut')){
+    const value = parseInt(s.highCut,10);
+    applyHighCut(Number.isNaN(value) ? 0 : value, false);
+  }
+  if(has('omegaMaxExp')){
+    omegaMaxSlider.value = s.omegaMaxExp;
+  }
+  if(has('dampPct')){
+    dampSlider.value = s.dampPct;
+  }else if(!force && s.dampExp!=null){
+    const exp = parseFloat(s.dampExp);
+    if(!Number.isNaN(exp)){
+      const q = Math.min(99, Math.max(0.001, Math.pow(10, exp)));
+      const p = 100 - q;
+      dampSlider.value = Math.min(99, Math.max(0, p));
     }
-    if(s.snapZeroAlpha!=null){ snapAlphaCheckbox.checked = !!s.snapZeroAlpha; }
-    if(s.fileOp){ fileOp.value = s.fileOp; }
-    if(s.uiHidden){ uiVisible = false; updateUIVisibility(); }
+  }
+  if(has('snapZeroAlpha')){
+    snapAlphaCheckbox.checked = !!s.snapZeroAlpha;
+  }
+  if(has('fileOp')){
+    fileOp.value = s.fileOp;
+  }
+  if(has('uiHidden')){
+    uiVisible = !s.uiHidden;
+    updateUIVisibility();
+  }
+}
+
+function loadSettings(){
+  let stored = {};
+  try{
+    stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {};
   }catch{}
+  applySettings(stored);
   applyUIScale();
   applyI18N();
   snapZeroAlpha = snapAlphaCheckbox.checked;
@@ -550,6 +623,21 @@ highCutSlider.addEventListener('input', ()=>{
   const value = parseInt(highCutSlider.value,10);
   applyHighCut(Number.isNaN(value) ? 0 : value);
 });
+
+DEFAULT_SETTINGS = collectSettingsFromUI();
+if(resetBtn){
+  resetBtn.addEventListener('click', ()=>{
+    const defaults = DEFAULT_SETTINGS || collectSettingsFromUI();
+    applySettings(defaults, {force:true});
+    applyUIScale();
+    applyI18N();
+    snapZeroAlpha = snapAlphaCheckbox.checked;
+    updateDampFromSlider();
+    updateFileOpUI();
+    saveSettings();
+    connectMIDIAccordingToUI();
+  });
+}
 
 /* ===== Note state ===== */
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
