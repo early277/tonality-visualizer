@@ -645,7 +645,9 @@ DEFAULT_SETTINGS = collectSettingsFromUI();
 if(resetBtn){
   resetBtn.addEventListener('click', ()=>{
     const defaults = DEFAULT_SETTINGS || collectSettingsFromUI();
+    const currentLang = lang;
     applySettings(defaults, {force:true});
+    lang = currentLang;
     applyUIScale();
     applyI18N();
     snapZeroAlpha = snapAlphaCheckbox.checked;
@@ -1109,7 +1111,6 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
   for(const p of points){
     const thAbs = angleForMidiAbs(p.midi);  // ディスク絶対角
     const freq = midiToHz(p.midi);
-    if(freq < minFreq || freq > maxFreq) continue;
     const r = radiusFromFreq(freq, rMax, step, minRadius);
     const rn = r / rMax;
     const d = shortestDelta(gravAbs, thAbs);
