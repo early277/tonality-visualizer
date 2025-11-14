@@ -130,6 +130,11 @@
     <span id="noteGuideAVal">30%</span>
   </label>
 
+  <label id="noteGuideLabelAWrap" data-lbl="noteGuideLabelAlpha">
+    <input id="noteGuideLabelA" type="range" min="0" max="100" step="1" value="30">
+    <span id="noteGuideLabelAVal">30%</span>
+  </label>
+
   <label id="waterAWrap" data-lbl="waterAlpha">
     <input id="waterA" type="range" min="0" max="100" step="1" value="12">
     <span id="waterAVal">12%</span>
@@ -240,6 +245,7 @@ const highCutSlider = document.getElementById('highCut'); const highCutVal = doc
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
 const straightLineASlider = document.getElementById('straightLineA'); const straightLineAVal = document.getElementById('straightLineAVal');
 const noteGuideASlider = document.getElementById('noteGuideA'); const noteGuideAVal = document.getElementById('noteGuideAVal');
+const noteGuideLabelASlider = document.getElementById('noteGuideLabelA'); const noteGuideLabelAVal = document.getElementById('noteGuideLabelAVal');
 const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
 const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
@@ -269,7 +275,7 @@ const I18N = {
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
-    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
+    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
@@ -288,7 +294,7 @@ const I18N = {
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
-    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
+    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
@@ -346,6 +352,7 @@ function collectSettingsFromUI(){
     uiop: uiopSlider.value, mass: massSlider.value,
     lineA: lineASlider.value, straightLineA: straightLineASlider.value, waterA: waterASlider.value,
     noteGuideA: noteGuideASlider.value,
+    noteGuideLabelA: noteGuideLabelASlider.value,
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
@@ -406,6 +413,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('noteGuideA')){
     noteGuideASlider.value = s.noteGuideA;
     noteGuideASlider.oninput();
+  }
+  if(has('noteGuideLabelA')){
+    noteGuideLabelASlider.value = s.noteGuideLabelA;
+    noteGuideLabelASlider.oninput();
   }
   if(has('movNumA')){
     movNumASlider.value = s.movNumA;
@@ -538,6 +549,13 @@ let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.text
 noteGuideASlider.oninput = ()=>{
   noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100;
   noteGuideAVal.textContent = `${Math.round(noteGuideAlpha*100)}%`;
+  saveSettings();
+};
+
+let noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100; noteGuideLabelAVal.textContent=`${Math.round(noteGuideLabelAlpha*100)}%`;
+noteGuideLabelASlider.oninput = ()=>{
+  noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100;
+  noteGuideLabelAVal.textContent = `${Math.round(noteGuideLabelAlpha*100)}%`;
   saveSettings();
 };
 
@@ -694,40 +712,115 @@ const NOTE_GUIDE_MARKS = [
   {deg: -150, label: '+5'}
 ];
 
-function drawNoteGuides(notePositions, cx, cy){
-  if(!notePositions.length || noteGuideAlpha <= 0) return;
-  const color = 'rgb(0, 230, 120)';
-  const fontPx = Math.round(12 * devicePixelRatio);
-  ctx.save();
-  ctx.globalAlpha = noteGuideAlpha;
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 1.5 * devicePixelRatio;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${fontPx}px system-ui`;
+const NOTE_GUIDE_COLOR_STOPS = [
+  {offset: 0.00, rgb: [128, 128, 128]},  // south (note location) -> gray
+  {offset: 0.25, rgb: [224, 64, 48]},    // west -> red
+  {offset: 0.50, rgb: [255, 255, 255]},  // north -> white
+  {offset: 0.75, rgb: [64, 200, 120]},   // east -> green
+  {offset: 1.00, rgb: [128, 128, 128]}   // wrap back to south
+];
 
-  for(const pos of notePositions){
-    const radius = pos.rAbs;
-    if(!Number.isFinite(radius) || radius <= 0) continue;
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, 2*Math.PI);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
-
-    for(const mark of NOTE_GUIDE_MARKS){
-      const angle = pos.theta - mark.deg * Math.PI / 180;
-      const {x, y} = polarToXY(cx, cy, radius, angle);
-      ctx.fillText(mark.label, x, y);
+function noteGuideColorForOffset(offset){
+  const normalized = ((offset % 1) + 1) % 1;
+  const stops = NOTE_GUIDE_COLOR_STOPS;
+  if(normalized === 0){
+    const [r,g,b] = stops[0].rgb;
+    return `rgb(${r},${g},${b})`;
+  }
+  for(let i=0; i<stops.length-1; i++){
+    const current = stops[i];
+    const next = stops[i+1];
+    if(normalized >= current.offset && normalized <= next.offset){
+      const span = next.offset - current.offset;
+      const t = span === 0 ? 0 : (normalized - current.offset) / span;
+      const r = Math.round(current.rgb[0] + (next.rgb[0] - current.rgb[0]) * t);
+      const g = Math.round(current.rgb[1] + (next.rgb[1] - current.rgb[1]) * t);
+      const b = Math.round(current.rgb[2] + (next.rgb[2] - current.rgb[2]) * t);
+      return `rgb(${r},${g},${b})`;
     }
   }
+  const [r,g,b] = stops[stops.length-1].rgb;
+  return `rgb(${r},${g},${b})`;
+}
 
-  ctx.restore();
+function drawNoteGuides(notePositions, cx, cy){
+  if(!notePositions.length || (noteGuideAlpha <= 0 && noteGuideLabelAlpha <= 0)) return;
+  const fontPx = Math.round(12 * devicePixelRatio);
+
+  if(noteGuideAlpha > 0){
+    ctx.save();
+    ctx.globalAlpha = noteGuideAlpha;
+    const circleLineWidth = 2.5 * devicePixelRatio;
+    const radialLineWidth = 1.8 * devicePixelRatio;
+    const hasConicGradient = typeof ctx.createConicGradient === 'function';
+
+    for(const pos of notePositions){
+      const radius = pos.rAbs;
+      if(!Number.isFinite(radius) || radius <= 0) continue;
+
+      ctx.lineWidth = circleLineWidth;
+      if(hasConicGradient){
+        const gradient = ctx.createConicGradient(-pos.theta, cx, cy);
+        for(const stop of NOTE_GUIDE_COLOR_STOPS){
+          const [r,g,b] = stop.rgb;
+          gradient.addColorStop(stop.offset, `rgb(${r},${g},${b})`);
+        }
+        ctx.strokeStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+        ctx.stroke();
+      }else{
+        const segments = 90;
+        const fullTurn = Math.PI * 2;
+        for(let i=0; i<segments; i++){
+          const startOffset = i / segments;
+          const endOffset = (i + 1) / segments;
+          ctx.strokeStyle = noteGuideColorForOffset(startOffset);
+          ctx.beginPath();
+          ctx.arc(
+            cx,
+            cy,
+            radius,
+            pos.theta - startOffset * fullTurn,
+            pos.theta - endOffset * fullTurn,
+            true
+          );
+          ctx.stroke();
+        }
+      }
+
+      ctx.strokeStyle = noteGuideColorForOffset(0);
+      ctx.lineWidth = radialLineWidth;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  if(noteGuideLabelAlpha > 0){
+    ctx.save();
+    ctx.globalAlpha = noteGuideLabelAlpha;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${fontPx}px system-ui`;
+
+    for(const pos of notePositions){
+      const radius = pos.rAbs;
+      if(!Number.isFinite(radius) || radius <= 0) continue;
+
+      for(const mark of NOTE_GUIDE_MARKS){
+        const angle = pos.theta - mark.deg * Math.PI / 180;
+        const {x, y} = polarToXY(cx, cy, radius, angle);
+        ctx.fillText(mark.label, x, y);
+      }
+    }
+
+    ctx.restore();
+  }
 }
 
 /* ===== Drawing ===== */
