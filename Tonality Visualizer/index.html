@@ -125,6 +125,11 @@
     <span id="straightLineAVal">20%</span>
   </label>
 
+  <label id="noteGuideAWrap" data-lbl="noteGuideAlpha">
+    <input id="noteGuideA" type="range" min="0" max="100" step="1" value="30">
+    <span id="noteGuideAVal">30%</span>
+  </label>
+
   <label id="waterAWrap" data-lbl="waterAlpha">
     <input id="waterA" type="range" min="0" max="100" step="1" value="12">
     <span id="waterAVal">12%</span>
@@ -234,6 +239,7 @@ const lowCutSlider = document.getElementById('lowCut'); const lowCutVal = docume
 const highCutSlider = document.getElementById('highCut'); const highCutVal = document.getElementById('highCutVal');
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
 const straightLineASlider = document.getElementById('straightLineA'); const straightLineAVal = document.getElementById('straightLineAVal');
+const noteGuideASlider = document.getElementById('noteGuideA'); const noteGuideAVal = document.getElementById('noteGuideAVal');
 const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
 const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
@@ -263,7 +269,7 @@ const I18N = {
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
-    lineAlpha:"line α", straightLineAlpha:"straight lines α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
+    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
@@ -282,7 +288,7 @@ const I18N = {
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
-    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
+    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
@@ -339,6 +345,7 @@ function collectSettingsFromUI(){
     anchor: anchorSel.value, midiAll: midiAll.checked, liveMon: liveMon.checked,
     uiop: uiopSlider.value, mass: massSlider.value,
     lineA: lineASlider.value, straightLineA: straightLineASlider.value, waterA: waterASlider.value,
+    noteGuideA: noteGuideASlider.value,
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
@@ -395,6 +402,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('waterA')){
     waterASlider.value = s.waterA;
     waterASlider.oninput();
+  }
+  if(has('noteGuideA')){
+    noteGuideASlider.value = s.noteGuideA;
+    noteGuideASlider.oninput();
   }
   if(has('movNumA')){
     movNumASlider.value = s.movNumA;
@@ -520,6 +531,13 @@ let straightLinkAlpha = parseInt(straightLineASlider.value,10)/100; straightLine
 straightLineASlider.oninput = ()=>{
   straightLinkAlpha = parseInt(straightLineASlider.value,10)/100;
   straightLineAVal.textContent = `${Math.round(straightLinkAlpha*100)}%`;
+  saveSettings();
+};
+
+let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.textContent=`${Math.round(noteGuideAlpha*100)}%`;
+noteGuideASlider.oninput = ()=>{
+  noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100;
+  noteGuideAVal.textContent = `${Math.round(noteGuideAlpha*100)}%`;
   saveSettings();
 };
 
@@ -662,6 +680,56 @@ if(resetBtn){
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
 const fileNotes = new Map();     // 再生中のMIDIファイル由来
 
+const NOTE_GUIDE_MARKS = [
+  {deg: 30, label: '-1'},
+  {deg: 60, label: '-2'},
+  {deg: 90, label: '-3'},
+  {deg: 120, label: '-4'},
+  {deg: 150, label: '-5'},
+  {deg: 180, label: 'T'},
+  {deg: -30, label: '+1'},
+  {deg: -60, label: '+2'},
+  {deg: -90, label: '+3'},
+  {deg: -120, label: '+4'},
+  {deg: -150, label: '+5'}
+];
+
+function drawNoteGuides(notePositions, cx, cy){
+  if(!notePositions.length || noteGuideAlpha <= 0) return;
+  const color = 'rgb(0, 230, 120)';
+  const fontPx = Math.round(12 * devicePixelRatio);
+  ctx.save();
+  ctx.globalAlpha = noteGuideAlpha;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5 * devicePixelRatio;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${fontPx}px system-ui`;
+
+  for(const pos of notePositions){
+    const radius = pos.rAbs;
+    if(!Number.isFinite(radius) || radius <= 0) continue;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+
+    for(const mark of NOTE_GUIDE_MARKS){
+      const angle = pos.theta - mark.deg * Math.PI / 180;
+      const {x, y} = polarToXY(cx, cy, radius, angle);
+      ctx.fillText(mark.label, x, y);
+    }
+  }
+
+  ctx.restore();
+}
+
 /* ===== Drawing ===== */
 function drawNotes(points, drawRot){
   if(!points.length) return;
@@ -743,6 +811,7 @@ function drawNotes(points, drawRot){
   };
 
   const notePositions = inRange.map(toPosition);
+  if(notePositions.length) drawNoteGuides(notePositions, cx, cy);
   const straightLinePositions = allPoints.map(toPosition);
 
   if(straightLinePositions.length>=2 && straightLinkAlpha>0){
