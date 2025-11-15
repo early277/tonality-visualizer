@@ -776,7 +776,7 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
     ctx.save();
     ctx.globalAlpha = noteGuideAlpha;
     const radialLineWidth = 1.8 * devicePixelRatio;
-    const fullTurn = - Math.PI * 2;
+    const fullTurn = Math.PI * 2;
     const radialLineColor = noteGuideColorForOffset(0.5);
     const sortedByRadius = [...notePositions]
       .filter(pos=>Number.isFinite(pos.rAbs) && pos.rAbs > 0)
