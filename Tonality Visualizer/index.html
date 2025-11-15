@@ -198,18 +198,22 @@
 
 <script>
 /* ===== UI scaling ===== */
+// iPhoneでUIが縮みすぎないようにスケール調整する
 const isIPhone = /iPhone/i.test(navigator.userAgent);
 if (isIPhone) {
   document.documentElement.style.setProperty('--ui-scale', '0.75');
 }
 
 /* ===== Canvas ===== */
+// メインキャンバスの初期化とリサイズ処理
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
+// ウィンドウの大きさに応じてキャンバスをリサイズし、Retina解像度にも対応
 function resize(){ cv.width = innerWidth*devicePixelRatio; cv.height = innerHeight*devicePixelRatio; }
 addEventListener('resize', resize); resize();
 
 /* ===== Music constants ===== */
+// 周波数と描画範囲に関する定数群
 const F_LOW = 27.5, F_HIGH = 4186.009;
 const OCTAVES = Math.ceil(Math.log2(F_HIGH/F_LOW));
 const MARGIN = 80;                               // 余白を広めに
@@ -217,12 +221,14 @@ const ANG0 = Math.PI/2;                          // Cを上（0°相当）
 const GRAV_ABS = ANG0;                           // 重力方向=0°固定
 const EXCLUDE_PAD_RAD = 0.1 * Math.PI / 180;       // 無効領域+0.1°
 const LABEL_ENH = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"};
+// 完全5度圏の配置を事前計算しておく
 const FIFTH_ORDER_PCS = (()=>{ let a=[],pc=0; for(let k=0;k<12;k++){ a.push(pc); pc=(pc+7)%12; } return a; })();
 const FIFTH_INDEX = (()=>{ const m=Array(12).fill(0); FIFTH_ORDER_PCS.forEach((pc,i)=>m[pc]=i); return m; })();
 const FIFTH_LABELS = FIFTH_ORDER_PCS.map(pc=>LABEL_ENH[pc]);
 const NOTE_BG = {0:[191,28,28],1:[191,109,28],2:[191,191,28],3:[109,191,28],4:[28,191,28],5:[28,191,109],6:[28,191,191],7:[28,109,191],8:[28,28,191],9:[109,28,191],10:[191,28,191],11:[191,28,109]};
 
 /* ===== UI refs ===== */
+// UI要素の参照をまとめて保持
 const uiPanel = document.getElementById('ui');
 const uiToggle = document.getElementById('uiToggle');
 const anchorSel = document.getElementById('anchor');
@@ -267,6 +273,7 @@ const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
 
 /* ===== i18n + persist ===== */
+// 言語切り替え用の辞書データ
 const I18N = {
   en:{
     language:"language", device:"device", allInputs:"All inputs",
@@ -308,11 +315,14 @@ const I18N = {
   }
 };
 const SETTINGS_KEY = 'ppm:v6';
+// 初回ロード時のデフォルト設定をキャッシュ
 let DEFAULT_SETTINGS = null;
 
+// UIスケールと初期言語
 let uiScale = 0.95;
 let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
+// ラベル要素に翻訳済みテキストを設定
 function setLabelText(labelEl, key){
   if(!labelEl) return;
   if(labelEl.firstChild && labelEl.firstChild.nodeType===Node.TEXT_NODE){
@@ -321,9 +331,12 @@ function setLabelText(labelEl, key){
     labelEl.prepend(document.createTextNode(t(key)+' '));
   }
 }
+// HTML全体のCSSカスタムプロパティに反映してUIのサイズを切り替える
 function applyUIScale(){ document.documentElement.style.setProperty('--ui-scale', uiScale); }
+// ラベルやステータスの文言を現在の言語設定で書き換える
 function applyI18N(){
   document.documentElement.lang = lang;
+  // data-lbl属性を持つすべての要素に翻訳済みの文字列を注入
   document.querySelectorAll('[data-lbl]').forEach(el=> setLabelText(el, el.getAttribute('data-lbl')));
   anchorSel.querySelector('option[value="water"]').textContent = t('waterFixed');
   anchorSel.querySelector('option[value="disk"]').textContent  = t('diskFixed');
@@ -340,12 +353,15 @@ function applyI18N(){
   midiStat.textContent = t('midiNotInit');
   midiLast.textContent = t('last') + ' –';
 }
+// 言語選択ドロップダウンの変更ハンドラ
 document.getElementById('lang').addEventListener('change', e=>{
   lang = e.target.value==='ja' ? 'ja' : 'en';
   applyI18N(); saveSettings();
 });
 
+// UIの状態をオブジェクトにまとめて保存用に返す
 function collectSettingsFromUI(){
+  // 保存対象のプロパティを列挙
   return {
     lang, uiScale,
     anchor: anchorSel.value, midiAll: midiAll.checked, liveMon: liveMon.checked,
@@ -367,20 +383,26 @@ function collectSettingsFromUI(){
   };
 }
 
+// localStorageへ設定を保存（例外は握りつぶす）
 function saveSettings(){
   try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettingsFromUI())); }catch{}
 }
+// 保存された設定をUIに反映する
 function applySettings(settings, {force = false} = {}){
   const s = (settings && typeof settings === 'object') ? settings : {};
   const has = key => force ? (key in s) : (s[key] != null);
 
+  // 言語関連の復元
   if(has('lang')){
     lang = s.lang === 'ja' ? 'ja' : 'en';
   }
+  // UIスケール関連の復元
   if(has('uiScale')){
     const parsed = parseFloat(s.uiScale);
     if(!Number.isNaN(parsed)) uiScale = parsed;
   }
+  // ここから下は順番依存のため見通しを良くするため小分けにコメントを挿入
+  // アンカーやMIDI関連の復元
   if(has('anchor') && s.anchor){
     anchorSel.value = s.anchor;
   }
@@ -390,6 +412,7 @@ function applySettings(settings, {force = false} = {}){
   if(has('liveMon')){
     liveMon.checked = !!s.liveMon;
   }
+  // 視覚設定の値を順番に反映
   if(has('uiop')){
     uiopSlider.value = s.uiop;
     applyUIOpacity();
@@ -442,10 +465,12 @@ function applySettings(settings, {force = false} = {}){
     excludeSel.value = s.exclude;
   }
   if(has('lowCut')){
+    // 入力値は整数として扱い、NaNなら0に戻す
     const value = parseInt(s.lowCut,10);
     applyLowCut(Number.isNaN(value) ? 0 : value, false);
   }
   if(has('highCut')){
+    // 高域の制限も同様に安全な範囲へクランプ
     const value = parseInt(s.highCut,10);
     applyHighCut(Number.isNaN(value) ? 0 : value, false);
   }
@@ -477,6 +502,7 @@ function applySettings(settings, {force = false} = {}){
 function loadSettings(){
   let stored = {};
   try{
+    // localStorageから設定文字列を取得し、壊れていてもアプリが落ちないようにする
     stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {};
   }catch{}
   applySettings(stored);
@@ -490,18 +516,29 @@ function loadSettings(){
 /* ===== UI show/hide ===== */
 let uiVisible = true;
 function updateUIVisibility(){
+  // displayプロパティで丸ごとパネルを非表示にする
   uiPanel.style.display = uiVisible ? '' : 'none';
   uiToggle.setAttribute('aria-pressed', String(!uiVisible));
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
 }
+// ボタン操作時は状態をトグルして即座に保存
 uiToggle.onclick = ()=>{ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); };
+// キーボードショートカット（Uキー）での開閉をサポート
 addEventListener('keydown', e=>{ if(e.key==='u' || e.key==='U'){ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); }});
 
 /* ファイル操作UIの表示切替（再生 or トレーナー） */
 function updateFileOpUI(){
   const isPlay = (fileOp.value === 'play');
+  // 再生モードでは再生ボタン群、トレーナーモードでは練習用ボタン群だけを見せる
   document.getElementById('playBtns').style.display  = isPlay ? '' : 'none';
   document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
+  if(isPlay){
+    // 再生モード時は最新の進行状況を再生ステータスで置き換える
+    info.textContent = 'file playback';
+  }else{
+    // トレーナーモードに切り替わると進捗インジケータを初期化
+    trainerStat.textContent = 'step: –';
+  }
 }
 fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 
@@ -532,12 +569,14 @@ function radiusFromFreq(f, rMax, step, minRadius = 0){
 }
 function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.sin(th) }; }
 function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
+// ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
 
 /* 表示系 */
 let linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent=`${Math.round(linkAlpha*100)}%`;
 lineASlider.oninput = ()=>{ linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent=`${Math.round(linkAlpha*100)}%`; saveSettings(); };
 
+// 直線表示の不透明度をスライダーで制御
 let straightLinkAlpha = parseInt(straightLineASlider.value,10)/100; straightLineAVal.textContent=`${Math.round(straightLinkAlpha*100)}%`;
 straightLineASlider.oninput = ()=>{
   straightLinkAlpha = parseInt(straightLineASlider.value,10)/100;
@@ -545,6 +584,7 @@ straightLineASlider.oninput = ()=>{
   saveSettings();
 };
 
+// ガイド線の可視性調整
 let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.textContent=`${Math.round(noteGuideAlpha*100)}%`;
 noteGuideASlider.oninput = ()=>{
   noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100;
@@ -552,6 +592,7 @@ noteGuideASlider.oninput = ()=>{
   saveSettings();
 };
 
+// ガイド番号の不透明度
 let noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100; noteGuideLabelAVal.textContent=`${Math.round(noteGuideLabelAlpha*100)}%`;
 noteGuideLabelASlider.oninput = ()=>{
   noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100;
@@ -559,21 +600,27 @@ noteGuideLabelASlider.oninput = ()=>{
   saveSettings();
 };
 
+// 水面表現の濃さを調整
 let waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent=`${Math.round(waterAlpha*100)}%`;
 waterASlider.oninput = ()=>{ waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent=`${Math.round(waterAlpha*100)}%`; saveSettings(); };
 
+// 移動ド番号の表示強度
 let movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent=`${Math.round(movNumAlpha*100)}%`;
 movNumASlider.oninput = ()=>{ movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent=`${Math.round(movNumAlpha*100)}%`; saveSettings(); };
 
+// 移動ド番号の文字サイズ
 let movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`;
 movNumSizeSlider.oninput = ()=>{ movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`; saveSettings(); };
 
+// ラベル文字サイズ
 let labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`;
 labelSizeSlider.oninput = ()=>{ labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`; saveSettings(); };
 
+// ラベル背景の透明度
 let labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`;
 labelBGSlider.oninput = ()=>{ labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent=`${Math.round(labelBgAlpha*100)}%`; saveSettings(); };
 
+// ラベルテキストの透明度
 let labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100; labelAlphaVal.textContent=`${Math.round(labelTextAlpha*100)}%`;
 labelAlphaSlider.oninput = ()=>{
   labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100;
@@ -602,6 +649,7 @@ omegaMaxSlider.oninput = ()=>{
   omegaMaxExp = parseFloat(omegaMaxSlider.value);
   omegaMax = Math.pow(10, omegaMaxExp);
   omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
+  // UI操作に追従して設定を永続化
   saveSettings();
 };
 
@@ -615,14 +663,18 @@ function updateDampFromSlider(){
   dampVal.textContent = `${fmtPct(p)}%/s`;
 }
 updateDampFromSlider();
+// スライダーを動かすたびに内部状態と保存処理を更新
 dampSlider.oninput = ()=>{ updateDampFromSlider(); saveSettings(); };
 
 let snapZeroAlpha = snapAlphaCheckbox.checked;
+// α=0時に角速度を強制的にゼロにするかどうかを反映
 snapAlphaCheckbox.onchange = ()=>{ snapZeroAlpha = snapAlphaCheckbox.checked; saveSettings(); };
 
 /* UI opacity / mass */
+// UI全体の透明度をスライダーから算出し、最低値を0.1までに制限
 function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent=`${Math.round(a*100)}%`; }
 applyUIOpacity(); uiopSlider.oninput = ()=>{ applyUIOpacity(); saveSettings(); };
+// 対数スライダーで受け取った値を指数化してディスク質量へ変換
 function updateMass(){ const lg=parseFloat(massSlider.value); diskMass=Math.pow(10,lg); massVal.textContent=`M=${diskMass.toFixed(2)}`; }
 updateMass(); massSlider.oninput = ()=>{ updateMass(); saveSettings(); };
 
@@ -647,6 +699,7 @@ function clampHighCut(value){
 }
 function applyLowCut(value, shouldSave = true){
   const clamped = clampLowCut(Number.isNaN(value) ? 0 : value);
+  // スライダー表示と内部状態をクランプ後の値に揃える
   if(String(clamped) !== lowCutSlider.value) lowCutSlider.value = String(clamped);
   if(lowCutOct !== clamped){
     lowCutOct = clamped;
@@ -658,6 +711,7 @@ function applyLowCut(value, shouldSave = true){
 }
 function applyHighCut(value, shouldSave = true){
   const clamped = clampHighCut(Number.isNaN(value) ? 0 : value);
+  // 無駄な保存処理を避けるため、変化があったときだけ保存
   if(String(clamped) !== highCutSlider.value) highCutSlider.value = String(clamped);
   if(highCutOct !== clamped){
     highCutOct = clamped;
@@ -680,8 +734,10 @@ highCutSlider.addEventListener('input', ()=>{
 DEFAULT_SETTINGS = collectSettingsFromUI();
 if(resetBtn){
   resetBtn.addEventListener('click', ()=>{
+    // ページ初期化直後の設定スナップショットを基準値として利用
     const defaults = DEFAULT_SETTINGS || collectSettingsFromUI();
     const currentLang = lang;
+    // 言語選択だけは保持したまま他のパラメータをリセット
     applySettings(defaults, {force:true});
     lang = currentLang;
     applyUIScale();
@@ -858,6 +914,7 @@ function drawNotes(points, drawRot){
   const inRange = [];
   const belowRange = [];
   const aboveRange = [];
+  // 画面内に入る音・低すぎる音・高すぎる音を分類してエッジケースの描画を安定させる
   for(const p of points){
     const f = midiToHz(p.midi);
     if(f < displayMinFreq){
@@ -877,6 +934,7 @@ function drawNotes(points, drawRot){
     if(!high|| p.f>high.f) high=p;
   }
   function ring(p, color, label, position = 'top'){
+    // MIDIノートを極座標に変換して円形のマーカーとラベルを描く
     const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
     const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
     ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
@@ -1008,6 +1066,7 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
   const r = rMax * 0.78;
   const fontPx = Math.round(Math.max(12, movNumSizePx) * devicePixelRatio);
   const pf=ctx.font, pa=ctx.globalAlpha, ps=ctx.fillStyle, pal=ctx.textAlign, pb=ctx.textBaseline;
+  // 現在のフォント設定を保存しつつ移動ドの番号を書き込む
   ctx.font = `${fontPx}px system-ui`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.globalAlpha = movNumAlpha;
@@ -1028,6 +1087,7 @@ function draw(){
   const w=cv.width, h=cv.height, cx=w/2, cy=h/2;
   const {rMax, step, octaves, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
   const now = performance.now()/1000;
+  // 前フレームとの経過時間を計算し、極端な変動はクランプ
   const dt = prevT? Math.max(1/240, Math.min(0.25, now-prevT)) : 1/60;
   prevT = now;
 
@@ -1042,9 +1102,11 @@ function draw(){
     : [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}))];
 
   const hasPhysInput = physicsPoints.length>0;
+  // 物理計算に使えるノートがあるかどうかを示すフラグ
 
   // 物理
   const tau = hasPhysInput ? torqueFromPoints(physicsPoints, GRAV_ABS, rMax, step, minRadius, displayMinFreq, displayMaxFreq, excludeMode) : 0;
+  // トルクを質量で割って角加速度を求める
   const alpha = tau / Math.max(1e-6, diskMass);
   if (snapZeroAlpha && Math.abs(alpha) < 1e-6){
     diskOmega = 0;
@@ -1072,6 +1134,7 @@ function draw(){
 
   // 放射線
   ctx.save(); ctx.translate(cx,cy);
+  // 完全5度圏に基づく放射線を一度に描き、A音だけを強調表示
   const highlightAIndex = FIFTH_INDEX[9];
   for(let k2=0;k2<12;k2++){
     const ang = baseAngleFromFifthIndex(k2) - drawRot;
@@ -1091,6 +1154,7 @@ function draw(){
     const rRaw = rMax - i*step;
     const radius = Math.max(minRadius, Math.min(rMax, rRaw));
     if(radius <= 0) continue; // iOS Safari throws if radius is 0 or negative
+    // 半径が負にならないように安全策を入れつつ同心円を描く
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, 2*Math.PI);
     ctx.stroke();
@@ -1098,6 +1162,7 @@ function draw(){
   ctx.lineWidth = 1;
 
   if(440 >= displayMinFreq && 440 <= displayMaxFreq){
+    // 標準ピッチA4=440Hzの位置を特別なリングで示す
     const r440 = radiusFromFreq(440, rMax, step);
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(00,100,100,0.9)';
@@ -1165,9 +1230,11 @@ requestAnimationFrame(draw);
 
 /* ===== Audio ctx & synth ===== */
 let audioCtx=null;
+// 再利用できるAudioContextを返し、存在しない場合は新規作成
 function ensureCtx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000}); return audioCtx; }
 class PolySynth{
   constructor(ctx){ this.ctx=ctx; this.master=ctx.createGain(); this.master.gain.value=0.9; this.master.connect(ctx.destination); this.voices=new Map(); }
+  // ノートオン時に2つのオシレータとローパスフィルタを構成し、ADSRでゲインを制御
   noteOn(midi, vel=1, when=null){
     const t = (when!=null)? when : this.ctx.currentTime;
     if(this.voices.has(midi)) this.noteOff(midi, t);
@@ -1183,6 +1250,7 @@ class PolySynth{
     o1.start(t); o2.start(t);
     this.voices.set(midi,{o1,o2,g,flt,R});
   }
+  // ノートオフ時はターゲット減衰を設定し、一定時間後にノードを破棄
   noteOff(midi, when=null){
     const v=this.voices.get(midi); if(!v) return;
     const t=(when!=null)? when : this.ctx.currentTime, R=v.R;
@@ -1210,6 +1278,7 @@ function midiMessageHandler(ev){
   const d=ev.data;
   if(!d || d.length<3) return;
   const st=d[0]&0xf0, note=d[1], vel=d[2];
+  // ノートオン/ノートオフを解釈して可視化用のマップに反映
   if(st===0x90){
     if(vel>0){
       liveNotes.set(note, vel/127);
@@ -1233,6 +1302,7 @@ async function setupMIDIInputs(){
   if(!isSecureContext && !window.__NATIVE_APP__){ updateMIDIStat(t('midiNeedSecure')); return; }
   if(!('requestMIDIAccess' in navigator)){ updateMIDIStat(t('midiUnsupported')); return; }
   try{
+    // Web MIDI APIから利用可能なデバイス一覧を取得
     midiAccess = await navigator.requestMIDIAccess({sysex:false, software:true});
     midiAccess.onstatechange = refreshMIDIInputs;
     await refreshMIDIInputs();
@@ -1245,6 +1315,7 @@ async function refreshMIDIInputs(){
   if(!midiAccess) return;
   midiDev.innerHTML='';
   const inputs = Array.from(midiAccess.inputs.values());
+  // 利用可能なMIDI入力をプルダウンに並べる
   for(const inp of inputs){
     const opt=document.createElement('option'); opt.value=inp.id; opt.textContent=inp.name||inp.id; midiDev.appendChild(opt);
   }
@@ -1266,6 +1337,7 @@ async function connectMIDIAccordingToUI(){
   if(!midiAccess) return;
   detachAllInputs();
   const inputs = Array.from(midiAccess.inputs.values());
+  // 「全入力」がオンなら全ポートを購読し、そうでなければ選択されたデバイスに限定
   if(midiAll.checked || !midiDev.value){
     for(const inp of inputs) await attachInput(inp);
     updateMIDIStat(`${t('midiAllInputsStat')} (${inputs.length})`);
@@ -1277,14 +1349,17 @@ async function connectMIDIAccordingToUI(){
 }
 midiDev.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
 midiAll.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
+// ライブモニタのON/OFFだけは状態を保存するだけで十分
 liveMon.onchange = ()=>{ saveSettings(); };
 
 /* ===== 自動開始 ===== */
 function autoStart(){
+  // AudioContextとMIDI初期化をアプリ起動時にまとめて実施
   ensureCtx();
   setupMIDIInputs().then(connectMIDIAccordingToUI);
 }
 document.addEventListener('DOMContentLoaded', ()=>{
+  // ページ読み込み完了後にUIやMIDIの初期状態を整える
   loadSettings();
   updateUIVisibility();
   updateFileOpUI();
@@ -1294,6 +1369,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 // iOS: ユーザー操作でAudioContextを復帰
 ['pointerdown','keydown','touchstart'].forEach(ev=>{
+  // iOS Safariは自動再生を禁止するため、初回操作でresumeを試みる
   addEventListener(ev, ()=>{ try{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }catch{} }, {once:true});
 });
 
@@ -1317,6 +1393,7 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
     }
     if (excluded) continue;
 
+    // ベロシティを0〜1に正規化し、半径と角度差からトルク寄与を計算
     const m = Math.max(0, Math.min(1, p.vel));
     tau += m * rn * Math.sin(d);
   }
@@ -1325,12 +1402,15 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
 
 /* ===== MIDI File loader / parser ===== */
 let midiData = null; // {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+// ファイル関連のメッセージを下部UIに表示
 function uiLog(msg){ fileInfo.textContent = msg; }
 
 async function fileToArrayBuffer(file){
   if (file && file.arrayBuffer) {
+    // 新しいブラウザではFile#arrayBufferが直接使える
     try { return await file.arrayBuffer(); } catch(e) { /* fallback */ }
   }
+  // 上記が失敗した場合はFileReaderで読み込むレガシールートを使用
   return await new Promise((resolve, reject)=>{
     const fr = new FileReader();
     fr.onload = ()=> resolve(fr.result);
@@ -1342,6 +1422,7 @@ async function handlePickedFile(file){
   try{
     uiLog(`picked: ${file?.name || '(no name)'}  type:${file?.type || 'unknown'}  size:${file?.size || 0}B`);
     if(!file) throw new Error('no file');
+    // ファイルをArrayBufferへ変換し、MIDIパーサに渡す準備をする
     const ab = await fileToArrayBuffer(file);
     if(!ab) throw new Error('arrayBuffer empty');
 
