@@ -801,8 +801,8 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
         const segment = NOTE_GUIDE_SEGMENTS[i];
         const {rgba, css, startOffset, endOffset} = segment;
         if(rgba.a <= 0) continue;
-        const startAngle = pos.theta + startOffset * fullTurn;
-        const endAngle = pos.theta + endOffset * fullTurn;
+        const startAngle = pos.theta - startOffset * fullTurn;
+        const endAngle = pos.theta - endOffset * fullTurn;
 
         ctx.beginPath();
         ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
