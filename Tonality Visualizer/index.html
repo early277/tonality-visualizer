@@ -712,20 +712,20 @@ const NOTE_GUIDE_MARKS = [
   {deg: -150, label: '+5'}
 ];
 
-const NOTE_GUIDE_COLOR_STOPS = [
-  {offset: 0.00, rgb: [128, 128, 128]},  // south (note location) -> gray
-  {offset: 0.25, rgb: [224, 64, 48]},    // west -> red
-  {offset: 0.50, rgb: [255, 255, 255]},  // north -> white
-  {offset: 0.75, rgb: [64, 200, 120]},   // east -> green
-  {offset: 1.00, rgb: [128, 128, 128]}   // wrap back to south
+const NOTE_GUIDE_BASE_COLORS = [
+  {offset: 0.00, rgba: [255, 255, 255, 0]},  // south -> transparent
+  {offset: 0.25, rgba: [224, 64, 48, 1]},    // west -> red
+  {offset: 0.50, rgba: [0, 0, 0, 1]},        // north -> black
+  {offset: 0.75, rgba: [64, 200, 120, 1]},   // east -> green
+  {offset: 1.00, rgba: [255, 255, 255, 0]}   // wrap back to south
 ];
 
-function noteGuideColorForOffset(offset){
+function interpolateNoteGuideColor(offset){
   const normalized = ((offset % 1) + 1) % 1;
-  const stops = NOTE_GUIDE_COLOR_STOPS;
+  const stops = NOTE_GUIDE_BASE_COLORS;
   if(normalized === 0){
-    const [r,g,b] = stops[0].rgb;
-    return `rgb(${r},${g},${b})`;
+    const [r,g,b,a] = stops[0].rgba;
+    return {r, g, b, a};
   }
   for(let i=0; i<stops.length-1; i++){
     const current = stops[i];
@@ -733,63 +733,87 @@ function noteGuideColorForOffset(offset){
     if(normalized >= current.offset && normalized <= next.offset){
       const span = next.offset - current.offset;
       const t = span === 0 ? 0 : (normalized - current.offset) / span;
-      const r = Math.round(current.rgb[0] + (next.rgb[0] - current.rgb[0]) * t);
-      const g = Math.round(current.rgb[1] + (next.rgb[1] - current.rgb[1]) * t);
-      const b = Math.round(current.rgb[2] + (next.rgb[2] - current.rgb[2]) * t);
-      return `rgb(${r},${g},${b})`;
+      const r = Math.round(current.rgba[0] + (next.rgba[0] - current.rgba[0]) * t);
+      const g = Math.round(current.rgba[1] + (next.rgba[1] - current.rgba[1]) * t);
+      const b = Math.round(current.rgba[2] + (next.rgba[2] - current.rgba[2]) * t);
+      const a = current.rgba[3] + (next.rgba[3] - current.rgba[3]) * t;
+      return {r, g, b, a};
     }
   }
-  const [r,g,b] = stops[stops.length-1].rgb;
-  return `rgb(${r},${g},${b})`;
+  const [r,g,b,a] = stops[stops.length-1].rgba;
+  return {r, g, b, a};
 }
 
-function drawNoteGuides(notePositions, cx, cy){
+function rgbaToCss({r,g,b,a}){
+  const alpha = Math.max(0, Math.min(1, a));
+  const rounded = Math.round(alpha * 1000) / 1000;
+  return `rgba(${r},${g},${b},${rounded})`;
+}
+
+function noteGuideColorForOffset(offset){
+  return rgbaToCss(interpolateNoteGuideColor(offset));
+}
+
+const NOTE_GUIDE_SEGMENT_COUNT = 12;
+const NOTE_GUIDE_SEGMENT_COLORS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i)=>{
+  const midOffset = (i + 0.5) / NOTE_GUIDE_SEGMENT_COUNT;
+  let rgba = interpolateNoteGuideColor(midOffset);
+  if(i === 0 || i === NOTE_GUIDE_SEGMENT_COUNT - 1){
+    rgba = {r: 255, g: 255, b: 255, a: 0};
+  }
+  return {rgba, css: rgbaToCss(rgba)};
+});
+
+function drawNoteGuides(notePositions, cx, cy, diskRadius){
   if(!notePositions.length || (noteGuideAlpha <= 0 && noteGuideLabelAlpha <= 0)) return;
   const fontPx = Math.round(12 * devicePixelRatio);
 
   if(noteGuideAlpha > 0){
     ctx.save();
     ctx.globalAlpha = noteGuideAlpha;
-    const circleLineWidth = 2.5 * devicePixelRatio;
     const radialLineWidth = 1.8 * devicePixelRatio;
-    const hasConicGradient = typeof ctx.createConicGradient === 'function';
+    const fullTurn = Math.PI * 2;
+    const radialLineColor = noteGuideColorForOffset(0.5);
+    const sortedByRadius = [...notePositions]
+      .filter(pos=>Number.isFinite(pos.rAbs) && pos.rAbs > 0)
+      .sort((a,b)=> b.rAbs - a.rAbs);
+    const innerRadiusByMidi = new Map();
+    for(let i=0; i<sortedByRadius.length; i++){
+      const current = sortedByRadius[i];
+      const next = sortedByRadius[i+1];
+      let inner = next ? next.rAbs : current.rAbs - (diskRadius / 12);
+      if(!Number.isFinite(inner)) inner = 0;
+      innerRadiusByMidi.set(current.midi, Math.max(0, inner));
+    }
 
     for(const pos of notePositions){
-      const radius = pos.rAbs;
-      if(!Number.isFinite(radius) || radius <= 0) continue;
+      const outerRadius = pos.rAbs;
+      if(!Number.isFinite(outerRadius) || outerRadius <= 0) continue;
+      const rawInner = innerRadiusByMidi.get(pos.midi);
+      const innerRadius = rawInner==null ? 0 : Math.max(0, Math.min(outerRadius, rawInner));
+      if(innerRadius >= outerRadius && innerRadius !== 0) continue;
 
-      ctx.lineWidth = circleLineWidth;
-      if(hasConicGradient){
-        const gradient = ctx.createConicGradient(-pos.theta, cx, cy);
-        for(const stop of NOTE_GUIDE_COLOR_STOPS){
-          const [r,g,b] = stop.rgb;
-          gradient.addColorStop(stop.offset, `rgb(${r},${g},${b})`);
-        }
-        ctx.strokeStyle = gradient;
+      for(let i=0; i<NOTE_GUIDE_SEGMENT_COUNT; i++){
+        const {rgba, css} = NOTE_GUIDE_SEGMENT_COLORS[i];
+        if(rgba[3] <= 0) continue;
+        const startOffset = i / NOTE_GUIDE_SEGMENT_COUNT;
+        const endOffset = (i + 1) / NOTE_GUIDE_SEGMENT_COUNT;
+        const startAngle = pos.theta - startOffset * fullTurn;
+        const endAngle = pos.theta - endOffset * fullTurn;
+
         ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, 2*Math.PI);
-        ctx.stroke();
-      }else{
-        const segments = 90;
-        const fullTurn = Math.PI * 2;
-        for(let i=0; i<segments; i++){
-          const startOffset = i / segments;
-          const endOffset = (i + 1) / segments;
-          ctx.strokeStyle = noteGuideColorForOffset(startOffset);
-          ctx.beginPath();
-          ctx.arc(
-            cx,
-            cy,
-            radius,
-            pos.theta - startOffset * fullTurn,
-            pos.theta - endOffset * fullTurn,
-            true
-          );
-          ctx.stroke();
+        ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
+        if(innerRadius > 0){
+          ctx.arc(cx, cy, innerRadius, endAngle, startAngle, false);
+        }else{
+          ctx.lineTo(cx, cy);
         }
+        ctx.closePath();
+        ctx.fillStyle = css;
+        ctx.fill();
       }
 
-      ctx.strokeStyle = noteGuideColorForOffset(0);
+      ctx.strokeStyle = radialLineColor;
       ctx.lineWidth = radialLineWidth;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -904,7 +928,7 @@ function drawNotes(points, drawRot){
   };
 
   const notePositions = inRange.map(toPosition);
-  if(notePositions.length) drawNoteGuides(notePositions, cx, cy);
+  if(notePositions.length) drawNoteGuides(notePositions, cx, cy, rMax);
   const straightLinePositions = allPoints.map(toPosition);
 
   if(straightLinePositions.length>=2 && straightLinkAlpha>0){
