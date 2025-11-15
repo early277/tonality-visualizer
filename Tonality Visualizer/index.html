@@ -798,8 +798,8 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
         if(rgba[3] <= 0) continue;
         const startOffset = i / NOTE_GUIDE_SEGMENT_COUNT;
         const endOffset = (i + 1) / NOTE_GUIDE_SEGMENT_COUNT;
-        const startAngle = pos.theta + startOffset * fullTurn;
-        const endAngle = pos.theta + endOffset * fullTurn;
+        const startAngle = pos.theta - startOffset * fullTurn;
+        const endAngle = pos.theta - endOffset * fullTurn;
 
         ctx.beginPath();
         ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
@@ -837,7 +837,7 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
       if(!Number.isFinite(radius) || radius <= 0) continue;
 
       for(const mark of NOTE_GUIDE_MARKS){
-        const angle = pos.theta - mark.deg * Math.PI / 180;
+        const angle = pos.theta + mark.deg * Math.PI / 180;
         const {x, y} = polarToXY(cx, cy, radius, angle);
         ctx.fillText(mark.label, x, y);
       }
