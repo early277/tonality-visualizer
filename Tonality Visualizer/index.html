@@ -755,13 +755,17 @@ function noteGuideColorForOffset(offset){
 }
 
 const NOTE_GUIDE_SEGMENT_COUNT = 12;
-const NOTE_GUIDE_SEGMENT_COLORS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i)=>{
-  const midOffset = (i + 0.5) / NOTE_GUIDE_SEGMENT_COUNT;
-  let rgba = interpolateNoteGuideColor(midOffset);
-  if(i === 0 || i === NOTE_GUIDE_SEGMENT_COUNT - 1){
+const NOTE_GUIDE_SEGMENT_SPAN = 1 / NOTE_GUIDE_SEGMENT_COUNT;
+const NOTE_GUIDE_SEGMENT_HALF_SPAN = NOTE_GUIDE_SEGMENT_SPAN / 2;
+const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i)=>{
+  const centerOffset = i / NOTE_GUIDE_SEGMENT_COUNT;
+  const startOffset = centerOffset - NOTE_GUIDE_SEGMENT_HALF_SPAN;
+  const endOffset = centerOffset + NOTE_GUIDE_SEGMENT_HALF_SPAN;
+  let rgba = interpolateNoteGuideColor(centerOffset);
+  if(i === 0){
     rgba = {r: 255, g: 255, b: 255, a: 0};
   }
-  return {rgba, css: rgbaToCss(rgba)};
+  return {startOffset, endOffset, rgba, css: rgbaToCss(rgba)};
 });
 
 function drawNoteGuides(notePositions, cx, cy, diskRadius){
@@ -794,10 +798,9 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
       if(innerRadius >= outerRadius && innerRadius !== 0) continue;
 
       for(let i=0; i<NOTE_GUIDE_SEGMENT_COUNT; i++){
-        const {rgba, css} = NOTE_GUIDE_SEGMENT_COLORS[i];
-        if(rgba[3] <= 0) continue;
-        const startOffset = i / NOTE_GUIDE_SEGMENT_COUNT;
-        const endOffset = (i + 1) / NOTE_GUIDE_SEGMENT_COUNT;
+        const segment = NOTE_GUIDE_SEGMENTS[i];
+        const {rgba, css, startOffset, endOffset} = segment;
+        if(rgba.a <= 0) continue;
         const startAngle = pos.theta - startOffset * fullTurn;
         const endAngle = pos.theta - endOffset * fullTurn;
 
