@@ -751,9 +751,15 @@ if(resetBtn){
 }
 
 /* ===== Note state ===== */
+// liveNotes と fileNotes は後段の描画・物理計算で参照する入力ノート集合を保持する。
+// どちらも MIDI ノート番号をキー、ベロシティを値とした Map とし、
+// 実行時に随時追加・削除される動的な状態を扱う。
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
 const fileNotes = new Map();     // 再生中のMIDIファイル由来
 
+// NOTE_GUIDE_MARKS は水面に描画する目盛りラベルの一覧。
+// degree 方向と表示文字列を組み合わせて定義し、
+// drawNoteGuides 内で極座標位置決定に用いる。
 const NOTE_GUIDE_MARKS = [
   {deg: 30, label: '-1'},
   {deg: 60, label: '-2'},
@@ -768,6 +774,9 @@ const NOTE_GUIDE_MARKS = [
   {deg: -150, label: '+5'}
 ];
 
+// NOTE_GUIDE_BASE_COLORS は 1 周分のグラデーション定義。
+// offset を 0.0-1.0 の範囲で解釈し、各区間を線形補間することで
+// 現在角度に応じた色を生成する。
 const NOTE_GUIDE_BASE_COLORS = [
   {offset: 0.00, rgba: [255, 255, 255, 0]},  // south -> transparent
   {offset: 0.25, rgba: [224, 64, 48, 1]},    // west -> red
@@ -776,6 +785,8 @@ const NOTE_GUIDE_BASE_COLORS = [
   {offset: 1.00, rgba: [255, 255, 255, 0]}   // wrap back to south
 ];
 
+// 与えられた offset（周回位置）から NOTE_GUIDE_BASE_COLORS を補間し、
+// 実際に使用する RGBA 値を算出する。
 function interpolateNoteGuideColor(offset){
   const normalized = ((offset % 1) + 1) % 1;
   const stops = NOTE_GUIDE_BASE_COLORS;
@@ -800,12 +811,15 @@ function interpolateNoteGuideColor(offset){
   return {r, g, b, a};
 }
 
+// RGBA オブジェクトを CSS 互換の rgba() 文字列へ変換する小さなユーティリティ。
 function rgbaToCss({r,g,b,a}){
   const alpha = Math.max(0, Math.min(1, a));
   const rounded = Math.round(alpha * 1000) / 1000;
   return `rgba(${r},${g},${b},${rounded})`;
 }
 
+// NOTE_GUIDE_BASE_COLORS と interpolateNoteGuideColor を組み合わせて
+// 指定 offset に対応する CSS 色文字列を得るヘルパー。
 function noteGuideColorForOffset(offset){
   return rgbaToCss(interpolateNoteGuideColor(offset));
 }
@@ -813,6 +827,8 @@ function noteGuideColorForOffset(offset){
 const NOTE_GUIDE_SEGMENT_COUNT = 12;
 const NOTE_GUIDE_SEGMENT_SPAN = 1 / NOTE_GUIDE_SEGMENT_COUNT;
 const NOTE_GUIDE_SEGMENT_HALF_SPAN = NOTE_GUIDE_SEGMENT_SPAN / 2;
+// NOTE_GUIDE_SEGMENTS はグラデーションをセグメント単位に事前分割した配列。
+// 描画ループで毎回補間するコストを抑えるため、中心 offset ごとに色を保持する。
 const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i)=>{
   const centerOffset = i / NOTE_GUIDE_SEGMENT_COUNT;
   const startOffset = centerOffset - NOTE_GUIDE_SEGMENT_HALF_SPAN;
@@ -824,6 +840,9 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
   return {startOffset, endOffset, rgba, css: rgbaToCss(rgba)};
 });
 
+// drawNoteGuides は音の位置に応じて水面の扇形やラベルを描画する。
+// notePositions: 描画対象となる polar 座標情報を含む配列。
+// cx/cy: キャンバス中心、diskRadius: 最大半径。
 function drawNoteGuides(notePositions, cx, cy, diskRadius){
   if(!notePositions.length || (noteGuideAlpha <= 0 && noteGuideLabelAlpha <= 0)) return;
   const fontPx = Math.round(12 * devicePixelRatio);
@@ -1048,6 +1067,8 @@ function drawNotes(points, drawRot){
 }
 
 /* ターゲット描画（トレーナー） */
+// drawTargetNotes はトレーナーモードで指定したターゲットノートを視覚化する。
+// MIDI 番号を受け取り、表示範囲内でリング上にハイライトを描画する。
 function drawTargetNotes(targets, drawRot){
   if(!targets || !targets.length) return;
   const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
@@ -1062,6 +1083,8 @@ function drawTargetNotes(targets, drawRot){
 }
 
 /* 移動ド数字（水面回転と同期） */
+// drawMovableDoNumbers は移動ド（メロディック・ソルフェージュ）の数字を描く。
+// 回転角 halfCenter に追従しながらリング内側に等間隔で表示する。
 function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
   const r = rMax * 0.78;
   const fontPx = Math.round(Math.max(12, movNumSizePx) * devicePixelRatio);
@@ -1083,6 +1106,8 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
 
 /* ===== Main draw loop ===== */
 let prevT=null;
+// draw はキャンバス全体のメイン描画ループ。
+// 物理演算の結果を反映しながら、水面・ノート・補助情報を毎フレーム再描画する。
 function draw(){
   const w=cv.width, h=cv.height, cx=w/2, cy=h/2;
   const {rMax, step, octaves, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
