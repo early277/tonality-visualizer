@@ -522,7 +522,7 @@ function ringParams(){
 }
 function baseAngleFromFifthIndex(i){ return ANG0 + 2*Math.PI*(i%12)/12; }
 function angleForMidiAbs(m){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + diskAngle; } // 物理用
-function angleForMidiDraw(m, drawRot){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) - drawRot; } // 描画用
+function angleForMidiDraw(m, drawRot){ const pc=((m%12)+12)%12; const idx=FIFTH_INDEX[pc]; return baseAngleFromFifthIndex(idx) + drawRot; } // 描画用
 function radiusFromFreq(f, rMax, step, minRadius = 0){
   const octaves = activeOctaveCount();
   const oc = Math.log2(f / minDisplayFreq());
