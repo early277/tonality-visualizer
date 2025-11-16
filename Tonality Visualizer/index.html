@@ -850,9 +850,7 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
   if(noteGuideAlpha > 0){
     ctx.save();
     ctx.globalAlpha = noteGuideAlpha;
-    const radialLineWidth = 1.8 * devicePixelRatio;
     const fullTurn = Math.PI * 2;
-    const radialLineColor = noteGuideColorForOffset(0.5);
     const sortedByRadius = [...notePositions]
       .filter(pos=>Number.isFinite(pos.rAbs) && pos.rAbs > 0)
       .sort((a,b)=> b.rAbs - a.rAbs);
@@ -890,13 +888,6 @@ function drawNoteGuides(notePositions, cx, cy, diskRadius){
         ctx.fillStyle = css;
         ctx.fill();
       }
-
-      ctx.strokeStyle = radialLineColor;
-      ctx.lineWidth = radialLineWidth;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
     }
 
     ctx.restore();
