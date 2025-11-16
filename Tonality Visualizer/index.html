@@ -843,78 +843,87 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
 // drawNoteGuides は音の位置に応じて水面の扇形やラベルを描画する。
 // notePositions: 描画対象となる polar 座標情報を含む配列。
 // cx/cy: キャンバス中心、diskRadius: 最大半径。
-function drawNoteGuides(notePositions, cx, cy, diskRadius){
-  if(!notePositions.length || (noteGuideAlpha <= 0 && noteGuideLabelAlpha <= 0)) return;
-  const fontPx = Math.round(12 * devicePixelRatio);
+  function drawNoteGuides(notePositions, cx, cy, diskRadius){
+    // ガイドを描く必要が無い状況 (データが無い、透明度 0) は即座に打ち切る。
+    if(!notePositions.length || (noteGuideAlpha <= 0 && noteGuideLabelAlpha <= 0)) return;
+    const fontPx = Math.round(12 * devicePixelRatio);
 
-  if(noteGuideAlpha > 0){
-    ctx.save();
-    ctx.globalAlpha = noteGuideAlpha;
-    const fullTurn = Math.PI * 2;
-    const sortedByRadius = [...notePositions]
-      .filter(pos=>Number.isFinite(pos.rAbs) && pos.rAbs > 0)
-      .sort((a,b)=> b.rAbs - a.rAbs);
-    const innerRadiusByMidi = new Map();
-    for(let i=0; i<sortedByRadius.length; i++){
-      const current = sortedByRadius[i];
-      const next = sortedByRadius[i+1];
-      let inner = next ? next.rAbs : current.rAbs - (diskRadius / 12);
-      if(!Number.isFinite(inner)) inner = 0;
-      innerRadiusByMidi.set(current.midi, Math.max(0, inner));
-    }
+    if(noteGuideAlpha > 0){
+      ctx.save();
+      ctx.globalAlpha = noteGuideAlpha;
+      const fullTurn = Math.PI * 2;
+      // rAbs が有効なノートだけを取り出し、遠い順に並べて半径の大小関係を把握する。
+      const sortedByRadius = [...notePositions]
+        .filter(pos=>Number.isFinite(pos.rAbs) && pos.rAbs > 0)
+        .sort((a,b)=> b.rAbs - a.rAbs);
+      const innerRadiusByMidi = new Map();
+      // 各ノートについて、次に近いノートの半径を「内側の境界」として記録する。
+      // 次のノートが存在しない場合はディスクを 12 分割した幅だけ内側へ縮める。
+      for(let i=0; i<sortedByRadius.length; i++){
+        const current = sortedByRadius[i];
+        const next = sortedByRadius[i+1];
+        let inner = next ? next.rAbs : current.rAbs - (diskRadius / 12);
+        if(!Number.isFinite(inner)) inner = 0;
+        innerRadiusByMidi.set(current.midi, Math.max(0, inner));
+      }
 
-    for(const pos of notePositions){
-      const outerRadius = pos.rAbs;
-      if(!Number.isFinite(outerRadius) || outerRadius <= 0) continue;
-      const rawInner = innerRadiusByMidi.get(pos.midi);
-      const innerRadius = rawInner==null ? 0 : Math.max(0, Math.min(outerRadius, rawInner));
-      if(innerRadius >= outerRadius && innerRadius !== 0) continue;
+      // ノートごとに外周半径と求めた内周半径でドーナツ状の扇形を描画する。
+      for(const pos of notePositions){
+        const outerRadius = pos.rAbs;
+        if(!Number.isFinite(outerRadius) || outerRadius <= 0) continue;
+        const rawInner = innerRadiusByMidi.get(pos.midi);
+        const innerRadius = rawInner==null ? 0 : Math.max(0, Math.min(outerRadius, rawInner));
+        if(innerRadius >= outerRadius && innerRadius !== 0) continue;
 
-      for(let i=0; i<NOTE_GUIDE_SEGMENT_COUNT; i++){
-        const segment = NOTE_GUIDE_SEGMENTS[i];
-        const {rgba, css, startOffset, endOffset} = segment;
-        if(rgba.a <= 0) continue;
-        const startAngle = pos.theta - startOffset * fullTurn;
-        const endAngle = pos.theta - endOffset * fullTurn;
+        // NOTE_GUIDE_SEGMENTS で事前計算した色グラデーションを扇形ごとに適用する。
+        for(let i=0; i<NOTE_GUIDE_SEGMENT_COUNT; i++){
+          const segment = NOTE_GUIDE_SEGMENTS[i];
+          const {rgba, css, startOffset, endOffset} = segment;
+          if(rgba.a <= 0) continue;
+          const startAngle = pos.theta - startOffset * fullTurn;
+          const endAngle = pos.theta - endOffset * fullTurn;
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
-        if(innerRadius > 0){
-          ctx.arc(cx, cy, innerRadius, endAngle, startAngle, false);
-        }else{
-          ctx.lineTo(cx, cy);
+          // 外周から内周に向かってパスを閉じ、水面に重ねる扇状の塗りを行う。
+          ctx.beginPath();
+          ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
+          if(innerRadius > 0){
+            ctx.arc(cx, cy, innerRadius, endAngle, startAngle, false);
+          }else{
+            ctx.lineTo(cx, cy);
+          }
+          ctx.closePath();
+          ctx.fillStyle = css;
+          ctx.fill();
         }
-        ctx.closePath();
-        ctx.fillStyle = css;
-        ctx.fill();
       }
+
+      ctx.restore();
     }
 
-    ctx.restore();
-  }
+    if(noteGuideLabelAlpha > 0){
+      ctx.save();
+      ctx.globalAlpha = noteGuideLabelAlpha;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${fontPx}px system-ui`;
 
-  if(noteGuideLabelAlpha > 0){
-    ctx.save();
-    ctx.globalAlpha = noteGuideLabelAlpha;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = `${fontPx}px system-ui`;
+      // それぞれのノートの極座標をデカルト座標に変換し、ラベル文字列を配置する。
+      for(const pos of notePositions){
+        const radius = pos.rAbs;
+        if(!Number.isFinite(radius) || radius <= 0) continue;
 
-    for(const pos of notePositions){
-      const radius = pos.rAbs;
-      if(!Number.isFinite(radius) || radius <= 0) continue;
-
-      for(const mark of NOTE_GUIDE_MARKS){
-        const angle = pos.theta + mark.deg * Math.PI / 180;
-        const {x, y} = polarToXY(cx, cy, radius, angle);
-        ctx.fillText(mark.label, x, y);
+        // NOTE_GUIDE_MARKS に定義されたマーク (度数や文字) を回転角度分だけ配置。
+        for(const mark of NOTE_GUIDE_MARKS){
+          const angle = pos.theta + mark.deg * Math.PI / 180;
+          const {x, y} = polarToXY(cx, cy, radius, angle);
+          ctx.fillText(mark.label, x, y);
+        }
       }
-    }
 
-    ctx.restore();
+      ctx.restore();
+    }
   }
-}
 
 /* ===== Drawing ===== */
 function drawNotes(points, drawRot){
