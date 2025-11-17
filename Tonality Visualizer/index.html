@@ -788,7 +788,6 @@ const NOTE_GUIDE_BASE_COLORS = [
 // 与えられた offset（周回位置）から NOTE_GUIDE_BASE_COLORS を補間し、
 // 実際に使用する RGBA 値を算出する。
 function interpolateNoteGuideColor(offset){
-  offset = 1 - offset;  // 追加：向きを反転
   const normalized = ((offset % 1) + 1) % 1;
   const stops = NOTE_GUIDE_BASE_COLORS;
   if(normalized === 0){
@@ -881,8 +880,8 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
           const segment = NOTE_GUIDE_SEGMENTS[i];
           const {rgba, css, startOffset, endOffset} = segment;
           if(rgba.a <= 0) continue;
-          const startAngle = pos.theta - startOffset * fullTurn;
-          const endAngle = pos.theta - endOffset * fullTurn;
+          const startAngle = pos.theta + startOffset * fullTurn;
+          const endAngle = pos.theta + endOffset * fullTurn;
 
           // 外周から内周に向かってパスを閉じ、水面に重ねる扇状の塗りを行う。
           ctx.beginPath();
