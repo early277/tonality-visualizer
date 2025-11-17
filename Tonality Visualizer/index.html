@@ -1000,15 +1000,16 @@ function drawNotes(points, drawRot){
     }
   }
 
-  const toPosition = (p)=>{
-    const theta = angleForMidiDraw(p.midi, drawRot);
+  const toPosition = (p, rot = drawRot)=>{
+    const theta = angleForMidiDraw(p.midi, rot);
     const rAbs = radiusFromFreq(p.f, rMax, step, minRadius);
     const {x, y} = polarToXY(cx, cy, rAbs, theta);
     return {...p, theta, rAbs, x, y};
   };
 
+  const noteGuidePositions = inRange.map(p=>toPosition(p, -drawRot));
+  if(noteGuidePositions.length) drawNoteGuides(noteGuidePositions, cx, cy, rMax);
   const notePositions = inRange.map(toPosition);
-  if(notePositions.length) drawNoteGuides(notePositions, cx, cy, rMax);
   const straightLinePositions = allPoints.map(toPosition);
 
   if(straightLinePositions.length>=2 && straightLinkAlpha>0){
