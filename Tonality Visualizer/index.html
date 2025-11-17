@@ -788,7 +788,7 @@ const NOTE_GUIDE_BASE_COLORS = [
 // 与えられた offset（周回位置）から NOTE_GUIDE_BASE_COLORS を補間し、
 // 実際に使用する RGBA 値を算出する。
 function interpolateNoteGuideColor(offset){
-  const normalized = ((offset % 1) + 1) % 1;
+  const normalized = ((0.5-offset % 1) + 1) % 1;
   const stops = NOTE_GUIDE_BASE_COLORS;
   if(normalized === 0){
     const [r,g,b,a] = stops[0].rgba;
