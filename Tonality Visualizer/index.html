@@ -880,14 +880,14 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
           const segment = NOTE_GUIDE_SEGMENTS[i];
           const {rgba, css, startOffset, endOffset} = segment;
           if(rgba.a <= 0) continue;
-          const startAngle = pos.theta - startOffset * fullTurn;
-          const endAngle = pos.theta - endOffset * fullTurn;
+          const startAngle = pos.theta + startOffset * fullTurn;
+          const endAngle = pos.theta + endOffset * fullTurn;
 
           // 外周から内周に向かってパスを閉じ、水面に重ねる扇状の塗りを行う。
           ctx.beginPath();
-          ctx.arc(cx, cy, outerRadius, startAngle, endAngle, true);
+          ctx.arc(cx, cy, outerRadius, startAngle, endAngle, false);
           if(innerRadius > 0){
-            ctx.arc(cx, cy, innerRadius, endAngle, startAngle, false);
+            ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
           }else{
             ctx.lineTo(cx, cy);
           }
@@ -1000,15 +1000,16 @@ function drawNotes(points, drawRot){
     }
   }
 
-  const toPosition = (p)=>{
-    const theta = angleForMidiDraw(p.midi, drawRot);
+  const toPosition = (p, rot = drawRot)=>{
+    const theta = angleForMidiDraw(p.midi, rot);
     const rAbs = radiusFromFreq(p.f, rMax, step, minRadius);
     const {x, y} = polarToXY(cx, cy, rAbs, theta);
     return {...p, theta, rAbs, x, y};
   };
 
+  const noteGuidePositions = inRange.map(p=>toPosition(p, -drawRot));
+  if(noteGuidePositions.length) drawNoteGuides(noteGuidePositions, cx, cy, rMax);
   const notePositions = inRange.map(toPosition);
-  if(notePositions.length) drawNoteGuides(notePositions, cx, cy, rMax);
   const straightLinePositions = allPoints.map(toPosition);
 
   if(straightLinePositions.length>=2 && straightLinkAlpha>0){
