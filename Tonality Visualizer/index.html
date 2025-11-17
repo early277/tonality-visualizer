@@ -875,15 +875,13 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
         const innerRadius = rawInner==null ? 0 : Math.max(0, Math.min(outerRadius, rawInner));
         if(innerRadius >= outerRadius && innerRadius !== 0) continue;
 
-        const mirroredTheta = -pos.theta;
-
         // NOTE_GUIDE_SEGMENTS で事前計算した色グラデーションを扇形ごとに適用する。
         for(let i=0; i<NOTE_GUIDE_SEGMENT_COUNT; i++){
           const segment = NOTE_GUIDE_SEGMENTS[i];
           const {rgba, css, startOffset, endOffset} = segment;
           if(rgba.a <= 0) continue;
-          const startAngle = mirroredTheta + startOffset * fullTurn;
-          const endAngle = mirroredTheta + endOffset * fullTurn;
+          const startAngle = pos.theta - startOffset * fullTurn;
+          const endAngle = pos.theta - endOffset * fullTurn;
 
           // 外周から内周に向かってパスを閉じ、水面に重ねる扇状の塗りを行う。
           ctx.beginPath();
@@ -917,7 +915,7 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
 
         // NOTE_GUIDE_MARKS に定義されたマーク (度数や文字) を回転角度分だけ配置。
         for(const mark of NOTE_GUIDE_MARKS){
-          const angle = -pos.theta - mark.deg * Math.PI / 180;
+          const angle = pos.theta + mark.deg * Math.PI / 180;
           const {x, y} = polarToXY(cx, cy, radius, angle);
           ctx.fillText(mark.label, x, y);
         }
