@@ -9,7 +9,8 @@
   html,body{margin:0;height:100%;background:#111;color:#ddd;font:14px system-ui}
   :root{ --ui-scale:1; }
   #ui{position:fixed;top:75px;left:8px;gap:12px;display:flex;flex-wrap:wrap;align-items:center;z-index:2;
-       transform-origin:top left; transform:scale(var(--ui-scale));}
+       transform-origin:top left; transform:scale(var(--ui-scale));
+       max-height:calc(100vh - 110px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 6px;}
   canvas{display:block;width:100vw;height:100vh}
   label{display:flex;gap:6px;align-items:center}
   input[type=range]{width:180px}
@@ -126,8 +127,8 @@
   </label>
 
   <label id="noteGuideAWrap" data-lbl="noteGuideAlpha">
-    <input id="noteGuideA" type="range" min="0" max="100" step="1" value="30">
-    <span id="noteGuideAVal">30%</span>
+    <input id="noteGuideA" type="range" min="0" max="100" step="1" value="15">
+    <span id="noteGuideAVal">15%</span>
   </label>
 
   <label id="noteGuideLabelAWrap" data-lbl="noteGuideLabelAlpha">
@@ -202,6 +203,7 @@
 const isIPhone = /iPhone/i.test(navigator.userAgent);
 if (isIPhone) {
   document.documentElement.style.setProperty('--ui-scale', '0.75');
+  document.body.classList.add('ios');
 }
 
 /* ===== Canvas ===== */
