@@ -1762,8 +1762,14 @@ btnPlay.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   const ctx = ensureCtx();
   try{ if(ctx.state==='suspended') ctx.resume(); }catch{}
-  if(player) player.stop();
-  player = new Player(ctx, midiData.notes);
+  if(!player){
+    player = new Player(ctx, midiData.notes);
+  }
+  // 再生完了後は先頭から再生成、途中停止ならその位置から再開
+  if(player.posSec >= player.totalLength()){
+    player.stop();
+    player = new Player(ctx, midiData.notes);
+  }
   player.play();
 };
 btnPause.onclick = ()=>{ if(player) player.pause(); };
