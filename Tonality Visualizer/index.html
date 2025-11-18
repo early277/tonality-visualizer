@@ -1455,6 +1455,11 @@ async function handlePickedFile(file){
     if(!parsed || !parsed.notes) throw new Error('parse failed');
     midiData = parsed;
 
+    if(player){
+      player.stop();
+      player = null;
+    }
+
     const trks = (Array.isArray(midiData.tracks) ? midiData.tracks.length : (midiData.tracks ?? 0));
     uiLog(`OK: ${file.name}  trks:${trks}  ppq:${midiData.ppq}  len:${midiData.lengthSec.toFixed(2)}s  notes:${midiData.notes.length}`);
 
