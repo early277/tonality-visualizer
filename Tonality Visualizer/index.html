@@ -880,8 +880,8 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
           const segment = NOTE_GUIDE_SEGMENTS[i];
           const {rgba, css, startOffset, endOffset} = segment;
           if(rgba.a <= 0) continue;
-          const startAngle = pos.theta + startOffset * fullTurn;
-          const endAngle = pos.theta + endOffset * fullTurn;
+          const startAngle = pos.theta - endOffset * fullTurn;
+          const endAngle = pos.theta - startOffset * fullTurn;
 
           // 外周から内周に向かってパスを閉じ、水面に重ねる扇状の塗りを行う。
           ctx.beginPath();
