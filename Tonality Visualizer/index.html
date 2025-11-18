@@ -763,17 +763,17 @@ const fileNotes = new Map();     // 再生中のMIDIファイル由来
 // degree 方向と表示文字列を組み合わせて定義し、
 // drawNoteGuides 内で極座標位置決定に用いる。
 const NOTE_GUIDE_MARKS = [
-  {deg: 30, label: '-1'},
-  {deg: 60, label: '-2'},
-  {deg: 90, label: '-3'},
-  {deg: 120, label: '-4'},
-  {deg: 150, label: '-5'},
+  {deg: 30, label: '+1'},
+  {deg: 60, label: '+2'},
+  {deg: 90, label: '+3'},
+  {deg: 120, label: '+4'},
+  {deg: 150, label: '+5'},
   {deg: 180, label: 'T'},
-  {deg: -30, label: '+1'},
-  {deg: -60, label: '+2'},
-  {deg: -90, label: '+3'},
-  {deg: -120, label: '+4'},
-  {deg: -150, label: '+5'}
+  {deg: -30, label: '-1'},
+  {deg: -60, label: '-2'},
+  {deg: -90, label: '-3'},
+  {deg: -120, label: '-4'},
+  {deg: -150, label: '-5'}
 ];
 
 // NOTE_GUIDE_BASE_COLORS は 1 周分のグラデーション定義。
