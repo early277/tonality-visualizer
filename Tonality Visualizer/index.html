@@ -642,7 +642,8 @@ excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 const dragRot = {
   active: false,
   startAngle: 0,
-  startDiskAngle: 0
+  startDiskAngle: 0,
+  anchor: 'water'
 };
 function clientAngle(ev){
   const rect = cv.getBoundingClientRect();
@@ -662,6 +663,7 @@ function beginDrag(ev){
   dragRot.active = true;
   dragRot.startAngle = ang;
   dragRot.startDiskAngle = diskAngle;
+  dragRot.anchor = anchorSel.value;
   diskOmega = 0; // 手動操作中は慣性をリセット
   if(ev.pointerId != null && cv.setPointerCapture){
     try{ cv.setPointerCapture(ev.pointerId); }catch{}
@@ -673,7 +675,8 @@ function moveDrag(ev){
   const ang = clientAngle(ev);
   if(ang == null) return;
   const delta = ang - dragRot.startAngle;
-  diskAngle = dragRot.startDiskAngle + delta;
+  const dir = (dragRot.anchor === 'disk') ? -1 : 1;
+  diskAngle = dragRot.startDiskAngle + dir * delta;
   diskOmega = 0;
   ev.preventDefault();
 }
