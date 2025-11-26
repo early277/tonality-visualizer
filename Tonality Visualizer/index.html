@@ -16,6 +16,7 @@
   input[type=range]{width:180px}
   button,select{padding:6px 10px}
   .sep{width:1px;height:22px;background:#444;margin:0 4px}
+  .sliderVal{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;display:inline-block;width:7ch;text-align:right}
 
   /* UI show/hide トグル */
   #uiToggle{position:fixed;top:50px;right:8px;z-index:3;opacity:0.8}
@@ -75,11 +76,11 @@
 
   <!-- damping（比例：0〜99 %/s） -->
   <label id="dampWrap" data-lbl="damping">
-    <input id="damp" type="range" min="0" max="99" step="0.001" value="99" list="dampTicks">
+    <input id="damp" type="range" min="0" max="99" step="1" value="99" list="dampTicks">
     <datalist id="dampTicks">
       <option value="0"><option value="25"><option value="50"><option value="75"><option value="99">
     </datalist>
-    <span id="dampVal">99.000%/s</span>
+    <span id="dampVal" class="sliderVal">99%/s</span>
   </label>
 
   <!-- snap ω when α=0 -->
@@ -713,10 +714,11 @@ omegaMaxSlider.oninput = ()=>{
 
 /* ダンピング（比例）。スライダー値 = p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
-function fmtPct(p){ return p.toFixed(3); }
+function fmtPct(p){ return p.toFixed(0); }
 function updateDampFromSlider(){
   const raw = parseFloat(dampSlider.value);
-  const p = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(99, raw));
+  const clamped = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(99, raw));
+  const p = Math.round(clamped);
   dampPerSec = p / 100;                                   // 0.00〜0.99
   dampVal.textContent = `${fmtPct(p)}%/s`;
 }
