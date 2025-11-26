@@ -158,12 +158,12 @@
 
   <label id="labelBGWrap" data-lbl="labelBG">
     <input id="labelBG" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelBGVal">000%</span>
+    <span id="labelBGVal">0%</span>
   </label>
 
   <label id="labelAlphaWrap" data-lbl="labelAlpha">
     <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelAlphaVal">000%</span>
+    <span id="labelAlphaVal">0%</span>
   </label>
 
   <!-- MIDI File controls（常時表示） -->
@@ -573,47 +573,59 @@ function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.
 function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
 // ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
-// スライダー表示で幅が変わりすぎないように、0%は000%表記にして揃える
-function formatPctLabel(value){
-  const rounded = Math.round(value);
-  return `${rounded === 0 ? '000' : rounded}%`;
+// スライダー最大値の桁数分だけあらかじめスペースを確保しておき、表示幅のブレを抑える
+const pctLabelFormatterCache = new WeakMap();
+function formatPctLabel(slider, value){
+  if(!pctLabelFormatterCache.has(slider)){
+    const maxValue = parseFloat(slider.max);
+    const maxDigits = Math.max(1, String(Math.round(Number.isFinite(maxValue) ? maxValue : 100)).length);
+    const figurePad = "\u2007".repeat(maxDigits); // figure spaceは数字と同じ幅
+    const upperBound = Math.round(Number.isFinite(maxValue) ? maxValue : Math.pow(10, maxDigits) - 1);
+    pctLabelFormatterCache.set(slider, v=>{
+      const rounded = Math.round(v);
+      const clamped = Math.max(0, Math.min(upperBound, rounded));
+      const padded = (figurePad + clamped.toString()).slice(-maxDigits);
+      return `${padded}%`;
+    });
+  }
+  return pctLabelFormatterCache.get(slider)(value);
 }
 
 /* 表示系 */
-let linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent = formatPctLabel(linkAlpha * 100);
-lineASlider.oninput = ()=>{ linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent = formatPctLabel(linkAlpha * 100); saveSettings(); };
+let linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent = formatPctLabel(lineASlider, linkAlpha * 100);
+lineASlider.oninput = ()=>{ linkAlpha = parseInt(lineASlider.value,10)/100; lineAVal.textContent = formatPctLabel(lineASlider, linkAlpha * 100); saveSettings(); };
 
 // 直線表示の不透明度をスライダーで制御
-let straightLinkAlpha = parseInt(straightLineASlider.value,10)/100; straightLineAVal.textContent = formatPctLabel(straightLinkAlpha * 100);
+let straightLinkAlpha = parseInt(straightLineASlider.value,10)/100; straightLineAVal.textContent = formatPctLabel(straightLineASlider, straightLinkAlpha * 100);
 straightLineASlider.oninput = ()=>{
   straightLinkAlpha = parseInt(straightLineASlider.value,10)/100;
-  straightLineAVal.textContent = formatPctLabel(straightLinkAlpha * 100);
+  straightLineAVal.textContent = formatPctLabel(straightLineASlider, straightLinkAlpha * 100);
   saveSettings();
 };
 
 // ガイド線の可視性調整
-let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.textContent = formatPctLabel(noteGuideAlpha * 100);
+let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.textContent = formatPctLabel(noteGuideASlider, noteGuideAlpha * 100);
 noteGuideASlider.oninput = ()=>{
   noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100;
-  noteGuideAVal.textContent = formatPctLabel(noteGuideAlpha * 100);
+  noteGuideAVal.textContent = formatPctLabel(noteGuideASlider, noteGuideAlpha * 100);
   saveSettings();
 };
 
 // ガイド番号の不透明度
-let noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100; noteGuideLabelAVal.textContent = formatPctLabel(noteGuideLabelAlpha * 100);
+let noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100; noteGuideLabelAVal.textContent = formatPctLabel(noteGuideLabelASlider, noteGuideLabelAlpha * 100);
 noteGuideLabelASlider.oninput = ()=>{
   noteGuideLabelAlpha = parseInt(noteGuideLabelASlider.value,10)/100;
-  noteGuideLabelAVal.textContent = formatPctLabel(noteGuideLabelAlpha * 100);
+  noteGuideLabelAVal.textContent = formatPctLabel(noteGuideLabelASlider, noteGuideLabelAlpha * 100);
   saveSettings();
 };
 
 // 水面表現の濃さを調整
-let waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent = formatPctLabel(waterAlpha * 100);
-waterASlider.oninput = ()=>{ waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent = formatPctLabel(waterAlpha * 100); saveSettings(); };
+let waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent = formatPctLabel(waterASlider, waterAlpha * 100);
+waterASlider.oninput = ()=>{ waterAlpha = parseInt(waterASlider.value,10)/100; waterAVal.textContent = formatPctLabel(waterASlider, waterAlpha * 100); saveSettings(); };
 
 // 移動ド番号の表示強度
-let movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent = formatPctLabel(movNumAlpha * 100);
-movNumASlider.oninput = ()=>{ movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent = formatPctLabel(movNumAlpha * 100); saveSettings(); };
+let movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent = formatPctLabel(movNumASlider, movNumAlpha * 100);
+movNumASlider.oninput = ()=>{ movNumAlpha = parseInt(movNumASlider.value,10)/100; movNumAVal.textContent = formatPctLabel(movNumASlider, movNumAlpha * 100); saveSettings(); };
 
 // 移動ド番号の文字サイズ
 let movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`;
@@ -624,14 +636,14 @@ let labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`
 labelSizeSlider.oninput = ()=>{ labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`; saveSettings(); };
 
 // ラベル背景の透明度
-let labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent = formatPctLabel(labelBgAlpha * 100);
-labelBGSlider.oninput = ()=>{ labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent = formatPctLabel(labelBgAlpha * 100); saveSettings(); };
+let labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent = formatPctLabel(labelBGSlider, labelBgAlpha * 100);
+labelBGSlider.oninput = ()=>{ labelBgAlpha = parseInt(labelBGSlider.value,10)/100; labelBGVal.textContent = formatPctLabel(labelBGSlider, labelBgAlpha * 100); saveSettings(); };
 
 // ラベルテキストの透明度
-let labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100; labelAlphaVal.textContent = formatPctLabel(labelTextAlpha * 100);
+let labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100; labelAlphaVal.textContent = formatPctLabel(labelAlphaSlider, labelTextAlpha * 100);
 labelAlphaSlider.oninput = ()=>{
   labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100;
-  labelAlphaVal.textContent = formatPctLabel(labelTextAlpha * 100);
+  labelAlphaVal.textContent = formatPctLabel(labelAlphaSlider, labelTextAlpha * 100);
   saveSettings();
 };
 
@@ -735,7 +747,7 @@ snapAlphaCheckbox.onchange = ()=>{ snapZeroAlpha = snapAlphaCheckbox.checked; sa
 
 /* UI opacity / mass */
 // UI全体の透明度をスライダーから算出し、最低値を0.1までに制限
-function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent = formatPctLabel(a * 100); }
+function applyUIOpacity(){ const a=Math.max(0.1, Math.min(1, parseInt(uiopSlider.value,10)/100)); uiPanel.style.opacity=a; uiopVal.textContent = formatPctLabel(uiopSlider, a * 100); }
 applyUIOpacity(); uiopSlider.oninput = ()=>{ applyUIOpacity(); saveSettings(); };
 // 対数スライダーで受け取った値を指数化してディスク質量へ変換
 function updateMass(){ const lg=parseFloat(massSlider.value); diskMass=Math.pow(10,lg); massVal.textContent=`M=${diskMass.toFixed(2)}`; }
