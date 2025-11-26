@@ -16,7 +16,7 @@
   input[type=range]{width:180px}
   button,select{padding:6px 10px}
   .sep{width:1px;height:22px;background:#444;margin:0 4px}
-  .sliderVal{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;display:inline-block;width:7ch;text-align:right}
+  .sliderVal{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;display:inline-block;width:9ch;text-align:right}
 
   /* UI show/hide トグル */
   #uiToggle{position:fixed;top:50px;right:8px;z-index:3;opacity:0.8}
@@ -71,7 +71,7 @@
     <datalist id="omTicks">
       <option value="-2"><option value="-1"><option value="0"><option value="1"><option value="2">
     </datalist>
-    <span id="omegaMaxVal">2.00 rad/s</span>
+    <span id="omegaMaxVal" class="sliderVal">2.00 rad/s</span>
   </label>
 
   <!-- damping（比例：0〜99 %/s） -->
@@ -91,13 +91,13 @@
   <!-- UI opacity -->
   <label id="uiopWrap" data-lbl="uiOpacity">
     <input id="uiop" type="range" min="10" max="100" step="1" value="85">
-    <span id="uiopVal">85%</span>
+    <span id="uiopVal" class="sliderVal">85%</span>
   </label>
 
   <!-- disk physics -->
   <label id="massWrap" data-lbl="diskMass">
     <input id="mass" type="range" min="-2" max="2" step="0.001" value="-0.431">
-    <span id="massVal">M=0.37</span>
+    <span id="massVal" class="sliderVal">M=0.37</span>
   </label>
 
   <label id="lowCutWrap" data-lbl="lowCut">
@@ -105,7 +105,7 @@
     <datalist id="lowCutTicks">
       <option value="0"><option value="1"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6">
     </datalist>
-    <span id="lowCutVal">0</span>
+    <span id="lowCutVal" class="sliderVal">0</span>
   </label>
 
   <label id="highCutWrap" data-lbl="highCut">
@@ -113,58 +113,58 @@
     <datalist id="highCutTicks">
       <option value="0"><option value="1"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6">
     </datalist>
-    <span id="highCutVal">0</span>
+    <span id="highCutVal" class="sliderVal">0</span>
   </label>
 
   <!-- visuals -->
   <label id="lineAWrap" data-lbl="lineAlpha">
     <input id="lineA" type="range" min="0" max="100" step="1" value="50">
-    <span id="lineAVal">50%</span>
+    <span id="lineAVal" class="sliderVal">50%</span>
   </label>
 
   <label id="straightLineAWrap" data-lbl="straightLineAlpha">
     <input id="straightLineA" type="range" min="0" max="100" step="1" value="20">
-    <span id="straightLineAVal">20%</span>
+    <span id="straightLineAVal" class="sliderVal">20%</span>
   </label>
 
   <label id="noteGuideAWrap" data-lbl="noteGuideAlpha">
     <input id="noteGuideA" type="range" min="0" max="100" step="1" value="15">
-    <span id="noteGuideAVal">15%</span>
+    <span id="noteGuideAVal" class="sliderVal">15%</span>
   </label>
 
   <label id="noteGuideLabelAWrap" data-lbl="noteGuideLabelAlpha">
     <input id="noteGuideLabelA" type="range" min="0" max="100" step="1" value="5">
-    <span id="noteGuideLabelAVal">5%</span>
+    <span id="noteGuideLabelAVal" class="sliderVal">5%</span>
   </label>
 
   <label id="waterAWrap" data-lbl="waterAlpha">
     <input id="waterA" type="range" min="0" max="100" step="1" value="12">
-    <span id="waterAVal">12%</span>
+    <span id="waterAVal" class="sliderVal">12%</span>
   </label>
 
   <label id="movNumAWrap" data-lbl="movNumAlpha">
     <input id="movNumA" type="range" min="0" max="100" step="1" value="28">
-    <span id="movNumAVal">28%</span>
+    <span id="movNumAVal" class="sliderVal">28%</span>
   </label>
 
   <label id="movNumSizeWrap" data-lbl="movNumSize">
     <input id="movNumSize" type="range" min="10" max="60" step="1" value="28">
-    <span id="movNumSizeVal">28px</span>
+    <span id="movNumSizeVal" class="sliderVal">28px</span>
   </label>
 
   <label id="labelSizeWrap" data-lbl="labelSize">
     <input id="labelSize" type="range" min="8" max="36" step="1" value="12">
-    <span id="labelSizeVal">12px</span>
+    <span id="labelSizeVal" class="sliderVal">12px</span>
   </label>
 
   <label id="labelBGWrap" data-lbl="labelBG">
     <input id="labelBG" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelBGVal">0%</span>
+    <span id="labelBGVal" class="sliderVal">0%</span>
   </label>
 
   <label id="labelAlphaWrap" data-lbl="labelAlpha">
     <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelAlphaVal">0%</span>
+    <span id="labelAlphaVal" class="sliderVal">0%</span>
   </label>
 
   <!-- MIDI File controls（常時表示） -->
