@@ -11,7 +11,7 @@
   #ui{position:fixed;top:75px;left:8px;gap:12px;display:flex;flex-wrap:wrap;align-items:center;z-index:2;
        transform-origin:top left; transform:scale(var(--ui-scale));
        max-height:calc(100vh - 110px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 6px;}
-  canvas{display:block;width:100vw;height:100vh}
+  canvas{display:block;width:100vw;height:100vh;touch-action:none}
   label{display:flex;gap:6px;align-items:center}
   input[type=range]{width:180px}
   button,select{padding:6px 10px}
@@ -636,6 +636,62 @@ let diskAngle = 0, diskOmega = 0;
 let diskMass = Math.pow(10, parseFloat(massSlider.value));
 let excludeMode = excludeSel.value;
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
+
+// UIを隠したフルスクリーン表示中はスクロールできなくてもよいので、
+// ディスク（anchor=disk時は水面）をドラッグで回転させる操作を用意する。
+const dragRot = {
+  active: false,
+  startAngle: 0,
+  startDiskAngle: 0,
+  anchor: 'water'
+};
+function clientAngle(ev){
+  const rect = cv.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const x = (ev.clientX != null) ? ev.clientX : (ev.touches && ev.touches[0] && ev.touches[0].clientX);
+  const y = (ev.clientY != null) ? ev.clientY : (ev.touches && ev.touches[0] && ev.touches[0].clientY);
+  if(x == null || y == null) return null;
+  const dx = x - cx;
+  const dy = cy - y; // 画面座標系をキャンバスの極座標に合わせる
+  return Math.atan2(dy, dx);
+}
+function beginDrag(ev){
+  if(ev.button != null && ev.button !== 0) return;
+  const ang = clientAngle(ev);
+  if(ang == null) return;
+  dragRot.active = true;
+  dragRot.startAngle = ang;
+  dragRot.startDiskAngle = diskAngle;
+  dragRot.anchor = anchorSel.value;
+  diskOmega = 0; // 手動操作中は慣性をリセット
+  if(ev.pointerId != null && cv.setPointerCapture){
+    try{ cv.setPointerCapture(ev.pointerId); }catch{}
+  }
+  ev.preventDefault();
+}
+function moveDrag(ev){
+  if(!dragRot.active) return;
+  const ang = clientAngle(ev);
+  if(ang == null) return;
+  const delta = ang - dragRot.startAngle;
+  const dir = (dragRot.anchor === 'disk') ? -1 : 1;
+  diskAngle = dragRot.startDiskAngle + dir * delta;
+  diskOmega = 0;
+  ev.preventDefault();
+}
+function endDrag(ev){
+  if(!dragRot.active) return;
+  dragRot.active = false;
+  if(ev && ev.pointerId != null && cv.releasePointerCapture){
+    try{ cv.releasePointerCapture(ev.pointerId); }catch{}
+  }
+}
+cv.addEventListener('pointerdown', beginDrag, {passive:false});
+cv.addEventListener('pointermove', moveDrag, {passive:false});
+cv.addEventListener('pointerup', endDrag, {passive:false});
+cv.addEventListener('pointercancel', endDrag, {passive:false});
+cv.addEventListener('pointerleave', endDrag, {passive:false});
 
 /* ωmax（log10軸） */
 function fmtOmega(v){
