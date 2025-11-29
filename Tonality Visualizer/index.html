@@ -274,6 +274,49 @@ const btnNext = document.getElementById('btnNext');
 const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
 
+function reserveValueWidths(){
+  const reserve = (el, samples)=>{
+    if(!el || !samples || !samples.length) return;
+    const probe = document.createElement('span');
+    probe.style.visibility = 'hidden';
+    probe.style.position = 'absolute';
+    probe.style.whiteSpace = 'pre';
+    probe.style.font = 'inherit';
+    probe.style.fontVariantNumeric = 'tabular-nums';
+    uiPanel.appendChild(probe);
+    let maxWidth = 0;
+    for(const text of samples){
+      probe.textContent = text;
+      const w = probe.getBoundingClientRect().width;
+      if(w > maxWidth) maxWidth = w;
+    }
+    uiPanel.removeChild(probe);
+    el.style.display = 'inline-block';
+    el.style.minWidth = `${Math.ceil(maxWidth)}px`;
+    el.style.textAlign = 'right';
+    el.style.fontVariantNumeric = 'tabular-nums';
+  };
+
+  reserve(omegaMaxVal, ['0.0100 rad/s', '100 rad/s']);
+  reserve(dampVal, ['0.000%/s', '99.000%/s']);
+  reserve(uiopVal, ['100%']);
+  reserve(massVal, ['M=0.01', 'M=100.00']);
+  reserve(lowCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
+  reserve(highCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
+  const pctSamples = ['0%', '100%'];
+  reserve(lineAVal, pctSamples);
+  reserve(straightLineAVal, pctSamples);
+  reserve(noteGuideAVal, pctSamples);
+  reserve(noteGuideLabelAVal, pctSamples);
+  reserve(waterAVal, pctSamples);
+  reserve(movNumAVal, pctSamples);
+  reserve(labelBGVal, pctSamples);
+  reserve(labelAlphaVal, pctSamples);
+  reserve(movNumSizeVal, ['10px', '60px']);
+  reserve(labelSizeVal, ['8px', '36px']);
+}
+reserveValueWidths();
+
 /* ===== i18n + persist ===== */
 // 言語切り替え用の辞書データ
 const I18N = {
