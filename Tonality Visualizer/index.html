@@ -79,7 +79,7 @@
     <datalist id="dampTicks">
       <option value="0"><option value="25"><option value="50"><option value="75"><option value="99">
     </datalist>
-    <span id="dampVal">99.000%/s</span>
+    <span id="dampVal">99%/s</span>
   </label>
 
   <!-- snap ω when α=0 -->
@@ -137,8 +137,8 @@
   </label>
 
   <label id="waterAWrap" data-lbl="waterAlpha">
-    <input id="waterA" type="range" min="0" max="100" step="1" value="12">
-    <span id="waterAVal">12%</span>
+    <input id="waterA" type="range" min="0" max="100" step="1" value="15">
+    <span id="waterAVal">15%</span>
   </label>
 
   <label id="movNumAWrap" data-lbl="movNumAlpha">
@@ -171,6 +171,10 @@
   <label id="fileWrap" data-lbl="midiFile">
     <input id="midiFile" type="file" accept=".mid,.midi,audio/midi,audio/x-midi">
   </label>
+  <label id="transposeWrap" data-lbl="transpose">
+    <input id="transpose" type="range" min="-6" max="6" step="1" value="0">
+    <span id="transposeVal">+0 半音</span>
+  </label>
   <label id="fileOpWrap" data-lbl="fileOp">
     <select id="fileOp">
       <option value="play">再生</option>
@@ -182,6 +186,10 @@
     <button id="btnPause">⏸</button>
     <button id="btnStop">⏹</button>
   </span>
+  <label id="seekWrap" data-lbl="seek">
+    <input id="seek" type="range" min="0" max="1000" step="0.01" value="0" disabled>
+    <span id="seekTime">0:00 / 0:00</span>
+  </label>
   <span id="trainBtns">
     <button id="btnStartTrain">開始/リスタート</button>
     <button id="btnPrev">◀︎</button>
@@ -273,6 +281,10 @@ const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
+const transposeSlider = document.getElementById('transpose');
+const transposeVal = document.getElementById('transposeVal');
+const seekSlider = document.getElementById('seek');
+const seekTime = document.getElementById('seekTime');
 
 function reserveValueWidths(){
   const reserve = (el, samples)=>{
@@ -298,7 +310,7 @@ function reserveValueWidths(){
   };
 
   reserve(omegaMaxVal, ['0.0100 rad/s', '100 rad/s']);
-  reserve(dampVal, ['0.000%/s', '99.000%/s']);
+  reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
   reserve(lowCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
@@ -336,7 +348,8 @@ const I18N = {
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
-    trainStart:"start / restart",
+    trainStart:"start / restart", transpose:"transpose",
+    seek:"position",
     resetDefaults:"reset settings"
   },
   ja:{
@@ -355,7 +368,8 @@ const I18N = {
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
-    trainStart:"開始/リスタート",
+    trainStart:"開始/リスタート", transpose:"移調",
+    seek:"再生位置",
     resetDefaults:"初期設定に戻す"
   }
 };
@@ -366,6 +380,7 @@ let DEFAULT_SETTINGS = null;
 // UIスケールと初期言語
 let uiScale = 0.95;
 let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
+let midiTranspose = 0;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
 function setLabelText(labelEl, key){
@@ -393,6 +408,7 @@ function applyI18N(){
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
   updateCutDisplays();
+  updateTransposeDisplay();
   document.getElementById('lang').value = lang;
   info.textContent = t('idle');
   midiStat.textContent = t('midiNotInit');
@@ -421,6 +437,7 @@ function collectSettingsFromUI(){
     lowCut: lowCutOct,
     highCut: highCutOct,
     omegaMaxExp: omegaMaxSlider.value,
+    midiTranspose,
     dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
@@ -521,6 +538,14 @@ function applySettings(settings, {force = false} = {}){
   }
   if(has('omegaMaxExp')){
     omegaMaxSlider.value = s.omegaMaxExp;
+    applyOmegaMaxFromSlider();
+  }
+  if(has('midiTranspose')){
+    const value = parseInt(s.midiTranspose,10);
+    const clamped = Math.max(-6, Math.min(6, Number.isNaN(value) ? 0 : value));
+    midiTranspose = clamped;
+    transposeSlider.value = String(clamped);
+    applyTransposeSetting({shouldSave:false, preservePlayback:false});
   }
   if(has('dampPct')){
     dampSlider.value = s.dampPct;
@@ -678,6 +703,16 @@ let worldRot = 0;          // 描画用回転（anchorにより決定）
 let diskAngle = 0, diskOmega = 0;
 let diskMass = Math.pow(10, parseFloat(massSlider.value));
 let excludeMode = excludeSel.value;
+let midiDataRaw = null; // 未移調のMIDIデータ
+let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+let trainer = null;
+let player = null;
+let seekMuting = false;
+let seekWasRunning = false;
+
+function applySeekMuteState(){
+  if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
+}
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 
 // UIを隠したフルスクリーン表示中はスクロールできなくてもよいので、
@@ -745,18 +780,57 @@ function fmtOmega(v){
 }
 let omegaMaxExp = parseFloat(omegaMaxSlider.value);
 let omegaMax = Math.pow(10, omegaMaxExp);
-omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
-omegaMaxSlider.oninput = ()=>{
+function applyOmegaMaxFromSlider(){
   omegaMaxExp = parseFloat(omegaMaxSlider.value);
   omegaMax = Math.pow(10, omegaMaxExp);
   omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
+}
+applyOmegaMaxFromSlider();
+omegaMaxSlider.oninput = ()=>{
+  applyOmegaMaxFromSlider();
   // UI操作に追従して設定を永続化
   saveSettings();
 };
 
+/* MIDI transpose */
+function formatTransposeValue(v){
+  const sign = v >= 0 ? '+' : '';
+  const suffix = lang === 'ja' ? '半音' : 'st';
+  return `${sign}${v} ${suffix}`;
+}
+function updateTransposeDisplay(){
+  transposeVal.textContent = formatTransposeValue(midiTranspose);
+}
+function formatTime(sec){
+  const clamped = Math.max(0, Math.floor(Number.isFinite(sec) ? sec : 0));
+  const m = Math.floor(clamped / 60);
+  const s = clamped % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+function updateSeekUI(pos = 0, total = null){
+  const totalSec = (total != null) ? Math.max(0, total) : Math.max(0, midiData?.lengthSec || 0);
+  const posSec = Math.max(0, Math.min(pos || 0, totalSec));
+  const frac = totalSec ? Math.min(1, posSec / totalSec) : 0;
+  seekSlider.value = (frac * 1000).toFixed(2);
+  seekSlider.disabled = !totalSec;
+  seekTime.textContent = `${formatTime(posSec)} / ${formatTime(totalSec)}`;
+}
+updateSeekUI();
+function applyTransposeSetting({shouldSave = true, preservePlayback = false} = {}){
+  const raw = parseInt(transposeSlider.value, 10);
+  const clamped = Math.max(-6, Math.min(6, Number.isNaN(raw) ? 0 : raw));
+  midiTranspose = clamped;
+  if(String(clamped) !== transposeSlider.value) transposeSlider.value = String(clamped);
+  updateTransposeDisplay();
+  if(shouldSave) saveSettings();
+  rebuildMidiView({preservePlayback});
+}
+updateTransposeDisplay();
+transposeSlider.addEventListener('input', ()=> applyTransposeSetting({preservePlayback:true}));
+
 /* ダンピング（比例）。スライダー値 = p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
-function fmtPct(p){ return p.toFixed(3); }
+function fmtPct(p){ return Math.round(p).toString(); }
 function updateDampFromSlider(){
   const raw = parseFloat(dampSlider.value);
   const p = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(99, raw));
@@ -843,6 +917,9 @@ if(resetBtn){
     lang = currentLang;
     applyUIScale();
     applyI18N();
+    midiTranspose = 0;
+    transposeSlider.value = '0';
+    applyTransposeSetting({preservePlayback:false});
     snapZeroAlpha = snapAlphaCheckbox.checked;
     updateDampFromSlider();
     updateFileOpUI();
@@ -1218,6 +1295,18 @@ function draw(){
   prevT = now;
 
   ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = '#0d1016';
+  ctx.fillRect(0,0,w,h);
+
+  // ディスク本体の塗りつぶし（フラットカラー）
+  const diskRadius = rMax + 8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, diskRadius, 0, 2*Math.PI);
+  ctx.fillStyle = 'rgba(24,28,36,0.95)';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(220,235,255,0.18)';
+  ctx.stroke();
 
   // 物理に使う入力
   // - 再生: ファイル由来 + ライブ入力
@@ -1359,7 +1448,15 @@ let audioCtx=null;
 // 再利用できるAudioContextを返し、存在しない場合は新規作成
 function ensureCtx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000}); return audioCtx; }
 class PolySynth{
-  constructor(ctx){ this.ctx=ctx; this.master=ctx.createGain(); this.master.gain.value=0.9; this.master.connect(ctx.destination); this.voices=new Map(); }
+  constructor(ctx){
+    this.ctx=ctx;
+    this.masterGain=0.9;
+    this.master=ctx.createGain();
+    this.master.gain.value=this.masterGain;
+    this.master.connect(ctx.destination);
+    this.voices=new Map();
+    this.muted=false;
+  }
   // ノートオン時に2つのオシレータとローパスフィルタを構成し、ADSRでゲインを制御
   noteOn(midi, vel=1, when=null){
     const t = (when!=null)? when : this.ctx.currentTime;
@@ -1386,6 +1483,11 @@ class PolySynth{
     this.voices.delete(midi);
   }
   allNotesOff(){ for(const m of Array.from(this.voices.keys())) this.noteOff(m); }
+  setMuted(m){
+    this.muted = m;
+    const target = m ? 0 : this.masterGain;
+    this.master.gain.setTargetAtTime(target, this.ctx.currentTime, 0.01);
+  }
 }
 let synth=null;
 
@@ -1408,7 +1510,7 @@ function midiMessageHandler(ev){
   if(st===0x90){
     if(vel>0){
       liveNotes.set(note, vel/127);
-      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); synth.noteOn(note, vel/127); }
+      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); applySeekMuteState(); synth.noteOn(note, vel/127); }
     }else{
       liveNotes.delete(note);
       if(synth) synth.noteOff(note);
@@ -1527,7 +1629,6 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
 }
 
 /* ===== MIDI File loader / parser ===== */
-let midiData = null; // {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 // ファイル関連のメッセージを下部UIに表示
 function uiLog(msg){ fileInfo.textContent = msg; }
 
@@ -1554,18 +1655,11 @@ async function handlePickedFile(file){
 
     const parsed = parseMIDI(ab);
     if(!parsed || !parsed.notes) throw new Error('parse failed');
-    midiData = parsed;
-
-    if(player){
-      player.stop();
-      player = null;
-    }
+    midiDataRaw = parsed;
+    rebuildMidiView();
 
     const trks = (Array.isArray(midiData.tracks) ? midiData.tracks.length : (midiData.tracks ?? 0));
     uiLog(`OK: ${file.name}  trks:${trks}  ppq:${midiData.ppq}  len:${midiData.lengthSec.toFixed(2)}s  notes:${midiData.notes.length}`);
-
-    trainer = new Trainer(midiData);
-    updateTrainerUI();
   }catch(err){
     uiLog(`解析失敗: ${err && err.message ? err.message : err}`);
     console.error(err);
@@ -1739,10 +1833,54 @@ function parseMIDI(ab){
   const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
 
   return { ppq, tracks, tempos, segments, ticksToSec, notes, lengthSec, onsets, onsetTicks };
-}
+  }
 
-/* ===== Player ===== */
-class Player{
+  function applyTransposeToMIDI(data, shift){
+    if(!data) return null;
+    const clampNote = (n)=>{
+      const v = n + shift;
+      return (v < 0 || v > 127) ? null : v;
+    };
+    const notes = [];
+    for(const n of data.notes || []){
+      const nn = clampNote(n.note);
+      if(nn==null) continue;
+      notes.push({...n, note: nn});
+    }
+    const onsets = new Map();
+    if(data.onsets){
+      data.onsets.forEach((arr, tk)=>{
+        const mapped = arr.map(o=>({note: clampNote(o.note), vel: o.vel})).filter(o=>o.note!=null);
+        if(mapped.length) onsets.set(tk, mapped);
+      });
+    }
+    const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
+    return {...data, notes, onsets, onsetTicks, transpose: shift};
+  }
+
+  function rebuildMidiView({preservePlayback = false} = {}){
+    if(!midiDataRaw) return;
+    const resume = preservePlayback && player;
+    const resumeCtx = resume ? player.ctx : null;
+    const resumeRunning = resume ? player.running : false;
+    const resumePos = resume ? player.currentPosition() : 0;
+    if(player){
+      player.stop();
+      player = null;
+    }
+    midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
+    trainer = new Trainer(midiData);
+    updateTrainerUI();
+    updateSeekUI(resumePos, midiData.lengthSec);
+    const ctx = resumeCtx || ensureCtx();
+    player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
+    player.setPosition(resumePos);
+    if(resumeRunning) player.play();
+  }
+
+  /* ===== Player ===== */
+  class Player{
   constructor(ctx, notes){
     this.ctx=ctx; this.notes=notes;
     this.events = [];
@@ -1758,10 +1896,47 @@ class Player{
     this.lookahead = 0.1; // s
     this.running = false;
     this.timeouts = new Set();
+    this.onProgressCb = null;
+  }
+  onProgress(cb){ this.onProgressCb = cb; }
+  emitProgress(){ if(this.onProgressCb) this.onProgressCb(this.currentPosition(), this.totalLength()); }
+  clearTimers(){
+    if(this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    for(const to of this.timeouts) clearTimeout(to);
+    this.timeouts.clear();
+  }
+  clearPlayingState(){
+    this.clearTimers();
+    fileNotes.clear();
+    if(synth) synth.allNotesOff();
+  }
+  activateHeldNotes(posSec){
+    if(!this.notes || !this.notes.length) return;
+    const when = this.ctx.currentTime + 0.001;
+    if(!synth) synth=new PolySynth(this.ctx);
+    applySeekMuteState();
+    for(const n of this.notes){
+      if(n.startSec < posSec && n.endSec > posSec){
+        const vel = n.vel/127;
+        synth.noteOn(n.note, vel, when);
+        fileNotes.set(n.note, vel);
+      }
+    }
+  }
+  currentPosition(){
+    const now = this.running ? (this.ctx.currentTime - this.t0Ctx) : this.posSec;
+    return Math.max(0, Math.min(now, this.totalLength()));
+  }
+  retargetIndex(){
+    const pos = this.currentPosition();
+    let idx = this.events.findIndex(ev => ev.time >= pos);
+    this.nextIdx = idx < 0 ? this.events.length : idx;
   }
   scheduleUntil(tCut){
     const ctx=this.ctx;
     if(!synth) synth=new PolySynth(ctx);
+    applySeekMuteState();
     while(this.nextIdx < this.events.length && this.events[this.nextIdx].time <= tCut){
       const ev = this.events[this.nextIdx++];
       const whenAbs = this.t0Ctx + ev.time;
@@ -1782,6 +1957,7 @@ class Player{
     if(!this.running) return;
     const now = this.ctx.currentTime - this.t0Ctx;
     this.scheduleUntil(now + this.lookahead);
+    this.emitProgress();
     if(now >= this.totalLength()){ this.stop(); return; }
     this.timer = setTimeout(this.tick, 20);
   }
@@ -1790,20 +1966,40 @@ class Player{
     if(this.running) return;
     this.t0Ctx = this.ctx.currentTime - this.posSec;
     this.running = true;
+    this.emitProgress();
+    this.activateHeldNotes(this.posSec);
+    this.scheduleUntil(this.posSec + this.lookahead);
     this.tick();
   }
-  pause(){ if(!this.running) return; this.posSec = this.ctx.currentTime - this.t0Ctx; this.running = false; if(this.timer) clearTimeout(this.timer); }
+  pause(){
+    if(!this.running) return;
+    this.posSec = this.ctx.currentTime - this.t0Ctx;
+    this.retargetIndex();
+    this.running = false;
+    this.clearTimers();
+    this.clearPlayingState();
+    this.emitProgress();
+  }
   stop(){
     this.running = false; this.posSec = 0; this.nextIdx = 0;
-    if(this.timer) clearTimeout(this.timer);
-    for(const to of this.timeouts) clearTimeout(to);
-    this.timeouts.clear();
-    fileNotes.clear();
-    if(synth) synth.allNotesOff();
+    this.clearPlayingState();
+    this.emitProgress();
+  }
+  setPosition(sec){
+    const total = this.totalLength();
+    const clamped = Math.max(0, Math.min(Number.isFinite(sec) ? sec : 0, total));
+    this.posSec = clamped;
+    this.retargetIndex();
+    this.clearPlayingState();
+    if(this.running){
+      this.t0Ctx = this.ctx.currentTime - this.posSec;
+      this.activateHeldNotes(this.posSec);
+      this.scheduleUntil(this.posSec + this.lookahead);
+      this.tick();
+    }
+    this.emitProgress();
   }
 }
-let player = null;
-
 /* ===== Trainer（離鍵必須のエッジ検出） ===== */
 class Trainer{
   constructor(midi){
@@ -1861,25 +2057,52 @@ class Trainer{
     }
   }
 }
-let trainer = null;
-
-/* ===== UI actions ===== */
-btnPlay.onclick = ()=>{
+  /* ===== UI actions ===== */
+  btnPlay.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   const ctx = ensureCtx();
   try{ if(ctx.state==='suspended') ctx.resume(); }catch{}
   if(!player){
     player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
   }
   // 再生完了後は先頭から再生成、途中停止ならその位置から再開
   if(player.posSec >= player.totalLength()){
     player.stop();
     player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
   }
   player.play();
 };
 btnPause.onclick = ()=>{ if(player) player.pause(); };
 btnStop.onclick = ()=>{ if(player) player.stop(); };
+const beginSeekInteraction = ()=>{
+  seekWasRunning = !!(player && player.running);
+  if(player) player.pause();
+  if(!seekMuting){ seekMuting = true; applySeekMuteState(); }
+};
+const endSeekInteraction = ()=>{
+  if(seekMuting){ seekMuting = false; applySeekMuteState(); }
+  if(seekWasRunning && player){ player.play(); }
+  seekWasRunning = false;
+};
+seekSlider.addEventListener('pointerdown', beginSeekInteraction);
+seekSlider.addEventListener('pointerup', endSeekInteraction);
+seekSlider.addEventListener('pointercancel', endSeekInteraction);
+addEventListener('pointerup', endSeekInteraction);
+addEventListener('pointercancel', endSeekInteraction);
+seekSlider.addEventListener('input', ()=>{
+  if(!midiData) return;
+  if(!player){
+    const ctx = ensureCtx();
+    player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
+  }
+  const raw = parseFloat(seekSlider.value);
+  const frac = Math.max(0, Math.min(1, Number.isNaN(raw) ? 0 : raw / 1000));
+  const target = frac * player.totalLength();
+  if(Number.isFinite(target)) player.setPosition(target);
+});
 
 btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
