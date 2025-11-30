@@ -328,7 +328,6 @@ function reserveValueWidths(){
   reserve(movNumSizeVal, ['10px', '60px']);
   reserve(labelSizeVal, ['8px', '36px']);
 }
-reserveValueWidths();
 
 /* ===== i18n + persist ===== */
 // 言語切り替え用の辞書データ
@@ -403,6 +402,8 @@ const I18N = {
     filePlayback:"파일 재생", trainerStepPrefix:"스텝:"
   }
 };
+
+reserveValueWidths();
 const SETTINGS_KEY = 'ppm:v6';
 // 初回ロード時のデフォルト設定をキャッシュ
 let DEFAULT_SETTINGS = null;
