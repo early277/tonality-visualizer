@@ -137,8 +137,8 @@
   </label>
 
   <label id="waterAWrap" data-lbl="waterAlpha">
-    <input id="waterA" type="range" min="0" max="100" step="1" value="25">
-    <span id="waterAVal">25%</span>
+    <input id="waterA" type="range" min="0" max="100" step="1" value="15">
+    <span id="waterAVal">15%</span>
   </label>
 
   <label id="movNumAWrap" data-lbl="movNumAlpha">
@@ -162,8 +162,8 @@
   </label>
 
   <label id="labelAlphaWrap" data-lbl="labelAlpha">
-    <input id="labelAlpha" type="range" min="0" max="100" step="1" value="70">
-    <span id="labelAlphaVal">70%</span>
+    <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
+    <span id="labelAlphaVal">0%</span>
   </label>
 
   <!-- MIDI File controls（常時表示） -->
@@ -707,6 +707,11 @@ let midiDataRaw = null; // 未移調のMIDIデータ
 let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 let trainer = null;
 let player = null;
+let seekMuting = false;
+
+function applySeekMuteState(){
+  if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
+}
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 
 // UIを隠したフルスクリーン表示中はスクロールできなくてもよいので、
@@ -1446,7 +1451,15 @@ let audioCtx=null;
 // 再利用できるAudioContextを返し、存在しない場合は新規作成
 function ensureCtx(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000}); return audioCtx; }
 class PolySynth{
-  constructor(ctx){ this.ctx=ctx; this.master=ctx.createGain(); this.master.gain.value=0.9; this.master.connect(ctx.destination); this.voices=new Map(); }
+  constructor(ctx){
+    this.ctx=ctx;
+    this.masterGain=0.9;
+    this.master=ctx.createGain();
+    this.master.gain.value=this.masterGain;
+    this.master.connect(ctx.destination);
+    this.voices=new Map();
+    this.muted=false;
+  }
   // ノートオン時に2つのオシレータとローパスフィルタを構成し、ADSRでゲインを制御
   noteOn(midi, vel=1, when=null){
     const t = (when!=null)? when : this.ctx.currentTime;
@@ -1473,6 +1486,11 @@ class PolySynth{
     this.voices.delete(midi);
   }
   allNotesOff(){ for(const m of Array.from(this.voices.keys())) this.noteOff(m); }
+  setMuted(m){
+    this.muted = m;
+    const target = m ? 0 : this.masterGain;
+    this.master.gain.setTargetAtTime(target, this.ctx.currentTime, 0.01);
+  }
 }
 let synth=null;
 
@@ -1495,7 +1513,7 @@ function midiMessageHandler(ev){
   if(st===0x90){
     if(vel>0){
       liveNotes.set(note, vel/127);
-      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); synth.noteOn(note, vel/127); }
+      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); applySeekMuteState(); synth.noteOn(note, vel/127); }
     }else{
       liveNotes.delete(note);
       if(synth) synth.noteOff(note);
@@ -1900,6 +1918,7 @@ function parseMIDI(ab){
     if(!this.notes || !this.notes.length) return;
     const when = this.ctx.currentTime + 0.001;
     if(!synth) synth=new PolySynth(this.ctx);
+    applySeekMuteState();
     for(const n of this.notes){
       if(n.startSec < posSec && n.endSec > posSec){
         const vel = n.vel/127;
@@ -1920,6 +1939,7 @@ function parseMIDI(ab){
   scheduleUntil(tCut){
     const ctx=this.ctx;
     if(!synth) synth=new PolySynth(ctx);
+    applySeekMuteState();
     while(this.nextIdx < this.events.length && this.events[this.nextIdx].time <= tCut){
       const ev = this.events[this.nextIdx++];
       const whenAbs = this.t0Ctx + ev.time;
@@ -2059,6 +2079,13 @@ class Trainer{
 };
 btnPause.onclick = ()=>{ if(player) player.pause(); };
 btnStop.onclick = ()=>{ if(player) player.stop(); };
+const beginSeekMute = ()=>{ if(seekMuting) return; seekMuting = true; applySeekMuteState(); };
+const endSeekMute = ()=>{ if(!seekMuting) return; seekMuting = false; applySeekMuteState(); };
+seekSlider.addEventListener('pointerdown', beginSeekMute);
+seekSlider.addEventListener('pointerup', endSeekMute);
+seekSlider.addEventListener('pointercancel', endSeekMute);
+addEventListener('pointerup', endSeekMute);
+addEventListener('pointercancel', endSeekMute);
 seekSlider.addEventListener('input', ()=>{
   if(!midiData) return;
   if(!player){
