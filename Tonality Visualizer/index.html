@@ -30,6 +30,7 @@
     <select id="lang">
       <option value="en">English</option>
       <option value="ja" selected>日本語</option>
+      <option value="ko">한국어</option>
     </select>
   </label>
 
@@ -313,8 +314,8 @@ function reserveValueWidths(){
   reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
-  reserve(lowCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
-  reserve(highCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
+  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en')]);
+  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en')]);
   const pctSamples = ['0%', '100%'];
   reserve(lineAVal, pctSamples);
   reserve(straightLineAVal, pctSamples);
@@ -350,7 +351,10 @@ const I18N = {
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
     trainStart:"start / restart", transpose:"transpose",
     seek:"position",
-    resetDefaults:"reset settings"
+    resetDefaults:"reset settings",
+    uiHide:"hide UI", uiShow:"show UI",
+    octaveSuffix:"oct", transposeSuffix:"st",
+    filePlayback:"file playback", trainerStepPrefix:"step:"
   },
   ja:{
     language:"言語", device:"デバイス", allInputs:"全入力",
@@ -370,7 +374,33 @@ const I18N = {
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
     trainStart:"開始/リスタート", transpose:"移調",
     seek:"再生位置",
-    resetDefaults:"初期設定に戻す"
+    resetDefaults:"初期設定に戻す",
+    uiHide:"UI隠す", uiShow:"UI表示",
+    octaveSuffix:"オクターブ", transposeSuffix:"半音",
+    filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:"
+  },
+  ko:{
+    language:"언어", device:"장치", allInputs:"모든 입력",
+    anchor:"고정", waterFixed:"수면 고정", diskFixed:"디스크 고정",
+    liveSound:"MIDI 입력 음성 재생",
+    torqueExclude:"토크 제외 영역", filled:"채움", unfilled:"비채움",
+    uiOpacity:"UI 불투명도", diskMass:"디스크 질량", damping:"댐핑",
+    snapZeroAlpha:"α=0에서 각속도 정지",
+    lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기",
+    labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
+    lowCut:"저음역 컷", highCut:"고음역 컷",
+    omegaMax:"최대 회전 속도",
+    midiNotInit:"MIDI: 초기화되지 않음", last:"마지막:", idle:"대기",
+    midiNeedSecure:"HTTPS/localhost 필요", midiUnsupported:"미지원",
+    midiReady:"준비 완료", midiInitFailed:"초기화 실패", midiAllInputsStat:"모든 입력",
+    midiInputStatPrefix:"입력:", midiNoDevice:"장치 없음",
+    midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너",
+    trainStart:"시작/재시작", transpose:"이조",
+    seek:"재생 위치",
+    resetDefaults:"초기 설정으로",
+    uiHide:"UI 숨기기", uiShow:"UI 표시",
+    octaveSuffix:"옥타브", transposeSuffix:"반음",
+    filePlayback:"파일 재생", trainerStepPrefix:"스텝:"
   }
 };
 const SETTINGS_KEY = 'ppm:v6';
@@ -379,7 +409,9 @@ let DEFAULT_SETTINGS = null;
 
 // UIスケールと初期言語
 let uiScale = 0.95;
-let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
+const SUPPORTED_LANGS = ['en','ja','ko'];
+const navigatorLang = (navigator.language || 'en').toLowerCase();
+let lang = navigatorLang.startsWith('ja') ? 'ja' : navigatorLang.startsWith('ko') ? 'ko' : 'en';
 let midiTranspose = 0;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
@@ -393,9 +425,14 @@ function setLabelText(labelEl, key){
 }
 // HTML全体のCSSカスタムプロパティに反映してUIのサイズを切り替える
 function applyUIScale(){ document.documentElement.style.setProperty('--ui-scale', uiScale); }
+function formatCutValueForLang(value, targetLang){
+  const suffix = (I18N[targetLang] && I18N[targetLang].octaveSuffix) || I18N.en.octaveSuffix;
+  return `${value} ${suffix}`;
+}
 // ラベルやステータスの文言を現在の言語設定で書き換える
 function applyI18N(){
   document.documentElement.lang = lang;
+  reserveValueWidths();
   // data-lbl属性を持つすべての要素に翻訳済みの文字列を注入
   document.querySelectorAll('[data-lbl]').forEach(el=> setLabelText(el, el.getAttribute('data-lbl')));
   anchorSel.querySelector('option[value="water"]').textContent = t('waterFixed');
@@ -406,17 +443,18 @@ function applyI18N(){
   fileOp.querySelector('option[value="train"]').textContent = t('train');
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
-  uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
+  uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
   updateCutDisplays();
   updateTransposeDisplay();
   document.getElementById('lang').value = lang;
   info.textContent = t('idle');
   midiStat.textContent = t('midiNotInit');
   midiLast.textContent = t('last') + ' –';
+  updateFileOpUI();
 }
 // 言語選択ドロップダウンの変更ハンドラ
 document.getElementById('lang').addEventListener('change', e=>{
-  lang = e.target.value==='ja' ? 'ja' : 'en';
+  lang = SUPPORTED_LANGS.includes(e.target.value) ? e.target.value : 'en';
   applyI18N(); saveSettings();
 });
 
@@ -456,7 +494,7 @@ function applySettings(settings, {force = false} = {}){
 
   // 言語関連の復元
   if(has('lang')){
-    lang = s.lang === 'ja' ? 'ja' : 'en';
+    lang = SUPPORTED_LANGS.includes(s.lang) ? s.lang : 'en';
   }
   // UIスケール関連の復元
   if(has('uiScale')){
@@ -589,7 +627,7 @@ function updateUIVisibility(){
   // displayプロパティで丸ごとパネルを非表示にする
   uiPanel.style.display = uiVisible ? '' : 'none';
   uiToggle.setAttribute('aria-pressed', String(!uiVisible));
-  uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
+  uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
 }
 // ボタン操作時は状態をトグルして即座に保存
 uiToggle.onclick = ()=>{ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); };
@@ -604,10 +642,10 @@ function updateFileOpUI(){
   document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
   if(isPlay){
     // 再生モード時は最新の進行状況を再生ステータスで置き換える
-    info.textContent = 'file playback';
+    info.textContent = t('filePlayback');
   }else{
     // トレーナーモードに切り替わると進捗インジケータを初期化
-    trainerStat.textContent = 'step: –';
+    trainerStat.textContent = `${t('trainerStepPrefix')} –`;
   }
 }
 fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
@@ -795,7 +833,7 @@ omegaMaxSlider.oninput = ()=>{
 /* MIDI transpose */
 function formatTransposeValue(v){
   const sign = v >= 0 ? '+' : '';
-  const suffix = lang === 'ja' ? '半音' : 'st';
+  const suffix = t('transposeSuffix');
   return `${sign}${v} ${suffix}`;
 }
 function updateTransposeDisplay(){
@@ -859,7 +897,7 @@ let highCutOct = Math.max(0, Math.min(CUT_MAX, parseInt(highCutSlider.value,10) 
 function activeOctaveCount(){ return Math.max(1, OCTAVES - lowCutOct - highCutOct); }
 function minDisplayFreq(){ return F_LOW * Math.pow(2, lowCutOct); }
 function maxDisplayFreq(){ return F_LOW * Math.pow(2, lowCutOct + activeOctaveCount()); }
-function formatCutValue(v){ return lang==='ja' ? `${v}オクターブ` : `${v} oct`; }
+function formatCutValue(v){ return formatCutValueForLang(v, lang); }
 function updateCutDisplays(){
   lowCutVal.textContent = formatCutValue(lowCutOct);
   highCutVal.textContent = formatCutValue(highCutOct);
