@@ -29,6 +29,7 @@
   <label id="langWrap" data-lbl="language">
     <select id="lang">
       <option value="en">English</option>
+      <option value="es-MX">Español (México)</option>
       <option value="ja" selected>日本語</option>
       <option value="ko">한국어</option>
       <option value="zh">简体中文</option>
@@ -315,8 +316,8 @@ function reserveValueWidths(){
   reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
-  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'zh')]);
-  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'zh')]);
+  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'zh')]);
+  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'zh')]);
   const pctSamples = ['0%', '100%'];
   reserve(lineAVal, pctSamples);
   reserve(straightLineAVal, pctSamples);
@@ -355,6 +356,29 @@ const I18N = {
     uiHide:"hide UI", uiShow:"show UI",
     octaveSuffix:"oct", transposeSuffix:"st",
     filePlayback:"file playback", trainerStepPrefix:"step:"
+  },
+  "es-MX":{
+    language:"idioma", device:"dispositivo", allInputs:"todas las entradas",
+    anchor:"fijación", waterFixed:"agua fija", diskFixed:"disco fijo",
+    liveSound:"reproducir audio MIDI de entrada",
+    torqueExclude:"zona excluida de torque", filled:"relleno", unfilled:"sin rellenar",
+    uiOpacity:"opacidad de la UI", diskMass:"masa del disco", damping:"amortiguación",
+    snapZeroAlpha:"detener ω cuando α=0",
+    lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do",
+    labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
+    lowCut:"corte de graves", highCut:"corte de agudos",
+    omegaMax:"ω máx",
+    midiNotInit:"MIDI: sin inicializar", last:"último:", idle:"en espera",
+    midiNeedSecure:"requiere HTTPS/localhost", midiUnsupported:"no compatible",
+    midiReady:"listo", midiInitFailed:"fallo de inicio", midiAllInputsStat:"todas las entradas",
+    midiInputStatPrefix:"entrada:", midiNoDevice:"sin dispositivo",
+    midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador",
+    trainStart:"iniciar/reiniciar", transpose:"transposición",
+    seek:"posición de reproducción",
+    resetDefaults:"restablecer ajustes",
+    uiHide:"ocultar UI", uiShow:"mostrar UI",
+    octaveSuffix:"oct.", transposeSuffix:"semitonos",
+    filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:"
   },
   ja:{
     language:"言語", device:"デバイス", allInputs:"全入力",
@@ -434,11 +458,12 @@ let DEFAULT_SETTINGS = null;
 
 // UIスケールと初期言語
 let uiScale = 0.95;
-const SUPPORTED_LANGS = ['en','ja','ko','zh'];
+const SUPPORTED_LANGS = ['en','es-MX','ja','ko','zh'];
 const navigatorLang = (navigator.language || 'en').toLowerCase();
 let lang = navigatorLang.startsWith('ja') ? 'ja'
   : navigatorLang.startsWith('ko') ? 'ko'
   : navigatorLang.startsWith('zh') ? 'zh'
+  : navigatorLang.startsWith('es') ? 'es-MX'
   : 'en';
 let midiTranspose = 0;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
