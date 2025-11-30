@@ -1298,12 +1298,10 @@ function draw(){
   ctx.fillStyle = '#0d1016';
   ctx.fillRect(0,0,w,h);
 
-  // ディスク本体の塗りつぶし（フラットカラー）
+  // ディスク本体（完全透過の背景）
   const diskRadius = rMax + 8;
   ctx.beginPath();
   ctx.arc(cx, cy, diskRadius, 0, 2*Math.PI);
-  ctx.fillStyle = 'rgba(24,28,36,0.95)';
-  ctx.fill();
   ctx.lineWidth = 2;
   ctx.strokeStyle = 'rgba(220,235,255,0.18)';
   ctx.stroke();
