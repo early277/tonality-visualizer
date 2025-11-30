@@ -137,8 +137,8 @@
   </label>
 
   <label id="waterAWrap" data-lbl="waterAlpha">
-    <input id="waterA" type="range" min="0" max="100" step="1" value="12">
-    <span id="waterAVal">12%</span>
+    <input id="waterA" type="range" min="0" max="100" step="1" value="25">
+    <span id="waterAVal">25%</span>
   </label>
 
   <label id="movNumAWrap" data-lbl="movNumAlpha">
@@ -162,8 +162,8 @@
   </label>
 
   <label id="labelAlphaWrap" data-lbl="labelAlpha">
-    <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
-    <span id="labelAlphaVal">0%</span>
+    <input id="labelAlpha" type="range" min="0" max="100" step="1" value="70">
+    <span id="labelAlphaVal">70%</span>
   </label>
 
   <!-- MIDI File controls（常時表示） -->
@@ -703,6 +703,10 @@ let worldRot = 0;          // 描画用回転（anchorにより決定）
 let diskAngle = 0, diskOmega = 0;
 let diskMass = Math.pow(10, parseFloat(massSlider.value));
 let excludeMode = excludeSel.value;
+let midiDataRaw = null; // 未移調のMIDIデータ
+let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+let trainer = null;
+let player = null;
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 
 // UIを隠したフルスクリーン表示中はスクロールできなくてもよいので、
@@ -1285,16 +1289,22 @@ function draw(){
   prevT = now;
 
   ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = '#0d1016';
+  ctx.fillRect(0,0,w,h);
 
-  // ディスク本体の塗りつぶし（グラデーションでわずかに立体感を残す）
+  // ディスク本体の塗りつぶし（グラデーションで立体感を残しつつ明度を上げる）
   const diskRadius = rMax + 8;
   ctx.beginPath();
   ctx.arc(cx, cy, diskRadius, 0, 2*Math.PI);
-  const diskGrad = ctx.createRadialGradient(cx, cy, diskRadius * 0.05, cx, cy, diskRadius);
-  diskGrad.addColorStop(0, 'rgba(20,20,20,0.85)');
-  diskGrad.addColorStop(1, 'rgba(5,5,5,0.9)');
+  const diskGrad = ctx.createRadialGradient(cx, cy, diskRadius * 0.12, cx, cy, diskRadius);
+  diskGrad.addColorStop(0, 'rgba(60,70,90,0.95)');
+  diskGrad.addColorStop(0.65, 'rgba(32,36,45,0.94)');
+  diskGrad.addColorStop(1, 'rgba(18,20,26,0.96)');
   ctx.fillStyle = diskGrad;
   ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(220,235,255,0.18)';
+  ctx.stroke();
 
   // 物理に使う入力
   // - 再生: ファイル由来 + ライブ入力
@@ -1604,8 +1614,6 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
 }
 
 /* ===== MIDI File loader / parser ===== */
-let midiDataRaw = null; // 未移調のMIDIデータ
-let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 // ファイル関連のメッセージを下部UIに表示
 function uiLog(msg){ fileInfo.textContent = msg; }
 
@@ -1975,8 +1983,6 @@ function parseMIDI(ab){
     this.emitProgress();
   }
 }
-let player = null;
-
 /* ===== Trainer（離鍵必須のエッジ検出） ===== */
 class Trainer{
   constructor(midi){
@@ -2034,10 +2040,8 @@ class Trainer{
     }
   }
 }
-let trainer = null;
-
-/* ===== UI actions ===== */
-btnPlay.onclick = ()=>{
+  /* ===== UI actions ===== */
+  btnPlay.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   const ctx = ensureCtx();
   try{ if(ctx.state==='suspended') ctx.resume(); }catch{}
