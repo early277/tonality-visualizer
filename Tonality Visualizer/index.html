@@ -29,6 +29,7 @@
   <label id="langWrap" data-lbl="language">
     <select id="lang">
       <option value="en">English</option>
+      <option value="pt-BR">Português (Brasil)</option>
       <option value="es-MX">Español (México)</option>
       <option value="ja" selected>日本語</option>
       <option value="ko">한국어</option>
@@ -316,8 +317,8 @@ function reserveValueWidths(){
   reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
-  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'zh')]);
-  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'zh')]);
+  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'pt-BR'), formatCutValueForLang(6, 'zh')]);
+  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'es-MX'), formatCutValueForLang(6, 'pt-BR'), formatCutValueForLang(6, 'zh')]);
   const pctSamples = ['0%', '100%'];
   reserve(lineAVal, pctSamples);
   reserve(straightLineAVal, pctSamples);
@@ -356,6 +357,29 @@ const I18N = {
     uiHide:"hide UI", uiShow:"show UI",
     octaveSuffix:"oct", transposeSuffix:"st",
     filePlayback:"file playback", trainerStepPrefix:"step:"
+  },
+  "pt-BR":{
+    language:"idioma", device:"dispositivo", allInputs:"todas as entradas",
+    anchor:"ancoragem", waterFixed:"fixo à água", diskFixed:"fixo ao disco",
+    liveSound:"monitorar áudio do MIDI de entrada",
+    torqueExclude:"área sem torque", filled:"preenchido", unfilled:"não preenchido",
+    uiOpacity:"opacidade da UI", diskMass:"massa do disco", damping:"amortecimento",
+    snapZeroAlpha:"zerar ω quando α=0",
+    lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó",
+    labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
+    lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
+    omegaMax:"ω máx",
+    midiNotInit:"MIDI: não inicializado", last:"último:", idle:"ocioso",
+    midiNeedSecure:"requer HTTPS/localhost", midiUnsupported:"não compatível",
+    midiReady:"pronto", midiInitFailed:"falha na inicialização", midiAllInputsStat:"todas as entradas",
+    midiInputStatPrefix:"entrada:", midiNoDevice:"nenhum dispositivo",
+    midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador",
+    trainStart:"iniciar/reiniciar", transpose:"transposição",
+    seek:"posição de reprodução",
+    resetDefaults:"restaurar padrões",
+    uiHide:"ocultar UI", uiShow:"mostrar UI",
+    octaveSuffix:"oit", transposeSuffix:"semitons",
+    filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:"
   },
   "es-MX":{
     language:"idioma", device:"dispositivo", allInputs:"todas las entradas",
@@ -458,11 +482,12 @@ let DEFAULT_SETTINGS = null;
 
 // UIスケールと初期言語
 let uiScale = 0.95;
-const SUPPORTED_LANGS = ['en','es-MX','ja','ko','zh'];
+const SUPPORTED_LANGS = ['en','pt-BR','es-MX','ja','ko','zh'];
 const navigatorLang = (navigator.language || 'en').toLowerCase();
 let lang = navigatorLang.startsWith('ja') ? 'ja'
   : navigatorLang.startsWith('ko') ? 'ko'
   : navigatorLang.startsWith('zh') ? 'zh'
+  : navigatorLang.startsWith('pt') ? 'pt-BR'
   : navigatorLang.startsWith('es') ? 'es-MX'
   : 'en';
 let midiTranspose = 0;
