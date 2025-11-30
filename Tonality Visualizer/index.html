@@ -171,6 +171,10 @@
   <label id="fileWrap" data-lbl="midiFile">
     <input id="midiFile" type="file" accept=".mid,.midi,audio/midi,audio/x-midi">
   </label>
+  <label id="transposeWrap" data-lbl="transpose">
+    <input id="transpose" type="range" min="-24" max="24" step="1" value="0">
+    <span id="transposeVal">+0 半音</span>
+  </label>
   <label id="fileOpWrap" data-lbl="fileOp">
     <select id="fileOp">
       <option value="play">再生</option>
@@ -273,6 +277,8 @@ const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
+const transposeSlider = document.getElementById('transpose');
+const transposeVal = document.getElementById('transposeVal');
 
 function reserveValueWidths(){
   const reserve = (el, samples)=>{
@@ -336,7 +342,7 @@ const I18N = {
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
-    trainStart:"start / restart",
+    trainStart:"start / restart", transpose:"transpose",
     resetDefaults:"reset settings"
   },
   ja:{
@@ -355,7 +361,7 @@ const I18N = {
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
-    trainStart:"開始/リスタート",
+    trainStart:"開始/リスタート", transpose:"移調",
     resetDefaults:"初期設定に戻す"
   }
 };
@@ -366,6 +372,7 @@ let DEFAULT_SETTINGS = null;
 // UIスケールと初期言語
 let uiScale = 0.95;
 let lang = (navigator.language||'en').startsWith('ja') ? 'ja' : 'en';
+let midiTranspose = 0;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
 function setLabelText(labelEl, key){
@@ -393,6 +400,7 @@ function applyI18N(){
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? 'UI隠す' : 'UI表示';
   updateCutDisplays();
+  updateTransposeDisplay();
   document.getElementById('lang').value = lang;
   info.textContent = t('idle');
   midiStat.textContent = t('midiNotInit');
@@ -521,6 +529,13 @@ function applySettings(settings, {force = false} = {}){
   }
   if(has('omegaMaxExp')){
     omegaMaxSlider.value = s.omegaMaxExp;
+  }
+  if(has('midiTranspose')){
+    const value = parseInt(s.midiTranspose,10);
+    const clamped = Math.max(-24, Math.min(24, Number.isNaN(value) ? 0 : value));
+    midiTranspose = clamped;
+    transposeSlider.value = String(clamped);
+    applyTransposeSetting({shouldSave:false});
   }
   if(has('dampPct')){
     dampSlider.value = s.dampPct;
@@ -753,6 +768,27 @@ omegaMaxSlider.oninput = ()=>{
   // UI操作に追従して設定を永続化
   saveSettings();
 };
+
+/* MIDI transpose */
+function formatTransposeValue(v){
+  const sign = v >= 0 ? '+' : '';
+  const suffix = lang === 'ja' ? '半音' : 'st';
+  return `${sign}${v} ${suffix}`;
+}
+function updateTransposeDisplay(){
+  transposeVal.textContent = formatTransposeValue(midiTranspose);
+}
+function applyTransposeSetting({shouldSave = true} = {}){
+  const raw = parseInt(transposeSlider.value, 10);
+  const clamped = Math.max(-24, Math.min(24, Number.isNaN(raw) ? 0 : raw));
+  midiTranspose = clamped;
+  if(String(clamped) !== transposeSlider.value) transposeSlider.value = String(clamped);
+  updateTransposeDisplay();
+  if(shouldSave) saveSettings();
+  rebuildMidiView();
+}
+updateTransposeDisplay();
+transposeSlider.addEventListener('input', ()=> applyTransposeSetting());
 
 /* ダンピング（比例）。スライダー値 = p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
@@ -1527,7 +1563,8 @@ function torqueFromPoints(points, gravAbs, rMax, step, minRadius, minFreq, maxFr
 }
 
 /* ===== MIDI File loader / parser ===== */
-let midiData = null; // {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+let midiDataRaw = null; // 未移調のMIDIデータ
+let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 // ファイル関連のメッセージを下部UIに表示
 function uiLog(msg){ fileInfo.textContent = msg; }
 
@@ -1554,18 +1591,11 @@ async function handlePickedFile(file){
 
     const parsed = parseMIDI(ab);
     if(!parsed || !parsed.notes) throw new Error('parse failed');
-    midiData = parsed;
-
-    if(player){
-      player.stop();
-      player = null;
-    }
+    midiDataRaw = parsed;
+    rebuildMidiView();
 
     const trks = (Array.isArray(midiData.tracks) ? midiData.tracks.length : (midiData.tracks ?? 0));
     uiLog(`OK: ${file.name}  trks:${trks}  ppq:${midiData.ppq}  len:${midiData.lengthSec.toFixed(2)}s  notes:${midiData.notes.length}`);
-
-    trainer = new Trainer(midiData);
-    updateTrainerUI();
   }catch(err){
     uiLog(`解析失敗: ${err && err.message ? err.message : err}`);
     console.error(err);
@@ -1739,10 +1769,44 @@ function parseMIDI(ab){
   const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
 
   return { ppq, tracks, tempos, segments, ticksToSec, notes, lengthSec, onsets, onsetTicks };
-}
+  }
 
-/* ===== Player ===== */
-class Player{
+  function applyTransposeToMIDI(data, shift){
+    if(!data) return null;
+    const clampNote = (n)=>{
+      const v = n + shift;
+      return (v < 0 || v > 127) ? null : v;
+    };
+    const notes = [];
+    for(const n of data.notes || []){
+      const nn = clampNote(n.note);
+      if(nn==null) continue;
+      notes.push({...n, note: nn});
+    }
+    const onsets = new Map();
+    if(data.onsets){
+      data.onsets.forEach((arr, tk)=>{
+        const mapped = arr.map(o=>({note: clampNote(o.note), vel: o.vel})).filter(o=>o.note!=null);
+        if(mapped.length) onsets.set(tk, mapped);
+      });
+    }
+    const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
+    return {...data, notes, onsets, onsetTicks, transpose: shift};
+  }
+
+  function rebuildMidiView(){
+    if(!midiDataRaw) return;
+    midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
+    if(player){
+      player.stop();
+      player = null;
+    }
+    trainer = new Trainer(midiData);
+    updateTrainerUI();
+  }
+
+  /* ===== Player ===== */
+  class Player{
   constructor(ctx, notes){
     this.ctx=ctx; this.notes=notes;
     this.events = [];
