@@ -31,6 +31,7 @@
       <option value="en">English</option>
       <option value="ja" selected>日本語</option>
       <option value="ko">한국어</option>
+      <option value="zh">简体中文</option>
     </select>
   </label>
 
@@ -314,8 +315,8 @@ function reserveValueWidths(){
   reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
-  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en')]);
-  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en')]);
+  reserve(lowCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'zh')]);
+  reserve(highCutVal, [formatCutValueForLang(0, 'ja'), formatCutValueForLang(6, 'ja'), formatCutValueForLang(6, 'en'), formatCutValueForLang(6, 'zh')]);
   const pctSamples = ['0%', '100%'];
   reserve(lineAVal, pctSamples);
   reserve(straightLineAVal, pctSamples);
@@ -400,6 +401,29 @@ const I18N = {
     uiHide:"UI 숨기기", uiShow:"UI 표시",
     octaveSuffix:"옥타브", transposeSuffix:"반음",
     filePlayback:"파일 재생", trainerStepPrefix:"스텝:"
+  },
+  zh:{
+    language:"语言", device:"设备", allInputs:"全部输入",
+    anchor:"固定", waterFixed:"水面固定", diskFixed:"盘面固定",
+    liveSound:"播放MIDI输入音频",
+    torqueExclude:"扭矩排除区域", filled:"填充", unfilled:"空心",
+    uiOpacity:"界面不透明度", diskMass:"盘质量", damping:"阻尼",
+    snapZeroAlpha:"α=0 时停止角速度",
+    lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小",
+    labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
+    lowCut:"低频削减", highCut:"高频削减",
+    omegaMax:"最大角速度",
+    midiNotInit:"MIDI：未初始化", last:"最后:", idle:"空闲",
+    midiNeedSecure:"需要 HTTPS/localhost", midiUnsupported:"不支持",
+    midiReady:"已准备", midiInitFailed:"初始化失败", midiAllInputsStat:"全部输入",
+    midiInputStatPrefix:"输入:", midiNoDevice:"无设备",
+    midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器",
+    trainStart:"开始/重新开始", transpose:"移调",
+    seek:"播放位置",
+    resetDefaults:"恢复默认设置",
+    uiHide:"隐藏界面", uiShow:"显示界面",
+    octaveSuffix:"八度", transposeSuffix:"半音",
+    filePlayback:"文件播放", trainerStepPrefix:"步骤:"
   }
 };
 
@@ -410,9 +434,12 @@ let DEFAULT_SETTINGS = null;
 
 // UIスケールと初期言語
 let uiScale = 0.95;
-const SUPPORTED_LANGS = ['en','ja','ko'];
+const SUPPORTED_LANGS = ['en','ja','ko','zh'];
 const navigatorLang = (navigator.language || 'en').toLowerCase();
-let lang = navigatorLang.startsWith('ja') ? 'ja' : navigatorLang.startsWith('ko') ? 'ko' : 'en';
+let lang = navigatorLang.startsWith('ja') ? 'ja'
+  : navigatorLang.startsWith('ko') ? 'ko'
+  : navigatorLang.startsWith('zh') ? 'zh'
+  : 'en';
 let midiTranspose = 0;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
