@@ -1286,6 +1286,16 @@ function draw(){
 
   ctx.clearRect(0,0,w,h);
 
+  // ディスク本体の塗りつぶし（グラデーションでわずかに立体感を残す）
+  const diskRadius = rMax + 8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, diskRadius, 0, 2*Math.PI);
+  const diskGrad = ctx.createRadialGradient(cx, cy, diskRadius * 0.05, cx, cy, diskRadius);
+  diskGrad.addColorStop(0, 'rgba(20,20,20,0.85)');
+  diskGrad.addColorStop(1, 'rgba(5,5,5,0.9)');
+  ctx.fillStyle = diskGrad;
+  ctx.fill();
+
   // 物理に使う入力
   // - 再生: ファイル由来 + ライブ入力
   // - トレーナ: ライブ入力のみ（ターゲットは描画だけ）
