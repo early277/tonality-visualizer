@@ -708,6 +708,7 @@ let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:
 let trainer = null;
 let player = null;
 let seekMuting = false;
+let seekWasRunning = false;
 
 function applySeekMuteState(){
   if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
@@ -1297,15 +1298,11 @@ function draw(){
   ctx.fillStyle = '#0d1016';
   ctx.fillRect(0,0,w,h);
 
-  // ディスク本体の塗りつぶし（グラデーションで立体感を残しつつ明度を上げる）
+  // ディスク本体の塗りつぶし（フラットカラー）
   const diskRadius = rMax + 8;
   ctx.beginPath();
   ctx.arc(cx, cy, diskRadius, 0, 2*Math.PI);
-  const diskGrad = ctx.createRadialGradient(cx, cy, diskRadius * 0.12, cx, cy, diskRadius);
-  diskGrad.addColorStop(0, 'rgba(60,70,90,0.95)');
-  diskGrad.addColorStop(0.65, 'rgba(32,36,45,0.94)');
-  diskGrad.addColorStop(1, 'rgba(18,20,26,0.96)');
-  ctx.fillStyle = diskGrad;
+  ctx.fillStyle = 'rgba(24,28,36,0.95)';
   ctx.fill();
   ctx.lineWidth = 2;
   ctx.strokeStyle = 'rgba(220,235,255,0.18)';
@@ -2079,13 +2076,21 @@ class Trainer{
 };
 btnPause.onclick = ()=>{ if(player) player.pause(); };
 btnStop.onclick = ()=>{ if(player) player.stop(); };
-const beginSeekMute = ()=>{ if(seekMuting) return; seekMuting = true; applySeekMuteState(); };
-const endSeekMute = ()=>{ if(!seekMuting) return; seekMuting = false; applySeekMuteState(); };
-seekSlider.addEventListener('pointerdown', beginSeekMute);
-seekSlider.addEventListener('pointerup', endSeekMute);
-seekSlider.addEventListener('pointercancel', endSeekMute);
-addEventListener('pointerup', endSeekMute);
-addEventListener('pointercancel', endSeekMute);
+const beginSeekInteraction = ()=>{
+  seekWasRunning = !!(player && player.running);
+  if(player) player.pause();
+  if(!seekMuting){ seekMuting = true; applySeekMuteState(); }
+};
+const endSeekInteraction = ()=>{
+  if(seekMuting){ seekMuting = false; applySeekMuteState(); }
+  if(seekWasRunning && player){ player.play(); }
+  seekWasRunning = false;
+};
+seekSlider.addEventListener('pointerdown', beginSeekInteraction);
+seekSlider.addEventListener('pointerup', endSeekInteraction);
+seekSlider.addEventListener('pointercancel', endSeekInteraction);
+addEventListener('pointerup', endSeekInteraction);
+addEventListener('pointercancel', endSeekInteraction);
 seekSlider.addEventListener('input', ()=>{
   if(!midiData) return;
   if(!player){
