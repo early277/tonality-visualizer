@@ -79,7 +79,7 @@
     <datalist id="dampTicks">
       <option value="0"><option value="25"><option value="50"><option value="75"><option value="99">
     </datalist>
-    <span id="dampVal">99.000%/s</span>
+    <span id="dampVal">99%/s</span>
   </label>
 
   <!-- snap ω when α=0 -->
@@ -172,7 +172,7 @@
     <input id="midiFile" type="file" accept=".mid,.midi,audio/midi,audio/x-midi">
   </label>
   <label id="transposeWrap" data-lbl="transpose">
-    <input id="transpose" type="range" min="-24" max="24" step="1" value="0">
+    <input id="transpose" type="range" min="-6" max="6" step="1" value="0">
     <span id="transposeVal">+0 半音</span>
   </label>
   <label id="fileOpWrap" data-lbl="fileOp">
@@ -186,6 +186,10 @@
     <button id="btnPause">⏸</button>
     <button id="btnStop">⏹</button>
   </span>
+  <label id="seekWrap" data-lbl="seek">
+    <input id="seek" type="range" min="0" max="1000" step="0.01" value="0" disabled>
+    <span id="seekTime">0:00 / 0:00</span>
+  </label>
   <span id="trainBtns">
     <button id="btnStartTrain">開始/リスタート</button>
     <button id="btnPrev">◀︎</button>
@@ -279,6 +283,8 @@ const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
 const transposeSlider = document.getElementById('transpose');
 const transposeVal = document.getElementById('transposeVal');
+const seekSlider = document.getElementById('seek');
+const seekTime = document.getElementById('seekTime');
 
 function reserveValueWidths(){
   const reserve = (el, samples)=>{
@@ -304,7 +310,7 @@ function reserveValueWidths(){
   };
 
   reserve(omegaMaxVal, ['0.0100 rad/s', '100 rad/s']);
-  reserve(dampVal, ['0.000%/s', '99.000%/s']);
+  reserve(dampVal, ['0%/s', '99%/s']);
   reserve(uiopVal, ['100%']);
   reserve(massVal, ['M=0.01', 'M=100.00']);
   reserve(lowCutVal, ['0オクターブ', '6オクターブ', '6 oct']);
@@ -343,6 +349,7 @@ const I18N = {
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
     trainStart:"start / restart", transpose:"transpose",
+    seek:"position",
     resetDefaults:"reset settings"
   },
   ja:{
@@ -362,6 +369,7 @@ const I18N = {
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
     trainStart:"開始/リスタート", transpose:"移調",
+    seek:"再生位置",
     resetDefaults:"初期設定に戻す"
   }
 };
@@ -429,6 +437,7 @@ function collectSettingsFromUI(){
     lowCut: lowCutOct,
     highCut: highCutOct,
     omegaMaxExp: omegaMaxSlider.value,
+    midiTranspose,
     dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
@@ -529,13 +538,14 @@ function applySettings(settings, {force = false} = {}){
   }
   if(has('omegaMaxExp')){
     omegaMaxSlider.value = s.omegaMaxExp;
+    applyOmegaMaxFromSlider();
   }
   if(has('midiTranspose')){
     const value = parseInt(s.midiTranspose,10);
-    const clamped = Math.max(-24, Math.min(24, Number.isNaN(value) ? 0 : value));
+    const clamped = Math.max(-6, Math.min(6, Number.isNaN(value) ? 0 : value));
     midiTranspose = clamped;
     transposeSlider.value = String(clamped);
-    applyTransposeSetting({shouldSave:false});
+    applyTransposeSetting({shouldSave:false, preservePlayback:false});
   }
   if(has('dampPct')){
     dampSlider.value = s.dampPct;
@@ -760,11 +770,14 @@ function fmtOmega(v){
 }
 let omegaMaxExp = parseFloat(omegaMaxSlider.value);
 let omegaMax = Math.pow(10, omegaMaxExp);
-omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
-omegaMaxSlider.oninput = ()=>{
+function applyOmegaMaxFromSlider(){
   omegaMaxExp = parseFloat(omegaMaxSlider.value);
   omegaMax = Math.pow(10, omegaMaxExp);
   omegaMaxVal.textContent = `${fmtOmega(omegaMax)} rad/s`;
+}
+applyOmegaMaxFromSlider();
+omegaMaxSlider.oninput = ()=>{
+  applyOmegaMaxFromSlider();
   // UI操作に追従して設定を永続化
   saveSettings();
 };
@@ -778,21 +791,36 @@ function formatTransposeValue(v){
 function updateTransposeDisplay(){
   transposeVal.textContent = formatTransposeValue(midiTranspose);
 }
-function applyTransposeSetting({shouldSave = true} = {}){
+function formatTime(sec){
+  const clamped = Math.max(0, Math.floor(Number.isFinite(sec) ? sec : 0));
+  const m = Math.floor(clamped / 60);
+  const s = clamped % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+function updateSeekUI(pos = 0, total = null){
+  const totalSec = (total != null) ? Math.max(0, total) : Math.max(0, midiData?.lengthSec || 0);
+  const posSec = Math.max(0, Math.min(pos || 0, totalSec));
+  const frac = totalSec ? Math.min(1, posSec / totalSec) : 0;
+  seekSlider.value = (frac * 1000).toFixed(2);
+  seekSlider.disabled = !totalSec;
+  seekTime.textContent = `${formatTime(posSec)} / ${formatTime(totalSec)}`;
+}
+updateSeekUI();
+function applyTransposeSetting({shouldSave = true, preservePlayback = false} = {}){
   const raw = parseInt(transposeSlider.value, 10);
-  const clamped = Math.max(-24, Math.min(24, Number.isNaN(raw) ? 0 : raw));
+  const clamped = Math.max(-6, Math.min(6, Number.isNaN(raw) ? 0 : raw));
   midiTranspose = clamped;
   if(String(clamped) !== transposeSlider.value) transposeSlider.value = String(clamped);
   updateTransposeDisplay();
   if(shouldSave) saveSettings();
-  rebuildMidiView();
+  rebuildMidiView({preservePlayback});
 }
 updateTransposeDisplay();
-transposeSlider.addEventListener('input', ()=> applyTransposeSetting());
+transposeSlider.addEventListener('input', ()=> applyTransposeSetting({preservePlayback:true}));
 
 /* ダンピング（比例）。スライダー値 = p%/s */
 let dampPerSec = 0.99; // 初期（99%/s）
-function fmtPct(p){ return p.toFixed(3); }
+function fmtPct(p){ return Math.round(p).toString(); }
 function updateDampFromSlider(){
   const raw = parseFloat(dampSlider.value);
   const p = Number.isNaN(raw) ? 0 : Math.max(0, Math.min(99, raw));
@@ -879,6 +907,9 @@ if(resetBtn){
     lang = currentLang;
     applyUIScale();
     applyI18N();
+    midiTranspose = 0;
+    transposeSlider.value = '0';
+    applyTransposeSetting({preservePlayback:false});
     snapZeroAlpha = snapAlphaCheckbox.checked;
     updateDampFromSlider();
     updateFileOpUI();
@@ -1794,15 +1825,25 @@ function parseMIDI(ab){
     return {...data, notes, onsets, onsetTicks, transpose: shift};
   }
 
-  function rebuildMidiView(){
+  function rebuildMidiView({preservePlayback = false} = {}){
     if(!midiDataRaw) return;
-    midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
+    const resume = preservePlayback && player;
+    const resumeCtx = resume ? player.ctx : null;
+    const resumeRunning = resume ? player.running : false;
+    const resumePos = resume ? player.currentPosition() : 0;
     if(player){
       player.stop();
       player = null;
     }
+    midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
     trainer = new Trainer(midiData);
     updateTrainerUI();
+    updateSeekUI(resumePos, midiData.lengthSec);
+    const ctx = resumeCtx || ensureCtx();
+    player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
+    player.setPosition(resumePos);
+    if(resumeRunning) player.play();
   }
 
   /* ===== Player ===== */
@@ -1822,6 +1863,41 @@ function parseMIDI(ab){
     this.lookahead = 0.1; // s
     this.running = false;
     this.timeouts = new Set();
+    this.onProgressCb = null;
+  }
+  onProgress(cb){ this.onProgressCb = cb; }
+  emitProgress(){ if(this.onProgressCb) this.onProgressCb(this.currentPosition(), this.totalLength()); }
+  clearTimers(){
+    if(this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    for(const to of this.timeouts) clearTimeout(to);
+    this.timeouts.clear();
+  }
+  clearPlayingState(){
+    this.clearTimers();
+    fileNotes.clear();
+    if(synth) synth.allNotesOff();
+  }
+  activateHeldNotes(posSec){
+    if(!this.notes || !this.notes.length) return;
+    const when = this.ctx.currentTime + 0.001;
+    if(!synth) synth=new PolySynth(this.ctx);
+    for(const n of this.notes){
+      if(n.startSec < posSec && n.endSec > posSec){
+        const vel = n.vel/127;
+        synth.noteOn(n.note, vel, when);
+        fileNotes.set(n.note, vel);
+      }
+    }
+  }
+  currentPosition(){
+    const now = this.running ? (this.ctx.currentTime - this.t0Ctx) : this.posSec;
+    return Math.max(0, Math.min(now, this.totalLength()));
+  }
+  retargetIndex(){
+    const pos = this.currentPosition();
+    let idx = this.events.findIndex(ev => ev.time >= pos);
+    this.nextIdx = idx < 0 ? this.events.length : idx;
   }
   scheduleUntil(tCut){
     const ctx=this.ctx;
@@ -1846,6 +1922,7 @@ function parseMIDI(ab){
     if(!this.running) return;
     const now = this.ctx.currentTime - this.t0Ctx;
     this.scheduleUntil(now + this.lookahead);
+    this.emitProgress();
     if(now >= this.totalLength()){ this.stop(); return; }
     this.timer = setTimeout(this.tick, 20);
   }
@@ -1854,16 +1931,38 @@ function parseMIDI(ab){
     if(this.running) return;
     this.t0Ctx = this.ctx.currentTime - this.posSec;
     this.running = true;
+    this.emitProgress();
+    this.activateHeldNotes(this.posSec);
+    this.scheduleUntil(this.posSec + this.lookahead);
     this.tick();
   }
-  pause(){ if(!this.running) return; this.posSec = this.ctx.currentTime - this.t0Ctx; this.running = false; if(this.timer) clearTimeout(this.timer); }
+  pause(){
+    if(!this.running) return;
+    this.posSec = this.ctx.currentTime - this.t0Ctx;
+    this.retargetIndex();
+    this.running = false;
+    this.clearTimers();
+    this.clearPlayingState();
+    this.emitProgress();
+  }
   stop(){
     this.running = false; this.posSec = 0; this.nextIdx = 0;
-    if(this.timer) clearTimeout(this.timer);
-    for(const to of this.timeouts) clearTimeout(to);
-    this.timeouts.clear();
-    fileNotes.clear();
-    if(synth) synth.allNotesOff();
+    this.clearPlayingState();
+    this.emitProgress();
+  }
+  setPosition(sec){
+    const total = this.totalLength();
+    const clamped = Math.max(0, Math.min(Number.isFinite(sec) ? sec : 0, total));
+    this.posSec = clamped;
+    this.retargetIndex();
+    this.clearPlayingState();
+    if(this.running){
+      this.t0Ctx = this.ctx.currentTime - this.posSec;
+      this.activateHeldNotes(this.posSec);
+      this.scheduleUntil(this.posSec + this.lookahead);
+      this.tick();
+    }
+    this.emitProgress();
   }
 }
 let player = null;
@@ -1934,16 +2033,30 @@ btnPlay.onclick = ()=>{
   try{ if(ctx.state==='suspended') ctx.resume(); }catch{}
   if(!player){
     player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
   }
   // 再生完了後は先頭から再生成、途中停止ならその位置から再開
   if(player.posSec >= player.totalLength()){
     player.stop();
     player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
   }
   player.play();
 };
 btnPause.onclick = ()=>{ if(player) player.pause(); };
 btnStop.onclick = ()=>{ if(player) player.stop(); };
+seekSlider.addEventListener('input', ()=>{
+  if(!midiData) return;
+  if(!player){
+    const ctx = ensureCtx();
+    player = new Player(ctx, midiData.notes);
+    player.onProgress(updateSeekUI);
+  }
+  const raw = parseFloat(seekSlider.value);
+  const frac = Math.max(0, Math.min(1, Number.isNaN(raw) ? 0 : raw / 1000));
+  const target = frac * player.totalLength();
+  if(Number.isFinite(target)) player.setPosition(target);
+});
 
 btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
