@@ -1218,6 +1218,13 @@ const tapNoteTimeouts = new Map();
 const lockedTouches = new Map(); // pointerId -> {midi, vel}
 const mapToPoints = (m)=> Array.from(m, ([midi, vel])=>({midi, vel}));
 const TAP_NOTE_DURATION_SEC = 0.8;
+const trainerInputState = ()=> mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes);
+function trainerOnInputChange(){
+  if(fileOp.value==='train' && trainer && trainer.active){
+    trainer.considerAdvance(trainerInputState());
+    updateTrainerUI();
+  }
+}
 
 function closestNoteForTap(theta, radius){
   const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
@@ -1264,8 +1271,10 @@ function playTapNote(midi, velocity = 0.9){
   const to = setTimeout(()=>{
     tapNotes.delete(midi);
     tapNoteTimeouts.delete(midi);
+    trainerOnInputChange();
   }, TAP_NOTE_DURATION_SEC * 1000 + 10);
   tapNoteTimeouts.set(midi, to);
+  trainerOnInputChange();
 }
 
 function handleCanvasTap(ev){
@@ -1311,6 +1320,7 @@ function startLockedTouch(ev){
   }
   lockedTouches.set(pid, {midi: nearest.midi, vel});
   refreshLockedTouchNotes();
+  trainerOnInputChange();
   if(ev && ev.pointerId != null && cv.setPointerCapture){
     try{ cv.setPointerCapture(ev.pointerId); }catch{}
   }
@@ -1325,6 +1335,7 @@ function stopLockedTouch(ev){
     tapSynth.noteOff(info.midi);
   }
   refreshLockedTouchNotes();
+  trainerOnInputChange();
   if(ev && ev.pointerId != null && cv.releasePointerCapture){
     try{ cv.releasePointerCapture(ev.pointerId); }catch{}
   }
@@ -1344,6 +1355,7 @@ function stopAllLockedTouches(){
   }
   lockedTouches.clear();
   refreshLockedTouchNotes();
+  trainerOnInputChange();
 }
 function updateLockedTouch(ev){
   const pid = (ev && ev.pointerId != null) ? ev.pointerId : 'mouse';
@@ -1373,6 +1385,7 @@ function updateLockedTouch(ev){
   }
   lockedTouches.set(pid, {midi: nearest.midi, vel});
   refreshLockedTouchNotes();
+  trainerOnInputChange();
 }
 
 // NOTE_GUIDE_MARKS は水面に描画する目盛りラベルの一覧。
@@ -1960,11 +1973,7 @@ function midiMessageHandler(ev){
     if(synth) synth.noteOff(note);
   }
 
-  // ★トレーナー：離鍵必須のエッジ検出でステップ進行
-  if(fileOp.value==='train' && trainer && trainer.active){
-    trainer.considerAdvance(liveNotes);
-    updateTrainerUI();
-  }
+  trainerOnInputChange();
 }
 async function setupMIDIInputs(){
   if(!isSecureContext && !window.__NATIVE_APP__){ updateMIDIStat(t('midiNeedSecure')); return; }
@@ -2463,20 +2472,20 @@ class Trainer{
     this.gateReady = !this.satisfied(live); // 既に成立していたら離鍵を要求
   }
 
-  start(live = liveNotes){
+  start(live = trainerInputState()){
     this.idx = 0;
     this.active = true;
     this.armAccordingToState(live);
   }
 
-  next(live = liveNotes){
+  next(live = trainerInputState()){
     if(!this.active) return;
     this.idx++;
     if(this.idx >= this.steps.length){ this.finish(); return; }
     this.armAccordingToState(live);
   }
 
-  prev(live = liveNotes){
+  prev(live = trainerInputState()){
     if(!this.active) return;
     this.idx = Math.max(0, this.idx-1);
     this.armAccordingToState(live);
@@ -2484,7 +2493,7 @@ class Trainer{
 
   finish(){ this.active = false; }
 
-  considerAdvance(live = liveNotes){
+  considerAdvance(live = trainerInputState()){
     if(!this.active) return;
     const ok = this.satisfied(live);
     if(!this.gateReady){
@@ -2548,11 +2557,11 @@ btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   if(player) player.stop();
   trainer = new Trainer(midiData);
-  trainer.start(liveNotes);   // 開始時点の押下状態でゲート初期化
+  trainer.start(trainerInputState());   // 開始時点の押下状態でゲート初期化
   updateTrainerUI();
 };
-btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(liveNotes); updateTrainerUI(); } };
-btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(liveNotes); updateTrainerUI(); } };
+btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
+btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(trainerInputState()); updateTrainerUI(); } };
 
 function updateTrainerUI(){
   if(trainer && trainer.active){
@@ -2568,8 +2577,8 @@ function updateTrainerUI(){
 /* ===== Keyboard shortcuts ===== */
 addEventListener('keydown', e=>{
   if(fileOp.value==='train' && trainer && trainer.active){
-    if(e.key==='ArrowLeft'){ trainer.prev(liveNotes); updateTrainerUI(); }
-    else if(e.key==='ArrowRight'){ trainer.next(liveNotes); updateTrainerUI(); }
+    if(e.key==='ArrowLeft'){ trainer.prev(trainerInputState()); updateTrainerUI(); }
+    else if(e.key==='ArrowRight'){ trainer.next(trainerInputState()); updateTrainerUI(); }
   }
 });
 </script>
