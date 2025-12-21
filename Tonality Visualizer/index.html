@@ -20,9 +20,12 @@
   /* UI show/hide トグル */
   #uiToggle{position:fixed;top:50px;right:8px;z-index:3;opacity:0.8}
   #uiToggle:hover{opacity:1}
+  #diskLock{position:fixed;top:84px;right:8px;z-index:3;opacity:0.8}
+  #diskLock:hover{opacity:1}
 </style>
 
 <button id="uiToggle" aria-pressed="false">UI隠す</button>
+<button id="diskLock" aria-pressed="false">円盤ロック</button>
 
 <div id="ui">
   <!-- language -->
@@ -251,6 +254,7 @@ const NOTE_BG = {0:[191,28,28],1:[191,109,28],2:[191,191,28],3:[109,191,28],4:[2
 // UI要素の参照をまとめて保持
 const uiPanel = document.getElementById('ui');
 const uiToggle = document.getElementById('uiToggle');
+const diskLockBtn = document.getElementById('diskLock');
 const anchorSel = document.getElementById('anchor');
 const devWrap = document.getElementById('devWrap');
 const midiDev = document.getElementById('midiDev');
@@ -370,6 +374,7 @@ const I18N = {
     uiHide:"hide UI", uiShow:"show UI",
     octaveSuffix:"oct", transposeSuffix:"st",
     filePlayback:"file playback", trainerStepPrefix:"step:"
+    , diskLock:"lock disk", diskUnlock:"unlock disk"
   },
   "pt-BR":{
     language:"idioma", device:"dispositivo", allInputs:"todas as entradas",
@@ -396,6 +401,7 @@ const I18N = {
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oit", transposeSuffix:"semitons",
     filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:"
+    , diskLock:"travar disco", diskUnlock:"destravar disco"
   },
   "es-MX":{
     language:"idioma", device:"dispositivo", allInputs:"todas las entradas",
@@ -421,7 +427,8 @@ const I18N = {
     presetSaveFailed:"error al guardar",
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oct.", transposeSuffix:"semitonos",
-    filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:"
+    filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:",
+    diskLock:"bloquear disco", diskUnlock:"desbloquear disco"
   },
   ja:{
     language:"言語", device:"デバイス", allInputs:"全入力",
@@ -447,7 +454,8 @@ const I18N = {
     presetSaveFailed:"保存に失敗しました",
     uiHide:"UI隠す", uiShow:"UI表示",
     octaveSuffix:"オクターブ", transposeSuffix:"半音",
-    filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:"
+    filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:",
+    diskLock:"円盤ロック", diskUnlock:"ロック解除"
   },
   ko:{
     language:"언어", device:"장치", allInputs:"모든 입력",
@@ -473,7 +481,8 @@ const I18N = {
     presetSaveFailed:"저장에 실패했습니다",
     uiHide:"UI 숨기기", uiShow:"UI 표시",
     octaveSuffix:"옥타브", transposeSuffix:"반음",
-    filePlayback:"파일 재생", trainerStepPrefix:"스텝:"
+    filePlayback:"파일 재생", trainerStepPrefix:"스텝:",
+    diskLock:"디스크 잠금", diskUnlock:"잠금 해제"
   },
   zh:{
     language:"语言", device:"设备", allInputs:"全部输入",
@@ -499,7 +508,8 @@ const I18N = {
     presetSaveFailed:"保存失败",
     uiHide:"隐藏界面", uiShow:"显示界面",
     octaveSuffix:"八度", transposeSuffix:"半音",
-    filePlayback:"文件播放", trainerStepPrefix:"步骤:"
+    filePlayback:"文件播放", trainerStepPrefix:"步骤:",
+    diskLock:"锁定圆盘", diskUnlock:"解除锁定"
   }
 };
 
@@ -572,6 +582,7 @@ function applyI18N(){
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
+  updateDiskLockUI();
   updateCutDisplays();
   updateTransposeDisplay();
   document.getElementById('lang').value = lang;
@@ -607,7 +618,8 @@ function collectSettingsFromUI(){
     dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
-    uiHidden: !uiVisible
+    uiHidden: !uiVisible,
+    diskLocked
   };
 }
 
@@ -729,6 +741,9 @@ function applySettings(settings, {force = false} = {}){
   if(has('fileOp')){
     fileOp.value = s.fileOp;
   }
+  if(has('diskLocked')){
+    diskLocked = !!s.diskLocked;
+  }
   if(has('uiHidden')){
     uiVisible = !s.uiHidden;
     updateUIVisibility();
@@ -808,6 +823,21 @@ uiToggle.onclick = ()=>{ uiVisible = !uiVisible; updateUIVisibility(); saveSetti
 // キーボードショートカット（Uキー）での開閉をサポート
 addEventListener('keydown', e=>{ if(e.key==='u' || e.key==='U'){ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); }});
 
+function updateDiskLockUI(){
+  if(!diskLockBtn) return;
+  diskLockBtn.setAttribute('aria-pressed', String(diskLocked));
+  diskLockBtn.textContent = diskLocked ? t('diskUnlock') : t('diskLock');
+}
+if(diskLockBtn){
+  diskLockBtn.onclick = ()=>{
+    diskLocked = !diskLocked;
+    if(diskLocked) dragRot.active = false;
+    if(!diskLocked) stopAllLockedTouches();
+    updateDiskLockUI();
+    saveSettings();
+  };
+}
+
 /* ファイル操作UIの表示切替（再生 or トレーナー） */
 function updateFileOpUI(){
   const isPlay = (fileOp.value === 'play');
@@ -851,6 +881,16 @@ function radiusFromFreq(f, rMax, step, minRadius = 0){
 }
 function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.sin(th) }; }
 function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
+function mergeNoteMaps(...maps){
+  const merged = new Map();
+  for(const m of maps){
+    for(const [note, vel] of m){
+      const prev = merged.get(note);
+      if(prev == null || vel > prev) merged.set(note, vel);
+    }
+  }
+  return merged;
+}
 // ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
 
@@ -921,9 +961,11 @@ let trainer = null;
 let player = null;
 let seekMuting = false;
 let seekWasRunning = false;
+let diskLocked = false;
 
 function applySeekMuteState(){
   if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
+  if(tapSynth && typeof tapSynth.setMuted === 'function') tapSynth.setMuted(seekMuting);
 }
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 
@@ -933,7 +975,8 @@ const dragRot = {
   active: false,
   startAngle: 0,
   startDiskAngle: 0,
-  anchor: 'water'
+  anchor: 'water',
+  moved: false
 };
 function clientAngle(ev){
   const rect = cv.getBoundingClientRect();
@@ -946,14 +989,30 @@ function clientAngle(ev){
   const dy = cy - y; // 画面座標系をキャンバスの極座標に合わせる
   return Math.atan2(dy, dx);
 }
+function clientPolar(ev){
+  const rect = cv.getBoundingClientRect();
+  const cxCss = rect.left + rect.width / 2;
+  const cyCss = rect.top + rect.height / 2;
+  const x = (ev.clientX != null) ? ev.clientX : (ev.touches && ev.touches[0] && ev.touches[0].clientX);
+  const y = (ev.clientY != null) ? ev.clientY : (ev.touches && ev.touches[0] && ev.touches[0].clientY);
+  if(x == null || y == null) return null;
+  const dx = (x - cxCss) * devicePixelRatio;
+  const dy = (cyCss - y) * devicePixelRatio;
+  return { theta: Math.atan2(dy, dx), r: Math.hypot(dx, dy) };
+}
 function beginDrag(ev){
   if(ev.button != null && ev.button !== 0) return;
+  if(diskLocked){
+    startLockedTouch(ev);
+    return;
+  }
   const ang = clientAngle(ev);
   if(ang == null) return;
   dragRot.active = true;
   dragRot.startAngle = ang;
   dragRot.startDiskAngle = diskAngle;
   dragRot.anchor = anchorSel.value;
+  dragRot.moved = false;
   diskOmega = 0; // 手動操作中は慣性をリセット
   if(ev.pointerId != null && cv.setPointerCapture){
     try{ cv.setPointerCapture(ev.pointerId); }catch{}
@@ -961,21 +1020,33 @@ function beginDrag(ev){
   ev.preventDefault();
 }
 function moveDrag(ev){
+  if(diskLocked){
+    updateLockedTouch(ev);
+    ev.preventDefault();
+    return;
+  }
   if(!dragRot.active) return;
   const ang = clientAngle(ev);
   if(ang == null) return;
   const delta = ang - dragRot.startAngle;
+  if(Math.abs(shortestDelta(dragRot.startAngle, ang)) > 0.01) dragRot.moved = true;
   const dir = (dragRot.anchor === 'disk') ? -1 : 1;
   diskAngle = dragRot.startDiskAngle + dir * delta;
   diskOmega = 0;
   ev.preventDefault();
 }
 function endDrag(ev){
+  if(diskLocked){
+    stopLockedTouch(ev);
+    return;
+  }
   if(!dragRot.active) return;
+  const wasTap = !dragRot.moved && ev && ev.type === 'pointerup';
   dragRot.active = false;
   if(ev && ev.pointerId != null && cv.releasePointerCapture){
     try{ cv.releasePointerCapture(ev.pointerId); }catch{}
   }
+  if(wasTap) handleCanvasTap(ev);
 }
 cv.addEventListener('pointerdown', beginDrag, {passive:false});
 cv.addEventListener('pointermove', moveDrag, {passive:false});
@@ -1141,6 +1212,181 @@ if(resetBtn){
 // 実行時に随時追加・削除される動的な状態を扱う。
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
 const fileNotes = new Map();     // 再生中のMIDIファイル由来
+const tapNotes = new Map();      // キャンバスタップによる一時的な入力
+const lockedTouchNotes = new Map(); // ロック中のタッチ入力（押下中のみ保持）
+const tapNoteTimeouts = new Map();
+const lockedTouches = new Map(); // pointerId -> {midi, vel}
+const mapToPoints = (m)=> Array.from(m, ([midi, vel])=>({midi, vel}));
+const TAP_NOTE_DURATION_SEC = 0.8;
+const trainerInputState = ()=> mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes);
+function trainerOnInputChange(){
+  if(fileOp.value==='train' && trainer && trainer.active){
+    trainer.considerAdvance(trainerInputState());
+    updateTrainerUI();
+  }
+}
+
+function closestNoteForTap(theta, radius){
+  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
+  if(!Number.isFinite(rMax) || rMax <= 0) return null;
+
+  let bestPc = 0;
+  let bestAngleDiff = Infinity;
+  for(let pc=0; pc<12; pc++){
+    const idx = FIFTH_INDEX[pc];
+    const ang = baseAngleFromFifthIndex(idx) + worldRot;
+    const diff = Math.abs(shortestDelta(ang, theta));
+    if(diff < bestAngleDiff){
+      bestAngleDiff = diff;
+      bestPc = pc;
+    }
+  }
+
+  let best = null;
+  for(let midi=0; midi<=127; midi++){
+    if(((midi%12)+12)%12 !== bestPc) continue;
+    const freq = midiToHz(midi);
+    if(freq < displayMinFreq || freq > displayMaxFreq) continue;
+    const r = radiusFromFreq(freq, rMax, step, minRadius);
+    const diff = Math.abs(r - radius);
+    if(!best || diff < best.diff){
+      best = {midi, diff};
+    }
+  }
+  return best;
+}
+
+function playTapNote(midi, velocity = 0.9){
+  const ctx = ensureCtx();
+  if(!tapSynth) tapSynth = new PolySynth(ctx);
+  applySeekMuteState();
+  const vel = Math.max(0, Math.min(1, velocity));
+  const now = ctx.currentTime;
+  tapSynth.noteOn(midi, vel, now);
+  tapSynth.noteOff(midi, now + TAP_NOTE_DURATION_SEC);
+  tapNotes.set(midi, vel);
+
+  const prev = tapNoteTimeouts.get(midi);
+  if(prev) clearTimeout(prev);
+  const to = setTimeout(()=>{
+    tapNotes.delete(midi);
+    tapNoteTimeouts.delete(midi);
+    trainerOnInputChange();
+  }, TAP_NOTE_DURATION_SEC * 1000 + 10);
+  tapNoteTimeouts.set(midi, to);
+  trainerOnInputChange();
+}
+
+function handleCanvasTap(ev){
+  if(diskLocked) return;
+  const polar = clientPolar(ev);
+  if(!polar) return;
+  const {rMax} = ringParams();
+  if(!Number.isFinite(rMax) || polar.r > rMax + 32) return;
+  const nearest = closestNoteForTap(polar.theta, polar.r);
+  if(!nearest) return;
+  playTapNote(nearest.midi);
+}
+
+function lockedMidiActiveElsewhere(midi, excludeId = null){
+  for(const [pid, info] of lockedTouches){
+    if(pid === excludeId) continue;
+    if(info && info.midi === midi) return true;
+  }
+  return false;
+}
+function refreshLockedTouchNotes(){
+  lockedTouchNotes.clear();
+  for(const info of lockedTouches.values()){
+    if(!info || info.midi == null) continue;
+    const prev = lockedTouchNotes.get(info.midi);
+    if(prev == null || info.vel > prev) lockedTouchNotes.set(info.midi, info.vel);
+  }
+}
+function startLockedTouch(ev){
+  const pid = (ev && ev.pointerId != null) ? ev.pointerId : 'mouse';
+  const polar = clientPolar(ev);
+  if(!polar) return;
+  const {rMax} = ringParams();
+  if(!Number.isFinite(rMax) || polar.r > rMax + 32) return;
+  const nearest = closestNoteForTap(polar.theta, polar.r);
+  if(!nearest) return;
+  const ctx = ensureCtx();
+  if(!tapSynth) tapSynth = new PolySynth(ctx);
+  applySeekMuteState();
+  const vel = 0.9;
+  if(!lockedMidiActiveElsewhere(nearest.midi)){
+    tapSynth.noteOn(nearest.midi, vel, ctx.currentTime);
+  }
+  lockedTouches.set(pid, {midi: nearest.midi, vel});
+  refreshLockedTouchNotes();
+  trainerOnInputChange();
+  if(ev && ev.pointerId != null && cv.setPointerCapture){
+    try{ cv.setPointerCapture(ev.pointerId); }catch{}
+  }
+  ev.preventDefault();
+}
+function stopLockedTouch(ev){
+  const pid = (ev && ev.pointerId != null) ? ev.pointerId : 'mouse';
+  const info = lockedTouches.get(pid);
+  if(!info) return;
+  lockedTouches.delete(pid);
+  if(tapSynth && !lockedMidiActiveElsewhere(info.midi)){
+    tapSynth.noteOff(info.midi);
+  }
+  refreshLockedTouchNotes();
+  trainerOnInputChange();
+  if(ev && ev.pointerId != null && cv.releasePointerCapture){
+    try{ cv.releasePointerCapture(ev.pointerId); }catch{}
+  }
+}
+function stopAllLockedTouches(){
+  if(tapSynth){
+    for(const info of lockedTouches.values()){
+      if(info && info.midi != null) tapSynth.noteOff(info.midi);
+    }
+  }
+  if(cv && cv.releasePointerCapture){
+    for(const pid of lockedTouches.keys()){
+      if(typeof pid === 'number'){
+        try{ cv.releasePointerCapture(pid); }catch{}
+      }
+    }
+  }
+  lockedTouches.clear();
+  refreshLockedTouchNotes();
+  trainerOnInputChange();
+}
+function updateLockedTouch(ev){
+  const pid = (ev && ev.pointerId != null) ? ev.pointerId : 'mouse';
+  const existing = lockedTouches.get(pid);
+  if(!existing) return;
+  const polar = clientPolar(ev);
+  const {rMax} = ringParams();
+  if(!polar || !Number.isFinite(rMax) || polar.r > rMax + 32){
+    if(existing) stopLockedTouch(ev);
+    return;
+  }
+  const nearest = closestNoteForTap(polar.theta, polar.r);
+  if(!nearest){
+    if(existing) stopLockedTouch(ev);
+    return;
+  }
+  if(existing && existing.midi === nearest.midi) return;
+  const ctx = ensureCtx();
+  if(!tapSynth) tapSynth = new PolySynth(ctx);
+  applySeekMuteState();
+  if(existing && !lockedMidiActiveElsewhere(existing.midi, pid)){
+    tapSynth.noteOff(existing.midi);
+  }
+  const vel = existing ? existing.vel : 0.9;
+  if(!lockedMidiActiveElsewhere(nearest.midi, pid)){
+    tapSynth.noteOn(nearest.midi, vel, ctx.currentTime);
+  }
+  lockedTouches.set(pid, {midi: nearest.midi, vel});
+  refreshLockedTouchNotes();
+  trainerOnInputChange();
+}
 
 // NOTE_GUIDE_MARKS は水面に描画する目盛りラベルの一覧。
 // degree 方向と表示文字列を組み合わせて定義し、
@@ -1516,10 +1762,11 @@ function draw(){
   // 物理に使う入力
   // - 再生: ファイル由来 + ライブ入力
   // - トレーナ: ライブ入力のみ（ターゲットは描画だけ）
+  const liveAndTap = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes);
   const physicsPoints = (fileOp.value==='play')
-    ? [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v})),
-       ...Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}))]
-    : [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}))];
+    ? [...mapToPoints(liveAndTap),
+       ...mapToPoints(fileNotes)]
+    : [...mapToPoints(liveAndTap)];
 
   const hasPhysInput = physicsPoints.length>0;
   // 物理計算に使えるノートがあるかどうかを示すフラグ
@@ -1632,8 +1879,8 @@ function draw(){
   drawMovableDoNumbers(halfCenter, rMax, cx, cy);
 
   // 入力の可視化
-  const livePts = Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}));
-  const filePts = Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}));
+  const livePts = mapToPoints(mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes));
+  const filePts = mapToPoints(fileNotes);
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -1695,6 +1942,7 @@ class PolySynth{
   }
 }
 let synth=null;
+let tapSynth=null;
 
 /* ===== Web MIDI In（常時） ===== */
 let midiAccess=null;
@@ -1725,11 +1973,7 @@ function midiMessageHandler(ev){
     if(synth) synth.noteOff(note);
   }
 
-  // ★トレーナー：離鍵必須のエッジ検出でステップ進行
-  if(fileOp.value==='train' && trainer && trainer.active){
-    trainer.considerAdvance(liveNotes);
-    updateTrainerUI();
-  }
+  trainerOnInputChange();
 }
 async function setupMIDIInputs(){
   if(!isSecureContext && !window.__NATIVE_APP__){ updateMIDIStat(t('midiNeedSecure')); return; }
@@ -2228,20 +2472,20 @@ class Trainer{
     this.gateReady = !this.satisfied(live); // 既に成立していたら離鍵を要求
   }
 
-  start(live = liveNotes){
+  start(live = trainerInputState()){
     this.idx = 0;
     this.active = true;
     this.armAccordingToState(live);
   }
 
-  next(live = liveNotes){
+  next(live = trainerInputState()){
     if(!this.active) return;
     this.idx++;
     if(this.idx >= this.steps.length){ this.finish(); return; }
     this.armAccordingToState(live);
   }
 
-  prev(live = liveNotes){
+  prev(live = trainerInputState()){
     if(!this.active) return;
     this.idx = Math.max(0, this.idx-1);
     this.armAccordingToState(live);
@@ -2249,7 +2493,7 @@ class Trainer{
 
   finish(){ this.active = false; }
 
-  considerAdvance(live = liveNotes){
+  considerAdvance(live = trainerInputState()){
     if(!this.active) return;
     const ok = this.satisfied(live);
     if(!this.gateReady){
@@ -2313,11 +2557,11 @@ btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   if(player) player.stop();
   trainer = new Trainer(midiData);
-  trainer.start(liveNotes);   // 開始時点の押下状態でゲート初期化
+  trainer.start(trainerInputState());   // 開始時点の押下状態でゲート初期化
   updateTrainerUI();
 };
-btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(liveNotes); updateTrainerUI(); } };
-btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(liveNotes); updateTrainerUI(); } };
+btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
+btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(trainerInputState()); updateTrainerUI(); } };
 
 function updateTrainerUI(){
   if(trainer && trainer.active){
@@ -2333,8 +2577,8 @@ function updateTrainerUI(){
 /* ===== Keyboard shortcuts ===== */
 addEventListener('keydown', e=>{
   if(fileOp.value==='train' && trainer && trainer.active){
-    if(e.key==='ArrowLeft'){ trainer.prev(liveNotes); updateTrainerUI(); }
-    else if(e.key==='ArrowRight'){ trainer.next(liveNotes); updateTrainerUI(); }
+    if(e.key==='ArrowLeft'){ trainer.prev(trainerInputState()); updateTrainerUI(); }
+    else if(e.key==='ArrowRight'){ trainer.next(trainerInputState()); updateTrainerUI(); }
   }
 });
 </script>
