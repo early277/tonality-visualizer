@@ -851,6 +851,16 @@ function radiusFromFreq(f, rMax, step, minRadius = 0){
 }
 function polarToXY(cx,cy,r,th){ return { x: cx + r*Math.cos(th), y: cy - r*Math.sin(th) }; }
 function shortestDelta(a,b){ let d=b-a; while(d> Math.PI) d-=2*Math.PI; while(d<=-Math.PI) d+=2*Math.PI; return d; }
+function mergeNoteMaps(...maps){
+  const merged = new Map();
+  for(const m of maps){
+    for(const [note, vel] of m){
+      const prev = merged.get(note);
+      if(prev == null || vel > prev) merged.set(note, vel);
+    }
+  }
+  return merged;
+}
 // ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
 
@@ -924,6 +934,7 @@ let seekWasRunning = false;
 
 function applySeekMuteState(){
   if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
+  if(tapSynth && typeof tapSynth.setMuted === 'function') tapSynth.setMuted(seekMuting);
 }
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
 
@@ -933,7 +944,8 @@ const dragRot = {
   active: false,
   startAngle: 0,
   startDiskAngle: 0,
-  anchor: 'water'
+  anchor: 'water',
+  moved: false
 };
 function clientAngle(ev){
   const rect = cv.getBoundingClientRect();
@@ -946,6 +958,17 @@ function clientAngle(ev){
   const dy = cy - y; // 画面座標系をキャンバスの極座標に合わせる
   return Math.atan2(dy, dx);
 }
+function clientPolar(ev){
+  const rect = cv.getBoundingClientRect();
+  const cxCss = rect.left + rect.width / 2;
+  const cyCss = rect.top + rect.height / 2;
+  const x = (ev.clientX != null) ? ev.clientX : (ev.touches && ev.touches[0] && ev.touches[0].clientX);
+  const y = (ev.clientY != null) ? ev.clientY : (ev.touches && ev.touches[0] && ev.touches[0].clientY);
+  if(x == null || y == null) return null;
+  const dx = (x - cxCss) * devicePixelRatio;
+  const dy = (cyCss - y) * devicePixelRatio;
+  return { theta: Math.atan2(dy, dx), r: Math.hypot(dx, dy) };
+}
 function beginDrag(ev){
   if(ev.button != null && ev.button !== 0) return;
   const ang = clientAngle(ev);
@@ -954,6 +977,7 @@ function beginDrag(ev){
   dragRot.startAngle = ang;
   dragRot.startDiskAngle = diskAngle;
   dragRot.anchor = anchorSel.value;
+  dragRot.moved = false;
   diskOmega = 0; // 手動操作中は慣性をリセット
   if(ev.pointerId != null && cv.setPointerCapture){
     try{ cv.setPointerCapture(ev.pointerId); }catch{}
@@ -965,6 +989,7 @@ function moveDrag(ev){
   const ang = clientAngle(ev);
   if(ang == null) return;
   const delta = ang - dragRot.startAngle;
+  if(Math.abs(shortestDelta(dragRot.startAngle, ang)) > 0.01) dragRot.moved = true;
   const dir = (dragRot.anchor === 'disk') ? -1 : 1;
   diskAngle = dragRot.startDiskAngle + dir * delta;
   diskOmega = 0;
@@ -972,10 +997,12 @@ function moveDrag(ev){
 }
 function endDrag(ev){
   if(!dragRot.active) return;
+  const wasTap = !dragRot.moved && ev && ev.type === 'pointerup';
   dragRot.active = false;
   if(ev && ev.pointerId != null && cv.releasePointerCapture){
     try{ cv.releasePointerCapture(ev.pointerId); }catch{}
   }
+  if(wasTap) handleCanvasTap(ev);
 }
 cv.addEventListener('pointerdown', beginDrag, {passive:false});
 cv.addEventListener('pointermove', moveDrag, {passive:false});
@@ -1141,6 +1168,69 @@ if(resetBtn){
 // 実行時に随時追加・削除される動的な状態を扱う。
 const liveNotes = new Map();     // ハードMIDI入力の現在押下
 const fileNotes = new Map();     // 再生中のMIDIファイル由来
+const tapNotes = new Map();      // キャンバスタップによる一時的な入力
+const tapNoteTimeouts = new Map();
+const mapToPoints = (m)=> Array.from(m, ([midi, vel])=>({midi, vel}));
+const TAP_NOTE_DURATION_SEC = 0.8;
+
+function closestNoteForTap(theta, radius){
+  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
+  if(!Number.isFinite(rMax) || rMax <= 0) return null;
+
+  let bestPc = 0;
+  let bestAngleDiff = Infinity;
+  for(let pc=0; pc<12; pc++){
+    const idx = FIFTH_INDEX[pc];
+    const ang = baseAngleFromFifthIndex(idx) + worldRot;
+    const diff = Math.abs(shortestDelta(ang, theta));
+    if(diff < bestAngleDiff){
+      bestAngleDiff = diff;
+      bestPc = pc;
+    }
+  }
+
+  let best = null;
+  for(let midi=0; midi<=127; midi++){
+    if(((midi%12)+12)%12 !== bestPc) continue;
+    const freq = midiToHz(midi);
+    if(freq < displayMinFreq || freq > displayMaxFreq) continue;
+    const r = radiusFromFreq(freq, rMax, step, minRadius);
+    const diff = Math.abs(r - radius);
+    if(!best || diff < best.diff){
+      best = {midi, diff};
+    }
+  }
+  return best;
+}
+
+function playTapNote(midi, velocity = 0.9){
+  const ctx = ensureCtx();
+  if(!tapSynth) tapSynth = new PolySynth(ctx);
+  applySeekMuteState();
+  const vel = Math.max(0, Math.min(1, velocity));
+  const now = ctx.currentTime;
+  tapSynth.noteOn(midi, vel, now);
+  tapSynth.noteOff(midi, now + TAP_NOTE_DURATION_SEC);
+  tapNotes.set(midi, vel);
+
+  const prev = tapNoteTimeouts.get(midi);
+  if(prev) clearTimeout(prev);
+  const to = setTimeout(()=>{
+    tapNotes.delete(midi);
+    tapNoteTimeouts.delete(midi);
+  }, TAP_NOTE_DURATION_SEC * 1000 + 10);
+  tapNoteTimeouts.set(midi, to);
+}
+
+function handleCanvasTap(ev){
+  const polar = clientPolar(ev);
+  if(!polar) return;
+  const {rMax} = ringParams();
+  if(!Number.isFinite(rMax) || polar.r > rMax + 32) return;
+  const nearest = closestNoteForTap(polar.theta, polar.r);
+  if(!nearest) return;
+  playTapNote(nearest.midi);
+}
 
 // NOTE_GUIDE_MARKS は水面に描画する目盛りラベルの一覧。
 // degree 方向と表示文字列を組み合わせて定義し、
@@ -1516,10 +1606,11 @@ function draw(){
   // 物理に使う入力
   // - 再生: ファイル由来 + ライブ入力
   // - トレーナ: ライブ入力のみ（ターゲットは描画だけ）
+  const liveAndTap = mergeNoteMaps(liveNotes, tapNotes);
   const physicsPoints = (fileOp.value==='play')
-    ? [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v})),
-       ...Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}))]
-    : [...Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}))];
+    ? [...mapToPoints(liveAndTap),
+       ...mapToPoints(fileNotes)]
+    : [...mapToPoints(liveAndTap)];
 
   const hasPhysInput = physicsPoints.length>0;
   // 物理計算に使えるノートがあるかどうかを示すフラグ
@@ -1632,8 +1723,8 @@ function draw(){
   drawMovableDoNumbers(halfCenter, rMax, cx, cy);
 
   // 入力の可視化
-  const livePts = Array.from(liveNotes, ([m,v])=>({midi:m, vel:v}));
-  const filePts = Array.from(fileNotes, ([m,v])=>({midi:m, vel:v}));
+  const livePts = mapToPoints(mergeNoteMaps(liveNotes, tapNotes));
+  const filePts = mapToPoints(fileNotes);
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -1695,6 +1786,7 @@ class PolySynth{
   }
 }
 let synth=null;
+let tapSynth=null;
 
 /* ===== Web MIDI In（常時） ===== */
 let midiAccess=null;
