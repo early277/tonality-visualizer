@@ -6,12 +6,18 @@
 
 <title>Polar Pitch Map — Disk physics, MIDI In + MIDI File</title>
 <style>
-  html,body{margin:0;height:100%;background:#111;color:#ddd;font:14px system-ui}
+  html,body{
+    margin:0;height:100%;background:#111;color:#ddd;font:14px system-ui;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
   :root{ --ui-scale:1; }
   #ui{position:fixed;top:75px;left:8px;gap:12px;display:flex;flex-wrap:wrap;align-items:center;z-index:2;
        transform-origin:top left; transform:scale(var(--ui-scale));
        max-height:calc(100vh - 110px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 6px;}
-  canvas{display:block;width:100vw;height:100vh;touch-action:none}
+  canvas{
+    display:block;width:100vw;height:100vh;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
   label{display:flex;gap:6px;align-items:center}
   input[type=range]{width:180px}
   button,select{padding:6px 10px}
