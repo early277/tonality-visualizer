@@ -39,6 +39,12 @@
 
   <button id="resetSettings" type="button">初期設定に戻す</button>
 
+  <label id="presetWrap" data-lbl="presetSlot">
+    <select id="presetSlot"></select>
+  </label>
+  <button id="savePreset" type="button">プリセット保存</button>
+  <button id="loadPreset" type="button">プリセット読込</button>
+
   <!-- anchor: 水面固定 or ディスク固定 -->
   <label id="anchorWrap" data-lbl="anchor">
     <select id="anchor">
@@ -252,6 +258,10 @@ const allWrap = document.getElementById('allWrap');
 const midiAll = document.getElementById('midiAll');
 const liveMon = document.getElementById('liveMon');
 const resetBtn = document.getElementById('resetSettings');
+const presetWrap = document.getElementById('presetWrap');
+const presetSlotSel = document.getElementById('presetSlot');
+const savePresetBtn = document.getElementById('savePreset');
+const loadPresetBtn = document.getElementById('loadPreset');
 
 const excludeSel = document.getElementById('exclude');
 const uiopSlider = document.getElementById('uiop'); const uiopVal = document.getElementById('uiopVal');
@@ -354,6 +364,9 @@ const I18N = {
     trainStart:"start / restart", transpose:"transpose",
     seek:"position",
     resetDefaults:"reset settings",
+    presetSlot:"preset slot", presetSave:"save to slot", presetLoad:"load slot",
+    presetSaved:"preset saved", presetLoaded:"preset loaded", presetEmpty:"slot is empty",
+    presetSaveFailed:"save failed",
     uiHide:"hide UI", uiShow:"show UI",
     octaveSuffix:"oct", transposeSuffix:"st",
     filePlayback:"file playback", trainerStepPrefix:"step:"
@@ -377,6 +390,9 @@ const I18N = {
     trainStart:"iniciar/reiniciar", transpose:"transposição",
     seek:"posição de reprodução",
     resetDefaults:"restaurar padrões",
+    presetSlot:"slot de preset", presetSave:"salvar no slot", presetLoad:"carregar slot",
+    presetSaved:"preset salvo", presetLoaded:"preset carregado", presetEmpty:"slot vazio",
+    presetSaveFailed:"falha ao salvar",
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oit", transposeSuffix:"semitons",
     filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:"
@@ -400,6 +416,9 @@ const I18N = {
     trainStart:"iniciar/reiniciar", transpose:"transposición",
     seek:"posición de reproducción",
     resetDefaults:"restablecer ajustes",
+    presetSlot:"ranura de preset", presetSave:"guardar en ranura", presetLoad:"cargar ranura",
+    presetSaved:"preset guardado", presetLoaded:"preset cargado", presetEmpty:"ranura vacía",
+    presetSaveFailed:"error al guardar",
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oct.", transposeSuffix:"semitonos",
     filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:"
@@ -423,6 +442,9 @@ const I18N = {
     trainStart:"開始/リスタート", transpose:"移調",
     seek:"再生位置",
     resetDefaults:"初期設定に戻す",
+    presetSlot:"プリセット枠", presetSave:"枠に保存", presetLoad:"枠を読み込み",
+    presetSaved:"プリセットを保存しました", presetLoaded:"プリセットを読み込みました", presetEmpty:"枠が空です",
+    presetSaveFailed:"保存に失敗しました",
     uiHide:"UI隠す", uiShow:"UI表示",
     octaveSuffix:"オクターブ", transposeSuffix:"半音",
     filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:"
@@ -446,6 +468,9 @@ const I18N = {
     trainStart:"시작/재시작", transpose:"이조",
     seek:"재생 위치",
     resetDefaults:"초기 설정으로",
+    presetSlot:"프리셋 슬롯", presetSave:"슬롯에 저장", presetLoad:"슬롯 불러오기",
+    presetSaved:"프리셋을 저장했습니다", presetLoaded:"프리셋을 불러왔습니다", presetEmpty:"슬롯이 비어 있습니다",
+    presetSaveFailed:"저장에 실패했습니다",
     uiHide:"UI 숨기기", uiShow:"UI 표시",
     octaveSuffix:"옥타브", transposeSuffix:"반음",
     filePlayback:"파일 재생", trainerStepPrefix:"스텝:"
@@ -469,6 +494,9 @@ const I18N = {
     trainStart:"开始/重新开始", transpose:"移调",
     seek:"播放位置",
     resetDefaults:"恢复默认设置",
+    presetSlot:"预设槽位", presetSave:"保存到槽位", presetLoad:"加载槽位",
+    presetSaved:"预设已保存", presetLoaded:"预设已加载", presetEmpty:"槽位为空",
+    presetSaveFailed:"保存失败",
     uiHide:"隐藏界面", uiShow:"显示界面",
     octaveSuffix:"八度", transposeSuffix:"半音",
     filePlayback:"文件播放", trainerStepPrefix:"步骤:"
@@ -477,6 +505,13 @@ const I18N = {
 
 reserveValueWidths();
 const SETTINGS_KEY = 'ppm:v6';
+const PRESET_SLOT_COUNT = 3;
+const presetStorageKey = slot => `${SETTINGS_KEY}:preset${slot}`;
+const clampPresetSlot = value => {
+  const parsed = parseInt(value,10);
+  if(Number.isNaN(parsed)) return 1;
+  return Math.max(1, Math.min(PRESET_SLOT_COUNT, parsed));
+};
 // 初回ロード時のデフォルト設定をキャッシュ
 let DEFAULT_SETTINGS = null;
 
@@ -507,12 +542,27 @@ function formatCutValueForLang(value, targetLang){
   const suffix = (I18N[targetLang] && I18N[targetLang].octaveSuffix) || I18N.en.octaveSuffix;
   return `${value} ${suffix}`;
 }
+function updatePresetOptions(){
+  if(!presetSlotSel) return;
+  const current = clampPresetSlot(presetSlotSel.value || 1);
+  presetSlotSel.innerHTML = '';
+  for(let i=1;i<=PRESET_SLOT_COUNT;i++){
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${t('presetSlot')} ${i}`;
+    presetSlotSel.appendChild(opt);
+  }
+  presetSlotSel.value = String(current);
+}
 // ラベルやステータスの文言を現在の言語設定で書き換える
 function applyI18N(){
   document.documentElement.lang = lang;
   reserveValueWidths();
   // data-lbl属性を持つすべての要素に翻訳済みの文字列を注入
   document.querySelectorAll('[data-lbl]').forEach(el=> setLabelText(el, el.getAttribute('data-lbl')));
+  updatePresetOptions();
+  if(savePresetBtn) savePresetBtn.textContent = t('presetSave');
+  if(loadPresetBtn) loadPresetBtn.textContent = t('presetLoad');
   anchorSel.querySelector('option[value="water"]').textContent = t('waterFixed');
   anchorSel.querySelector('option[value="disk"]').textContent  = t('diskFixed');
   excludeSel.querySelector('option[value="filled"]').textContent   = t('filled');
@@ -684,6 +734,14 @@ function applySettings(settings, {force = false} = {}){
     updateUIVisibility();
   }
 }
+function finalizeAppliedSettings({shouldConnectMIDI = false} = {}){
+  applyUIScale();
+  applyI18N();
+  snapZeroAlpha = snapAlphaCheckbox.checked;
+  updateDampFromSlider();
+  updateFileOpUI();
+  if(shouldConnectMIDI) connectMIDIAccordingToUI();
+}
 
 function loadSettings(){
   let stored = {};
@@ -692,11 +750,49 @@ function loadSettings(){
     stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {};
   }catch{}
   applySettings(stored);
-  applyUIScale();
-  applyI18N();
-  snapZeroAlpha = snapAlphaCheckbox.checked;
-  updateDampFromSlider();
-  updateFileOpUI();
+  finalizeAppliedSettings();
+}
+
+function selectedPresetSlot(){
+  return clampPresetSlot(presetSlotSel ? presetSlotSel.value : 1);
+}
+
+function savePreset(slot){
+  const target = clampPresetSlot(slot);
+  try{
+    localStorage.setItem(presetStorageKey(target), JSON.stringify(collectSettingsFromUI()));
+    info.textContent = `${t('presetSaved')} #${target}`;
+  }catch{
+    info.textContent = t('presetSaveFailed');
+  }
+}
+
+function loadPreset(slot){
+  const target = clampPresetSlot(slot);
+  let storedPreset = null;
+  try{
+    storedPreset = JSON.parse(localStorage.getItem(presetStorageKey(target)) || 'null');
+  }catch{}
+  if(!storedPreset){
+    info.textContent = t('presetEmpty');
+    return;
+  }
+  applySettings(storedPreset, {force:true});
+  finalizeAppliedSettings({shouldConnectMIDI:true});
+  saveSettings();
+  info.textContent = `${t('presetLoaded')} #${target}`;
+}
+
+if(presetSlotSel){
+  presetSlotSel.addEventListener('change', ()=>{
+    presetSlotSel.value = String(selectedPresetSlot());
+  });
+}
+if(savePresetBtn){
+  savePresetBtn.onclick = ()=> savePreset(selectedPresetSlot());
+}
+if(loadPresetBtn){
+  loadPresetBtn.onclick = ()=> loadPreset(selectedPresetSlot());
 }
 
 /* ===== UI show/hide ===== */
@@ -1031,16 +1127,11 @@ if(resetBtn){
     // 言語選択だけは保持したまま他のパラメータをリセット
     applySettings(defaults, {force:true});
     lang = currentLang;
-    applyUIScale();
-    applyI18N();
     midiTranspose = 0;
     transposeSlider.value = '0';
     applyTransposeSetting({preservePlayback:false});
-    snapZeroAlpha = snapAlphaCheckbox.checked;
-    updateDampFromSlider();
-    updateFileOpUI();
+    finalizeAppliedSettings({shouldConnectMIDI:true});
     saveSettings();
-    connectMIDIAccordingToUI();
   });
 }
 
