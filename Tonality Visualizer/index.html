@@ -1378,7 +1378,7 @@ function handleRealtimeTrainerInput(note, isOn, vel){
 function buildTrainerForMode(){
   if(!midiData){
     if(midiDataRaw){
-      rebuildMidiView({preservePlayback:false});
+      midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
     }else{
       return null;
     }
@@ -2942,7 +2942,10 @@ seekSlider.addEventListener('input', ()=>{
 });
 
 btnStartTrain.onclick = ()=>{
-  if(!midiData && !midiDataRaw){
+  if(!midiData && midiDataRaw){
+    midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
+  }
+  if(!midiData){
     fileInfo.textContent='file: –';
     trainerStat.textContent = 'ring: MIDI file not loaded';
     return;
@@ -2959,6 +2962,9 @@ btnStartTrain.onclick = ()=>{
   }
   if(!trainer){
     trainerStat.textContent = 'ring: failed to init (no MIDI data)';
+  }else if(trainer.kind === 'realtime'){
+    const total = trainer.midi?.notes?.length || 0;
+    trainerStat.textContent = `ring: ready (${total} notes)`;
   }
   updateTrainerUI();
 };
