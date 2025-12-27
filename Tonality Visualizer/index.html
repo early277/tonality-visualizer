@@ -1370,8 +1370,8 @@ function trainerOnInputChange(){
 function handleRealtimeTrainerInput(note, isOn, vel){
   if(fileOp.value!=='train' || !trainer || !trainer.active || trainer.kind!=='realtime') return;
   const ctx = ensureCtx();
-  const t = ctx.currentTime;
-  trainer.processInput(note, isOn ? 'on' : 'off', vel, t);
+  const abs = (ctx && ctx.state==='running') ? ctx.currentTime : performance.now()/1000;
+  trainer.processInput(note, isOn ? 'on' : 'off', vel, abs);
   trainer.advance(trainer.now());
   updateTrainerUI();
 }
@@ -2756,6 +2756,7 @@ class RealTimeTrainer{
     this.kind = 'realtime';
     this.midi = midi;
     this.ctx = ensureCtx();
+    this.clock = ()=>performance.now()/1000;
     this.applyOptions({toleranceMs, holdRatio, lookaheadSec});
     this.resetState();
   }
@@ -2775,6 +2776,7 @@ class RealTimeTrainer{
     this.running = false;
     this.active = false;
     this.startCtxTime = 0;
+    this.monotonicStart = 0;
     this.posSec = 0;
     this.stats = {perfect:0, good:0, miss:0, early:0, late:0, holdOk:0, holdMiss:0};
     this.deltaSum = 0;
@@ -2783,8 +2785,10 @@ class RealTimeTrainer{
   totalLength(){ return this.midi?.lengthSec || 0; }
   start(){
     if(!this.ctx) this.ctx = ensureCtx();
+    try{ if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); }catch{}
     this.resetState();
-    this.startCtxTime = this.ctx.currentTime;
+    this.startCtxTime = this.ctx ? this.ctx.currentTime : 0;
+    this.monotonicStart = this.clock();
     this.posSec = 0;
     this.running = true;
     this.active = true;
@@ -2796,7 +2800,10 @@ class RealTimeTrainer{
   }
   now(){
     if(!this.running) return this.posSec;
-    const pos = this.ctx.currentTime - this.startCtxTime;
+    const base = (this.ctx && this.ctx.state==='running')
+      ? (this.ctx.currentTime - this.startCtxTime)
+      : (this.clock() - this.monotonicStart);
+    const pos = Number.isFinite(base) ? base : 0;
     return Math.max(0, Math.min(pos, this.totalLength()));
   }
   _markMiss(target){
@@ -2848,7 +2855,9 @@ class RealTimeTrainer{
   }
   processInput(note, type, vel, timeSec = null){
     if(!this.active) return;
-    const relSec = (timeSec!=null ? timeSec : this.ctx.currentTime) - this.startCtxTime;
+    const abs = (timeSec!=null) ? timeSec
+      : ((this.ctx && this.ctx.state==='running') ? this.ctx.currentTime : this.clock());
+    const relSec = abs - (this.ctx && this.ctx.state==='running' ? this.startCtxTime : this.monotonicStart);
     if(type==='on') this._handleOn(note, relSec);
     else this._handleOff(note, relSec);
   }
