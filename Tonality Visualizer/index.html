@@ -200,6 +200,12 @@
       <option value="train" selected>トレーナー</option>
     </select>
   </label>
+  <label id="trainerModeWrap" data-lbl="trainerMode">
+    <select id="trainerMode">
+      <option value="gate" selected>和音ゲート</option>
+      <option value="realtime">リアルタイム（リング）</option>
+    </select>
+  </label>
   <span id="playBtns">
     <button id="btnPlay">▶︎</button>
     <button id="btnPause">⏸</button>
@@ -214,6 +220,22 @@
     <button id="btnPrev">◀︎</button>
     <button id="btnNext">▶︎</button>
   </span>
+  <label id="timingTolWrap" data-lbl="timingTol">
+    <input id="timingTol" type="range" min="10" max="200" step="1" value="60">
+    <span id="timingTolVal">±60 ms</span>
+  </label>
+  <label id="holdTolWrap" data-lbl="holdTol">
+    <input id="holdTol" type="range" min="50" max="120" step="1" value="90">
+    <span id="holdTolVal">90%</span>
+  </label>
+  <label id="ringLookaheadWrap" data-lbl="ringLookahead">
+    <input id="ringLookahead" type="range" min="1" max="6" step="0.1" value="2.5">
+    <span id="ringLookaheadVal">2.5 s</span>
+  </label>
+  <label id="ringAlphaWrap" data-lbl="ringAlpha">
+    <input id="ringAlpha" type="range" min="10" max="100" step="1" value="70">
+    <span id="ringAlphaVal">70%</span>
+  </label>
 
   <span id="info">idle</span>
   <span id="midiStat" style="min-width:280px">MIDI: 未初期化</span>
@@ -297,6 +319,8 @@ const omegaMaxSlider = document.getElementById('omegaMax'); const omegaMaxVal = 
 
 const midiFileInput = document.getElementById('midiFile');
 const fileOp = document.getElementById('fileOp');
+const trainerModeWrap = document.getElementById('trainerModeWrap');
+const trainerModeSel = document.getElementById('trainerMode');
 const btnPlay = document.getElementById('btnPlay');
 const btnPause = document.getElementById('btnPause');
 const btnStop = document.getElementById('btnStop');
@@ -305,6 +329,18 @@ const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
+const timingTolWrap = document.getElementById('timingTolWrap');
+const timingTolSlider = document.getElementById('timingTol');
+const timingTolVal = document.getElementById('timingTolVal');
+const holdTolWrap = document.getElementById('holdTolWrap');
+const holdTolSlider = document.getElementById('holdTol');
+const holdTolVal = document.getElementById('holdTolVal');
+const ringLookaheadWrap = document.getElementById('ringLookaheadWrap');
+const ringLookaheadSlider = document.getElementById('ringLookahead');
+const ringLookaheadVal = document.getElementById('ringLookaheadVal');
+const ringAlphaWrap = document.getElementById('ringAlphaWrap');
+const ringAlphaSlider = document.getElementById('ringAlpha');
+const ringAlphaVal = document.getElementById('ringAlphaVal');
 const transposeSlider = document.getElementById('transpose');
 const transposeVal = document.getElementById('transposeVal');
 const seekSlider = document.getElementById('seek');
@@ -350,6 +386,10 @@ function reserveValueWidths(){
   reserve(labelAlphaVal, pctSamples);
   reserve(movNumSizeVal, ['10px', '60px']);
   reserve(labelSizeVal, ['8px', '36px']);
+  reserve(timingTolVal, ['±10 ms', '±200 ms']);
+  reserve(holdTolVal, ['50%', '120%']);
+  reserve(ringLookaheadVal, ['1.0 s', '6.0 s']);
+  reserve(ringAlphaVal, ['10%', '100%']);
 }
 
 /* ===== i18n + persist ===== */
@@ -371,8 +411,10 @@ const I18N = {
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
     midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
+    trainerMode:"trainer mode", trainerModeGate:"chord gate", trainerModeRealtime:"real-time (ring)",
     trainStart:"start / restart", transpose:"transpose",
     seek:"position",
+    timingTol:"timing window", holdTol:"hold target", ringLookahead:"ring lookahead", ringAlpha:"ring opacity",
     resetDefaults:"reset settings",
     presetSlot:"preset slot", presetSave:"save to slot", presetLoad:"load slot",
     presetSaved:"preset saved", presetLoaded:"preset loaded", presetEmpty:"slot is empty",
@@ -398,8 +440,10 @@ const I18N = {
     midiReady:"pronto", midiInitFailed:"falha na inicialização", midiAllInputsStat:"todas as entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"nenhum dispositivo",
     midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador",
+    trainerMode:"modo do treinador", trainerModeGate:"acorde por acorde", trainerModeRealtime:"tempo real (anel)",
     trainStart:"iniciar/reiniciar", transpose:"transposição",
     seek:"posição de reprodução",
+    timingTol:"janela de tempo", holdTol:"duração alvo", ringLookahead:"antevisão no anel", ringAlpha:"opacidade do anel",
     resetDefaults:"restaurar padrões",
     presetSlot:"slot de preset", presetSave:"salvar no slot", presetLoad:"carregar slot",
     presetSaved:"preset salvo", presetLoaded:"preset carregado", presetEmpty:"slot vazio",
@@ -425,8 +469,10 @@ const I18N = {
     midiReady:"listo", midiInitFailed:"fallo de inicio", midiAllInputsStat:"todas las entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"sin dispositivo",
     midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador",
+    trainerMode:"modo de entrenador", trainerModeGate:"acorde por acorde", trainerModeRealtime:"tiempo real (anillo)",
     trainStart:"iniciar/reiniciar", transpose:"transposición",
     seek:"posición de reproducción",
+    timingTol:"ventana de tiempo", holdTol:"duración objetivo", ringLookahead:"anticipación del anillo", ringAlpha:"opacidad del anillo",
     resetDefaults:"restablecer ajustes",
     presetSlot:"ranura de preset", presetSave:"guardar en ranura", presetLoad:"cargar ranura",
     presetSaved:"preset guardado", presetLoaded:"preset cargado", presetEmpty:"ranura vacía",
@@ -452,8 +498,10 @@ const I18N = {
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
     midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
+    trainerMode:"トレーナーモード", trainerModeGate:"和音ゲート", trainerModeRealtime:"リアルタイム（リング）",
     trainStart:"開始/リスタート", transpose:"移調",
     seek:"再生位置",
+    timingTol:"タイミング許容", holdTol:"長さ目標", ringLookahead:"リング先読み", ringAlpha:"リング不透明度",
     resetDefaults:"初期設定に戻す",
     presetSlot:"プリセット枠", presetSave:"枠に保存", presetLoad:"枠を読み込み",
     presetSaved:"プリセットを保存しました", presetLoaded:"プリセットを読み込みました", presetEmpty:"枠が空です",
@@ -479,8 +527,10 @@ const I18N = {
     midiReady:"준비 완료", midiInitFailed:"초기화 실패", midiAllInputsStat:"모든 입력",
     midiInputStatPrefix:"입력:", midiNoDevice:"장치 없음",
     midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너",
+    trainerMode:"트레이너 모드", trainerModeGate:"화음 게이트", trainerModeRealtime:"실시간(링)",
     trainStart:"시작/재시작", transpose:"이조",
     seek:"재생 위치",
+    timingTol:"타이밍 허용", holdTol:"길이 목표", ringLookahead:"링 미리보기", ringAlpha:"링 불투명도",
     resetDefaults:"초기 설정으로",
     presetSlot:"프리셋 슬롯", presetSave:"슬롯에 저장", presetLoad:"슬롯 불러오기",
     presetSaved:"프리셋을 저장했습니다", presetLoaded:"프리셋을 불러왔습니다", presetEmpty:"슬롯이 비어 있습니다",
@@ -506,8 +556,10 @@ const I18N = {
     midiReady:"已准备", midiInitFailed:"初始化失败", midiAllInputsStat:"全部输入",
     midiInputStatPrefix:"输入:", midiNoDevice:"无设备",
     midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器",
+    trainerMode:"训练模式", trainerModeGate:"和弦闯关", trainerModeRealtime:"实时（环形）",
     trainStart:"开始/重新开始", transpose:"移调",
     seek:"播放位置",
+    timingTol:"时序容差", holdTol:"按住时长目标", ringLookahead:"环形预览", ringAlpha:"环形不透明度",
     resetDefaults:"恢复默认设置",
     presetSlot:"预设槽位", presetSave:"保存到槽位", presetLoad:"加载槽位",
     presetSaved:"预设已保存", presetLoaded:"预设已加载", presetEmpty:"槽位为空",
@@ -585,6 +637,8 @@ function applyI18N(){
   excludeSel.querySelector('option[value="unfilled"]').textContent = t('unfilled');
   fileOp.querySelector('option[value="play"]').textContent = t('play');
   fileOp.querySelector('option[value="train"]').textContent = t('train');
+  trainerModeSel.querySelector('option[value="gate"]').textContent = t('trainerModeGate');
+  trainerModeSel.querySelector('option[value="realtime"]').textContent = t('trainerModeRealtime');
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
@@ -624,6 +678,11 @@ function collectSettingsFromUI(){
     dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
+    trainerMode,
+    timingToleranceMs,
+    holdTolerancePct,
+    ringLookaheadSec,
+    ringAlpha,
     uiHidden: !uiVisible,
     diskLocked
   };
@@ -747,6 +806,42 @@ function applySettings(settings, {force = false} = {}){
   if(has('fileOp')){
     fileOp.value = s.fileOp;
   }
+  if(has('trainerMode')){
+    trainerMode = s.trainerMode === 'realtime' ? 'realtime' : 'gate';
+    trainerModeSel.value = trainerMode;
+  }
+  if(has('timingToleranceMs')){
+    const v = parseInt(s.timingToleranceMs,10);
+    if(!Number.isNaN(v)){
+      timingToleranceMs = v;
+      timingTolSlider.value = String(v);
+      timingTolVal.textContent = `±${v} ms`;
+    }
+  }
+  if(has('holdTolerancePct')){
+    const v = parseInt(s.holdTolerancePct,10);
+    if(!Number.isNaN(v)){
+      holdTolerancePct = v;
+      holdTolSlider.value = String(v);
+      holdTolVal.textContent = `${v}%`;
+    }
+  }
+  if(has('ringLookaheadSec')){
+    const v = parseFloat(s.ringLookaheadSec);
+    if(!Number.isNaN(v)){
+      ringLookaheadSec = v;
+      ringLookaheadSlider.value = String(v);
+      ringLookaheadVal.textContent = `${v.toFixed(1)} s`;
+    }
+  }
+  if(has('ringAlpha')){
+    const v = parseFloat(s.ringAlpha);
+    if(!Number.isNaN(v)){
+      ringAlpha = v;
+      ringAlphaSlider.value = String(Math.round(v*100));
+      ringAlphaVal.textContent = `${Math.round(v*100)}%`;
+    }
+  }
   if(has('diskLocked')){
     diskLocked = !!s.diskLocked;
   }
@@ -850,12 +945,14 @@ function updateFileOpUI(){
   // 再生モードでは再生ボタン群、トレーナーモードでは練習用ボタン群だけを見せる
   document.getElementById('playBtns').style.display  = isPlay ? '' : 'none';
   document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
+  const trainerOnly = [trainerModeWrap, timingTolWrap, holdTolWrap, ringLookaheadWrap, ringAlphaWrap];
+  trainerOnly.forEach(el=>{ if(el) el.style.display = isPlay ? 'none' : ''; });
   if(isPlay){
     // 再生モード時は最新の進行状況を再生ステータスで置き換える
     info.textContent = t('filePlayback');
   }else{
     // トレーナーモードに切り替わると進捗インジケータを初期化
-    trainerStat.textContent = `${t('trainerStepPrefix')} –`;
+    trainerStat.textContent = (trainerMode === 'realtime') ? 'ring: –' : `${t('trainerStepPrefix')} –`;
   }
 }
 fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
@@ -953,6 +1050,45 @@ let labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100; labelAlphaVal.text
 labelAlphaSlider.oninput = ()=>{
   labelTextAlpha = parseInt(labelAlphaSlider.value,10)/100;
   labelAlphaVal.textContent = `${Math.round(labelTextAlpha*100)}%`;
+  saveSettings();
+};
+
+let trainerMode = trainerModeSel.value || 'gate';
+trainerModeSel.onchange = ()=>{
+  trainerMode = trainerModeSel.value || 'gate';
+  trainer = buildTrainerForMode();
+  updateTrainerUI();
+  saveSettings();
+};
+
+let timingToleranceMs = parseInt(timingTolSlider.value,10); timingTolVal.textContent = `±${timingToleranceMs} ms`;
+timingTolSlider.oninput = ()=>{
+  timingToleranceMs = parseInt(timingTolSlider.value,10);
+  timingTolVal.textContent = `±${timingToleranceMs} ms`;
+  if(trainer && trainer.kind==='realtime'){ trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec}); }
+  saveSettings();
+};
+
+let holdTolerancePct = parseInt(holdTolSlider.value,10); holdTolVal.textContent = `${holdTolerancePct}%`;
+holdTolSlider.oninput = ()=>{
+  holdTolerancePct = parseInt(holdTolSlider.value,10);
+  holdTolVal.textContent = `${holdTolerancePct}%`;
+  if(trainer && trainer.kind==='realtime'){ trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec}); }
+  saveSettings();
+};
+
+let ringLookaheadSec = parseFloat(ringLookaheadSlider.value); ringLookaheadVal.textContent = `${ringLookaheadSec.toFixed(1)} s`;
+ringLookaheadSlider.oninput = ()=>{
+  ringLookaheadSec = parseFloat(ringLookaheadSlider.value);
+  ringLookaheadVal.textContent = `${ringLookaheadSec.toFixed(1)} s`;
+  if(trainer && trainer.kind==='realtime'){ trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec}); }
+  saveSettings();
+};
+
+let ringAlpha = parseInt(ringAlphaSlider.value,10)/100; ringAlphaVal.textContent = `${Math.round(ringAlpha*100)}%`;
+ringAlphaSlider.oninput = ()=>{
+  ringAlpha = parseInt(ringAlphaSlider.value,10)/100;
+  ringAlphaVal.textContent = `${Math.round(ringAlpha*100)}%`;
   saveSettings();
 };
 
@@ -1226,10 +1362,29 @@ const mapToPoints = (m)=> Array.from(m, ([midi, vel])=>({midi, vel}));
 const TAP_NOTE_DURATION_SEC = 0.8;
 const trainerInputState = ()=> mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes);
 function trainerOnInputChange(){
-  if(fileOp.value==='train' && trainer && trainer.active){
+  if(fileOp.value==='train' && trainer && trainer.active && trainer.kind==='gate'){
     trainer.considerAdvance(trainerInputState());
     updateTrainerUI();
   }
+}
+function handleRealtimeTrainerInput(note, isOn, vel){
+  if(fileOp.value!=='train' || !trainer || !trainer.active || trainer.kind!=='realtime') return;
+  const ctx = ensureCtx();
+  const t = ctx.currentTime;
+  trainer.processInput(note, isOn ? 'on' : 'off', vel, t);
+  trainer.advance(trainer.now());
+  updateTrainerUI();
+}
+function buildTrainerForMode(){
+  if(!midiData) return null;
+  if(trainerMode === 'realtime'){
+    return new RealTimeTrainer(midiData, {
+      toleranceMs: timingToleranceMs,
+      holdRatio: holdTolerancePct/100,
+      lookaheadSec: ringLookaheadSec
+    });
+  }
+  return new GateTrainer(midiData);
 }
 
 function closestNoteForTap(theta, radius){
@@ -1604,19 +1759,93 @@ function drawNotes(points, drawRot){
       ctx.fillText(label, x, y - labelOffset);
     }
   }
-  function labelOnly(p, label, position = 'top', color = 'rgba(220,220,220,0.9)'){
-    const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
-    const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
-    ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
-    const labelOffset = 18 * devicePixelRatio;
+function labelOnly(p, label, position = 'top', color = 'rgba(220,220,220,0.9)'){
+  const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
+  const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
+  ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
+  const labelOffset = 18 * devicePixelRatio;
     if(position === 'bottom'){
       ctx.textBaseline='top';
       ctx.fillText(label, x, y + labelOffset);
     }else{
       ctx.textBaseline='bottom';
-      ctx.fillText(label, x, y - labelOffset);
-    }
+    ctx.fillText(label, x, y - labelOffset);
   }
+}
+
+function noteNameFromMidi(midi){
+  const pc = ((midi%12)+12)%12;
+  return LABEL_ENH[pc] || String(pc);
+}
+
+function drawRealtimeRing(trainer, drawRot){
+  if(!trainer || !trainer.active) return;
+  const {rMax} = ringParams();
+  const cx = cv.width/2, cy = cv.height/2;
+  const outer = (rMax + 34);
+  const inner = (rMax + 12);
+  const midR = (outer + inner) / 2;
+  const baseAng = -Math.PI/2;
+  const nowSec = trainer.now();
+  const wasActive = trainer.active;
+  trainer.advance(nowSec);
+  if(wasActive && !trainer.active) updateTrainerUI();
+  const lookahead = trainer.lookaheadSec || ringLookaheadSec;
+  const segments = trainer.segments(nowSec, lookahead);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(drawRot);
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = ringAlpha;
+
+  ctx.lineWidth = Math.max(2, (outer-inner)*0.35);
+  ctx.strokeStyle = `rgba(255,255,255,${0.3*ringAlpha})`;
+  ctx.beginPath();
+  ctx.arc(0,0, midR, 0, 2*Math.PI);
+  ctx.stroke();
+
+  ctx.lineWidth = Math.max(2, (outer-inner)*0.4);
+  ctx.strokeStyle = `rgba(255,255,255,${0.9*ringAlpha})`;
+  ctx.beginPath();
+  ctx.moveTo(inner*Math.cos(baseAng), inner*Math.sin(baseAng));
+  ctx.lineTo(outer*Math.cos(baseAng), outer*Math.sin(baseAng));
+  ctx.stroke();
+
+  ctx.lineWidth = Math.max(6*devicePixelRatio, outer-inner);
+
+  for(const seg of segments){
+    const startDelta = seg.startSec - nowSec;
+    const endDelta = seg.endSec - nowSec;
+    if(endDelta < -trainer.toleranceSec) continue;
+    const startFrac = startDelta / lookahead;
+    const endFrac = Math.min(1, Math.max(startFrac + 0.01, endDelta / lookahead));
+    const startAng = baseAng + startFrac * 2*Math.PI;
+    const endAng = baseAng + endFrac * 2*Math.PI;
+    const pc = ((seg.note%12)+12)%12;
+    const [r,g,b] = NOTE_BG[pc] || [200,200,200];
+    const onColor = `rgba(${r},${g},${b},${ringAlpha})`;
+    const activeColor = seg.state==='on' ? `rgba(${r},${g},${b},${Math.min(1, ringAlpha+0.15)})` : onColor;
+    ctx.strokeStyle = activeColor;
+    ctx.beginPath();
+    ctx.arc(0,0, midR, startAng, endAng, false);
+    ctx.stroke();
+
+    // ラベル
+    const midAng = (startAng + endAng) / 2;
+    const labelPos = polarToXY(0, 0, outer + 10*devicePixelRatio, midAng);
+    ctx.save();
+    ctx.fillStyle = `rgba(255,255,255,${ringAlpha})`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${11*devicePixelRatio}px system-ui`;
+    const label = `${noteNameFromMidi(seg.note)} ${Math.max(0.05, seg.len).toFixed(1)}s`;
+    ctx.fillText(label, labelPos.x, labelPos.y);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
   if(low)  ring(low,'rgba(0,200,255,0.95)','LOW','bottom');
   if(high) ring(high,'rgba(255,160,0,0.95)','HIGH','top');
 
@@ -1893,8 +2122,12 @@ function draw(){
 
   // ★トレーナーのターゲット表示（trainer.currentNotesを直接描画）
   if(fileOp.value==='train' && trainer && trainer.active){
-    const tn = trainer.currentNotes();
-    if(tn && tn.length) drawTargetNotes(tn, drawRot);
+    if(trainer.kind === 'gate'){
+      const tn = trainer.currentNotes();
+      if(tn && tn.length) drawTargetNotes(tn, drawRot);
+    }else if(trainer.kind === 'realtime'){
+      drawRealtimeRing(trainer, drawRot);
+    }
   }
 
   requestAnimationFrame(draw);
@@ -1970,13 +2203,16 @@ function midiMessageHandler(ev){
     if(vel>0){
       liveNotes.set(note, vel/127);
       if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); applySeekMuteState(); synth.noteOn(note, vel/127); }
+      handleRealtimeTrainerInput(note, true, vel/127);
     }else{
       liveNotes.delete(note);
       if(synth) synth.noteOff(note);
+      handleRealtimeTrainerInput(note, false, vel/127);
     }
   }else if(st===0x80){
     liveNotes.delete(note);
     if(synth) synth.noteOff(note);
+    handleRealtimeTrainerInput(note, false, vel/127);
   }
 
   trainerOnInputChange();
@@ -2324,7 +2560,7 @@ function parseMIDI(ab){
       player = null;
     }
     midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
-    trainer = new Trainer(midiData);
+    trainer = buildTrainerForMode();
     updateTrainerUI();
     updateSeekUI(resumePos, midiData.lengthSec);
     const ctx = resumeCtx || ensureCtx();
@@ -2456,8 +2692,9 @@ function parseMIDI(ab){
   }
 }
 /* ===== Trainer（離鍵必須のエッジ検出） ===== */
-class Trainer{
+class GateTrainer{
   constructor(midi){
+    this.kind = 'gate';
     this.midi = midi;
     this.steps = midi.onsetTicks.map(tk => ({tick:tk, notes: midi.onsets.get(tk).map(o=>o.note)}));
     this.idx = 0;
@@ -2512,6 +2749,136 @@ class Trainer{
     }
   }
 }
+
+/* ===== リアルタイム判定付きリングトレーナー ===== */
+class RealTimeTrainer{
+  constructor(midi, {toleranceMs = 60, holdRatio = 0.9, lookaheadSec = 2.5} = {}){
+    this.kind = 'realtime';
+    this.midi = midi;
+    this.ctx = ensureCtx();
+    this.applyOptions({toleranceMs, holdRatio, lookaheadSec});
+    this.resetState();
+  }
+  applyOptions({toleranceMs, holdRatio, lookaheadSec} = {}){
+    this.toleranceSec = Math.max(0.005, (toleranceMs ?? 60) / 1000);
+    this.holdRatio = Math.max(0, holdRatio ?? 0.9);
+    this.lookaheadSec = Math.max(0.5, lookaheadSec ?? 2.5);
+  }
+  resetState(){
+    this.notes = (this.midi?.notes || []).map((n, idx)=>({
+      ...n,
+      idx,
+      len: Math.max(0.05, n.endSec - n.startSec),
+      state: 'pending',
+      actualOn: null
+    }));
+    this.running = false;
+    this.active = false;
+    this.startCtxTime = 0;
+    this.posSec = 0;
+    this.stats = {perfect:0, good:0, miss:0, early:0, late:0, holdOk:0, holdMiss:0};
+    this.deltaSum = 0;
+    this.deltaCount = 0;
+  }
+  totalLength(){ return this.midi?.lengthSec || 0; }
+  start(){
+    if(!this.ctx) this.ctx = ensureCtx();
+    this.resetState();
+    this.startCtxTime = this.ctx.currentTime;
+    this.posSec = 0;
+    this.running = true;
+    this.active = true;
+  }
+  stop(){
+    this.running = false;
+    this.active = false;
+    this.posSec = 0;
+  }
+  now(){
+    if(!this.running) return this.posSec;
+    const pos = this.ctx.currentTime - this.startCtxTime;
+    return Math.max(0, Math.min(pos, this.totalLength()));
+  }
+  _markMiss(target){
+    target.state = 'miss';
+    this.stats.miss++;
+  }
+  _evalHold(target, nowSec){
+    if(target.state !== 'on') return;
+    const refNow = nowSec != null ? nowSec : this.now();
+    const held = Math.max(0, refNow - (target.actualOn ?? refNow));
+    const ratio = held / Math.max(0.05, target.len);
+    if(ratio >= this.holdRatio){
+      this.stats.holdOk++;
+    }else{
+      this.stats.holdMiss++;
+    }
+    target.state = 'done';
+  }
+  _handleOn(note, relSec){
+    const tol = this.toleranceSec;
+    let pick = null, best = Infinity, delta = 0;
+    for(const n of this.notes){
+      if(n.state!=='pending' || n.note!==note) continue;
+      const d = relSec - n.startSec;
+      const abs = Math.abs(d);
+      if(abs <= tol && abs < best){
+        pick = n; best = abs; delta = d;
+      }
+    }
+    if(pick){
+      pick.state = 'on';
+      pick.actualOn = relSec;
+      this.deltaSum += delta;
+      this.deltaCount++;
+      if(Math.abs(delta) <= tol*0.35){
+        this.stats.perfect++;
+      }else{
+        this.stats.good++;
+      }
+      if(delta > 0.001) this.stats.late++; else if(delta < -0.001) this.stats.early++;
+    }else{
+      this.stats.miss++;
+    }
+  }
+  _handleOff(note, relSec){
+    const target = this.notes.find(n=>n.state==='on' && n.note===note);
+    if(!target) return;
+    this._evalHold(target, relSec);
+  }
+  processInput(note, type, vel, timeSec = null){
+    if(!this.active) return;
+    const relSec = (timeSec!=null ? timeSec : this.ctx.currentTime) - this.startCtxTime;
+    if(type==='on') this._handleOn(note, relSec);
+    else this._handleOff(note, relSec);
+  }
+  advance(nowSec = this.now()){
+    const tol = this.toleranceSec;
+    for(const n of this.notes){
+      if(n.state==='pending' && nowSec > n.startSec + tol){
+        this._markMiss(n);
+      }else if(n.state==='on' && nowSec > n.endSec + tol){
+        this._evalHold(n, nowSec);
+      }
+    }
+    if(nowSec >= this.totalLength() + tol){
+      this.active = false;
+      this.running = false;
+    }
+  }
+  segments(nowSec = this.now(), lookahead = this.lookaheadSec){
+    const end = nowSec + lookahead;
+    return this.notes.filter(n=>{
+      if(n.state==='done' || n.state==='miss') return false;
+      return n.startSec >= nowSec - this.toleranceSec && n.startSec <= end;
+    });
+  }
+  summary(){
+    const hits = this.stats.perfect + this.stats.good;
+    const avgMs = this.deltaCount ? (this.deltaSum / this.deltaCount * 1000) : 0;
+    return {...this.stats, hits, avgMs, total:this.notes.length};
+  }
+}
   /* ===== UI actions ===== */
   btnPlay.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
@@ -2562,19 +2929,43 @@ seekSlider.addEventListener('input', ()=>{
 btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
   if(player) player.stop();
-  trainer = new Trainer(midiData);
-  trainer.start(trainerInputState());   // 開始時点の押下状態でゲート初期化
+  trainer = buildTrainerForMode();
+  if(trainer){
+    if(trainer.kind === 'gate'){
+      trainer.start(trainerInputState());   // 開始時点の押下状態でゲート初期化
+    }else if(trainer.kind === 'realtime'){
+      trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec});
+      trainer.start();
+    }
+  }
   updateTrainerUI();
 };
-btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
-btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(trainerInputState()); updateTrainerUI(); } };
+btnPrev.onclick = ()=>{ if(trainer && trainer.active && trainer.kind==='gate'){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
+btnNext.onclick = ()=>{ if(trainer && trainer.active && trainer.kind==='gate'){ trainer.next(trainerInputState()); updateTrainerUI(); } };
 
 function updateTrainerUI(){
   if(trainer && trainer.active){
-    const tn = trainer.currentNotes();
-    trainerStat.textContent = `step: ${trainer.idx+1}/${trainer.steps.length}  notes: [${tn.join(', ')}]`;
+    if(trainer.kind === 'gate'){
+      const tn = trainer.currentNotes();
+      trainerStat.textContent = `step: ${trainer.idx+1}/${trainer.steps.length}  notes: [${tn.join(', ')}]`;
+    }else if(trainer.kind === 'realtime'){
+      const s = trainer.summary();
+      const holdTotal = s.holdOk + s.holdMiss;
+      const holdTxt = holdTotal ? `${s.holdOk}/${holdTotal}` : '–';
+      const deltaTxt = Number.isFinite(s.avgMs) ? `${s.avgMs.toFixed(1)} ms` : '–';
+      trainerStat.textContent = `ring: hit ${s.hits}/${s.total}  Δ=${deltaTxt}  hold ${holdTxt}`;
+    }
   }else if(trainer && !trainer.active){
-    trainerStat.textContent = `step: done (${trainer?.steps?.length||0})`;
+    if(trainer.kind === 'realtime'){
+      const s = trainer.summary();
+      const holdTotal = s.holdOk + s.holdMiss;
+      const holdTxt = holdTotal ? `${s.holdOk}/${holdTotal}` : '–';
+      const deltaTxt = Number.isFinite(s.avgMs) ? `${s.avgMs.toFixed(1)} ms` : '–';
+      const hasResult = (s.hits + s.miss + holdTotal + s.early + s.late) > 0;
+      trainerStat.textContent = hasResult ? `ring done: ${s.hits}/${s.total}  Δ=${deltaTxt}  hold ${holdTxt}` : 'ring: –';
+    }else{
+      trainerStat.textContent = `step: done (${trainer?.steps?.length||0})`;
+    }
   }else{
     trainerStat.textContent = 'step: –';
   }
@@ -2582,7 +2973,7 @@ function updateTrainerUI(){
 
 /* ===== Keyboard shortcuts ===== */
 addEventListener('keydown', e=>{
-  if(fileOp.value==='train' && trainer && trainer.active){
+  if(fileOp.value==='train' && trainer && trainer.active && trainer.kind==='gate'){
     if(e.key==='ArrowLeft'){ trainer.prev(trainerInputState()); updateTrainerUI(); }
     else if(e.key==='ArrowRight'){ trainer.next(trainerInputState()); updateTrainerUI(); }
   }
