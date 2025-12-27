@@ -1784,7 +1784,7 @@ function noteNameFromMidi(midi){
   return LABEL_ENH[pc] || String(pc);
 }
 
-function drawRealtimeRing(trainer, drawRot){
+  function drawRealtimeRing(trainer, drawRot){
   if(!trainer || !trainer.active) return;
   const {rMax} = ringParams();
   const cx = cv.width/2, cy = cv.height/2;
@@ -1798,6 +1798,7 @@ function drawRealtimeRing(trainer, drawRot){
   if(wasActive && !trainer.active) updateTrainerUI();
   const lookahead = trainer.lookaheadSec || ringLookaheadSec;
   const segments = trainer.segments(nowSec, lookahead);
+  const firstNote = trainer.firstNoteSec;
 
   ctx.save();
   ctx.translate(cx, cy);
@@ -1819,6 +1820,17 @@ function drawRealtimeRing(trainer, drawRot){
   ctx.stroke();
 
   ctx.lineWidth = Math.max(6*devicePixelRatio, outer-inner);
+
+  if(!segments.length && Number.isFinite(firstNote) && firstNote > nowSec){
+    ctx.save();
+    ctx.fillStyle = `rgba(255,255,255,${ringAlpha})`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${12*devicePixelRatio}px system-ui`;
+    const msg = `waiting… first note in ${(firstNote - nowSec).toFixed(2)}s`;
+    ctx.fillText(msg, 0, -outer - 14*devicePixelRatio);
+    ctx.restore();
+  }
 
   for(const seg of segments){
     const startDelta = seg.startSec - nowSec;
@@ -2779,6 +2791,7 @@ class RealTimeTrainer{
       state: 'pending',
       actualOn: null
     }));
+    this.firstNoteSec = this.notes.reduce((m,n)=>Math.min(m, n.startSec??Infinity), Infinity);
     this.running = false;
     this.active = false;
     this.startCtxTime = 0;
@@ -2981,7 +2994,8 @@ function updateTrainerUI(){
       const holdTotal = s.holdOk + s.holdMiss;
       const holdTxt = holdTotal ? `${s.holdOk}/${holdTotal}` : '–';
       const deltaTxt = Number.isFinite(s.avgMs) ? `${s.avgMs.toFixed(1)} ms` : '–';
-      trainerStat.textContent = `ring: hit ${s.hits}/${s.total}  Δ=${deltaTxt}  hold ${holdTxt}`;
+      const wait = Number.isFinite(trainer.firstNoteSec) ? `t0=${trainer.firstNoteSec.toFixed(2)}s` : '';
+      trainerStat.textContent = `ring: hit ${s.hits}/${s.total}  Δ=${deltaTxt}  hold ${holdTxt} ${wait}`;
     }
   }else if(trainer && !trainer.active){
     if(trainer.kind === 'realtime'){
