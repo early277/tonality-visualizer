@@ -9,6 +9,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - **MIDI File Playback** — load `.mid` files and watch the tonal motion.  
 - **Trainer Mode** — practice chord-by-chord; advance when you play all target notes.  
 - **Real-Time Ring Trainer** — ring timeline shows when to play and how long to hold each note.  
+- **Real-Time Ring Trainer (local HTML note)** — when opening `index.html` directly as a file, load a MIDI via the picker before starting the ring trainer.  
 - **Live Sound Option** — toggle on/off the built-in WebAudio synth for live MIDI playback.  
 - **Physics-Based Disk** — the disk rotates according to tonal balance.  
 - **Customizable UI** — toggle visibility, anchor (water/disk), bilingual JP/EN, opacity, etc.  
@@ -53,6 +54,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - **MIDIファイル対応**：ファイルを再生して音の流れを表示  
 - **トレーナーモード**：和音ごとに順に練習できる「モグラたたき」式トレーニング  
 - **リアルタイム・リングトレーナー**：リング上でタイミングと保持時間を可視化して練習  
+- **ローカルHTML利用時の注意**：`index.html`を直接開く場合は、開始前にMIDIファイルをピッカーで読み込んでください  
 - **ライブ音声ON/OFF**：MIDI入力をアプリ内シンセで鳴らすか選択可能  
 - **物理ベースの回転円盤**：音の配置バランスでディスクが回転  
 - **UI調整**：UI表示/非表示、日本語・英語切替、水面固定／ディスク固定など  

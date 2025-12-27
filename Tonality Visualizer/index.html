@@ -1376,7 +1376,13 @@ function handleRealtimeTrainerInput(note, isOn, vel){
   updateTrainerUI();
 }
 function buildTrainerForMode(){
-  if(!midiData) return null;
+  if(!midiData){
+    if(midiDataRaw){
+      rebuildMidiView({preservePlayback:false});
+    }else{
+      return null;
+    }
+  }
   if(trainerMode === 'realtime'){
     return new RealTimeTrainer(midiData, {
       toleranceMs: timingToleranceMs,
@@ -2936,7 +2942,11 @@ seekSlider.addEventListener('input', ()=>{
 });
 
 btnStartTrain.onclick = ()=>{
-  if(!midiData){ fileInfo.textContent='file: –'; return; }
+  if(!midiData && !midiDataRaw){
+    fileInfo.textContent='file: –';
+    trainerStat.textContent = 'ring: MIDI file not loaded';
+    return;
+  }
   if(player) player.stop();
   trainer = buildTrainerForMode();
   if(trainer){
@@ -2946,6 +2956,9 @@ btnStartTrain.onclick = ()=>{
       trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec});
       trainer.start();
     }
+  }
+  if(!trainer){
+    trainerStat.textContent = 'ring: failed to init (no MIDI data)';
   }
   updateTrainerUI();
 };
