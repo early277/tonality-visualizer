@@ -170,6 +170,30 @@
     <span id="movNumSizeVal">28px</span>
   </label>
 
+  <label id="timelineEnableWrap" data-lbl="timelineEnabled">
+    <input id="timelineEnabled" type="checkbox" checked>
+  </label>
+
+  <label id="timelineLookaheadWrap" data-lbl="timelineLookahead">
+    <input id="timelineLookahead" type="range" min="1" max="12" step="0.5" value="4">
+    <span id="timelineLookaheadVal">4.0s</span>
+  </label>
+
+  <label id="timelineSpeedWrap" data-lbl="timelineSpeed">
+    <input id="timelineSpeed" type="range" min="0.25" max="3" step="0.05" value="1">
+    <span id="timelineSpeedVal">x1.00</span>
+  </label>
+
+  <label id="timelineThicknessWrap" data-lbl="timelineThickness">
+    <input id="timelineThickness" type="range" min="4" max="40" step="1" value="16">
+    <span id="timelineThicknessVal">16px</span>
+  </label>
+
+  <label id="timelineAlphaWrap" data-lbl="timelineAlpha">
+    <input id="timelineAlpha" type="range" min="0" max="100" step="1" value="65">
+    <span id="timelineAlphaVal">65%</span>
+  </label>
+
   <label id="labelSizeWrap" data-lbl="labelSize">
     <input id="labelSize" type="range" min="8" max="36" step="1" value="12">
     <span id="labelSizeVal">12px</span>
@@ -290,6 +314,11 @@ const waterASlider = document.getElementById('waterA'); const waterAVal = docume
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
 const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
 const labelAlphaSlider = document.getElementById('labelAlpha'); const labelAlphaVal = document.getElementById('labelAlphaVal');
+const timelineEnabledCheckbox = document.getElementById('timelineEnabled');
+const timelineLookaheadSlider = document.getElementById('timelineLookahead'); const timelineLookaheadVal = document.getElementById('timelineLookaheadVal');
+const timelineSpeedSlider = document.getElementById('timelineSpeed'); const timelineSpeedVal = document.getElementById('timelineSpeedVal');
+const timelineThicknessSlider = document.getElementById('timelineThickness'); const timelineThicknessVal = document.getElementById('timelineThicknessVal');
+const timelineAlphaSlider = document.getElementById('timelineAlpha'); const timelineAlphaVal = document.getElementById('timelineAlphaVal');
 const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
 const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
 
@@ -346,6 +375,10 @@ function reserveValueWidths(){
   reserve(noteGuideLabelAVal, pctSamples);
   reserve(waterAVal, pctSamples);
   reserve(movNumAVal, pctSamples);
+  reserve(timelineLookaheadVal, ['1.0s','12.0s']);
+  reserve(timelineSpeedVal, ['x0.25','x3.00']);
+  reserve(timelineThicknessVal, ['40px']);
+  reserve(timelineAlphaVal, pctSamples);
   reserve(labelBGVal, pctSamples);
   reserve(labelAlphaVal, pctSamples);
   reserve(movNumSizeVal, ['10px', '60px']);
@@ -364,6 +397,16 @@ const I18N = {
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
+    timelineEnabled:"timeline ring",
+    timelineLookahead:"timeline lookahead (s)",
+    timelineSpeed:"timeline speed",
+    timelineThickness:"timeline thickness",
+    timelineAlpha:"timeline α",
+    timelineEnabled:"timeline ring",
+    timelineLookahead:"timeline lookahead (s)",
+    timelineSpeed:"timeline speed",
+    timelineThickness:"timeline thickness",
+    timelineAlpha:"timeline α",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
@@ -391,6 +434,16 @@ const I18N = {
     snapZeroAlpha:"zerar ω quando α=0",
     lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó",
     labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
+    timelineEnabled:"anel de linha do tempo",
+    timelineLookahead:"antecipação da linha do tempo (s)",
+    timelineSpeed:"velocidade da linha do tempo",
+    timelineThickness:"espessura da linha do tempo",
+    timelineAlpha:"α da linha do tempo",
+    timelineEnabled:"anel de linha do tempo",
+    timelineLookahead:"antecipação da linha do tempo (s)",
+    timelineSpeed:"velocidade da linha do tempo",
+    timelineThickness:"espessura da linha do tempo",
+    timelineAlpha:"α da linha do tempo",
     lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: não inicializado", last:"último:", idle:"ocioso",
@@ -418,6 +471,11 @@ const I18N = {
     snapZeroAlpha:"detener ω cuando α=0",
     lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do",
     labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
+    timelineEnabled:"anillo de línea de tiempo",
+    timelineLookahead:"anticipación de línea de tiempo (s)",
+    timelineSpeed:"velocidad de línea de tiempo",
+    timelineThickness:"grosor de línea de tiempo",
+    timelineAlpha:"opacidad de línea de tiempo",
     lowCut:"corte de graves", highCut:"corte de agudos",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: sin inicializar", last:"último:", idle:"en espera",
@@ -445,6 +503,11 @@ const I18N = {
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
+    timelineEnabled:"タイムラインリング表示",
+    timelineLookahead:"タイムライン先読み (秒)",
+    timelineSpeed:"タイムライン速度",
+    timelineThickness:"タイムラインの太さ",
+    timelineAlpha:"タイムライン透明度",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
@@ -472,6 +535,11 @@ const I18N = {
     snapZeroAlpha:"α=0에서 각속도 정지",
     lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기",
     labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
+    timelineEnabled:"타임라인 링",
+    timelineLookahead:"타임라인 선행 (초)",
+    timelineSpeed:"타임라인 속도",
+    timelineThickness:"타임라인 두께",
+    timelineAlpha:"타임라인 투명도",
     lowCut:"저음역 컷", highCut:"고음역 컷",
     omegaMax:"최대 회전 속도",
     midiNotInit:"MIDI: 초기화되지 않음", last:"마지막:", idle:"대기",
@@ -499,6 +567,11 @@ const I18N = {
     snapZeroAlpha:"α=0 时停止角速度",
     lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小",
     labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
+    timelineEnabled:"时间线环",
+    timelineLookahead:"时间线预读 (秒)",
+    timelineSpeed:"时间线速度",
+    timelineThickness:"时间线粗细",
+    timelineAlpha:"时间线透明度",
     lowCut:"低频削减", highCut:"高频削减",
     omegaMax:"最大角速度",
     midiNotInit:"MIDI：未初始化", last:"最后:", idle:"空闲",
@@ -616,6 +689,11 @@ function collectSettingsFromUI(){
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
+    timelineEnabled: timelineEnabledCheckbox.checked,
+    timelineLookahead: timelineLookaheadSlider.value,
+    timelineSpeed: timelineSpeedSlider.value,
+    timelineThickness: timelineThicknessSlider.value,
+    timelineAlpha: timelineAlphaSlider.value,
     exclude: excludeSel.value,
     lowCut: lowCutOct,
     highCut: highCutOct,
@@ -706,6 +784,25 @@ function applySettings(settings, {force = false} = {}){
   if(has('labelAlpha')){
     labelAlphaSlider.value = s.labelAlpha;
     labelAlphaSlider.oninput();
+  }
+  if(has('timelineEnabled')){
+    timelineEnabledCheckbox.checked = !!s.timelineEnabled;
+  }
+  if(has('timelineLookahead')){
+    timelineLookaheadSlider.value = s.timelineLookahead;
+    timelineLookaheadSlider.oninput();
+  }
+  if(has('timelineSpeed')){
+    timelineSpeedSlider.value = s.timelineSpeed;
+    timelineSpeedSlider.oninput();
+  }
+  if(has('timelineThickness')){
+    timelineThicknessSlider.value = s.timelineThickness;
+    timelineThicknessSlider.oninput();
+  }
+  if(has('timelineAlpha')){
+    timelineAlphaSlider.value = s.timelineAlpha;
+    timelineAlphaSlider.oninput();
   }
   if(has('exclude')){
     excludeSel.value = s.exclude;
@@ -897,6 +994,15 @@ function mergeNoteMaps(...maps){
   }
   return merged;
 }
+function activeNotesNow(){
+  return mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
+}
+function timelineNowSec(){
+  if(player){
+    return player.currentPosition();
+  }
+  return 0;
+}
 // ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
 
@@ -956,6 +1062,42 @@ labelAlphaSlider.oninput = ()=>{
   saveSettings();
 };
 
+// タイムラインリング設定
+let timelineEnabled = timelineEnabledCheckbox.checked;
+let timelineLookaheadSec = parseFloat(timelineLookaheadSlider.value);
+let timelineSpeed = parseFloat(timelineSpeedSlider.value);
+let timelineThicknessPx = parseInt(timelineThicknessSlider.value, 10);
+let timelineAlpha = parseInt(timelineAlphaSlider.value,10) / 100;
+function updateTimelineLookaheadDisplay(){
+  const val = parseFloat(timelineLookaheadSlider.value);
+  timelineLookaheadSec = Number.isNaN(val) ? 4 : val;
+  timelineLookaheadVal.textContent = `${timelineLookaheadSec.toFixed(1)}s`;
+}
+function updateTimelineSpeedDisplay(){
+  const val = parseFloat(timelineSpeedSlider.value);
+  timelineSpeed = Number.isNaN(val) ? 1 : val;
+  timelineSpeedVal.textContent = `x${timelineSpeed.toFixed(2)}`;
+}
+function updateTimelineThicknessDisplay(){
+  const val = parseInt(timelineThicknessSlider.value, 10);
+  timelineThicknessPx = Number.isNaN(val) ? 16 : val;
+  timelineThicknessVal.textContent = `${timelineThicknessPx}px`;
+}
+function updateTimelineAlphaDisplay(){
+  const val = parseInt(timelineAlphaSlider.value,10);
+  timelineAlpha = Number.isNaN(val) ? 0.65 : Math.max(0, Math.min(1, val/100));
+  timelineAlphaVal.textContent = `${Math.round(timelineAlpha*100)}%`;
+}
+timelineEnabledCheckbox.onchange = ()=>{ timelineEnabled = timelineEnabledCheckbox.checked; saveSettings(); };
+timelineLookaheadSlider.oninput = ()=>{ updateTimelineLookaheadDisplay(); saveSettings(); };
+timelineSpeedSlider.oninput = ()=>{ updateTimelineSpeedDisplay(); saveSettings(); };
+timelineThicknessSlider.oninput = ()=>{ updateTimelineThicknessDisplay(); saveSettings(); };
+timelineAlphaSlider.oninput = ()=>{ updateTimelineAlphaDisplay(); saveSettings(); };
+updateTimelineLookaheadDisplay();
+updateTimelineSpeedDisplay();
+updateTimelineThicknessDisplay();
+updateTimelineAlphaDisplay();
+
 /* ===== Global state ===== */
 let worldRot = 0;          // 描画用回転（anchorにより決定）
 let diskAngle = 0, diskOmega = 0;
@@ -964,6 +1106,8 @@ let excludeMode = excludeSel.value;
 let midiDataRaw = null; // 未移調のMIDIデータ
 let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 let trainer = null;
+let timelineNotes = [];
+const timelineNoteStates = new Map(); // idx -> {holding, completed, missed, lastSeen}
 let player = null;
 let seekMuting = false;
 let seekWasRunning = false;
@@ -1741,6 +1885,110 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
   ctx.font=pf; ctx.globalAlpha=pa; ctx.fillStyle=ps; ctx.textAlign=pal; ctx.textBaseline=pb;
 }
 
+function drawTimelineRing(nowSec, drawRot, diskRadius){
+  if(!timelineEnabled || !timelineNotes.length) return;
+  const lookahead = Math.max(0.25, timelineLookaheadSec);
+  const cx=cv.width/2, cy=cv.height/2;
+  const outer = diskRadius + timelineThicknessPx * devicePixelRatio;
+  const inner = Math.max(diskRadius + 4, outer - timelineThicknessPx * devicePixelRatio);
+  const mid = (outer + inner)/2;
+  const baseAlpha = timelineAlpha;
+  const nowLineAngle = -Math.PI/2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, outer, 0, 2*Math.PI);
+  ctx.arc(cx, cy, inner, 0, 2*Math.PI, true);
+  ctx.closePath();
+  ctx.fillStyle = `rgba(120,150,200,${baseAlpha*0.18})`;
+  ctx.fill();
+
+  // 現在位置ライン
+  ctx.beginPath();
+  ctx.moveTo(cx + inner*Math.cos(nowLineAngle), cy + inner*Math.sin(nowLineAngle));
+  ctx.lineTo(cx + outer*Math.cos(nowLineAngle), cy + outer*Math.sin(nowLineAngle));
+  ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const activeMap = activeNotesNow();
+  const fullTurn = 2*Math.PI*timelineSpeed;
+  const nowTime = performance.now();
+
+  for(const n of timelineNotes){
+    const deltaStart = n.startSec - nowSec;
+    const deltaEnd = n.endSec - nowSec;
+    if(deltaStart > lookahead) continue;
+    if(deltaEnd < -lookahead*0.25) {
+      // prune old states
+      const st = timelineNoteStates.get(n.idx);
+      if(st && nowSec - n.endSec > lookahead*2) timelineNoteStates.delete(n.idx);
+      continue;
+    }
+    const pitchAngle = angleForMidiDraw(n.note, drawRot);
+    const startAng = nowLineAngle + (deltaStart/lookahead) * fullTurn;
+    const endAng = nowLineAngle + (deltaEnd/lookahead) * fullTurn;
+    const key = n.idx;
+    const state = timelineNoteStates.get(key) || {holding:false, completed:false, missed:false, lastSeen: nowTime};
+    state.lastSeen = nowTime;
+    const isActive = activeMap.has(n.note);
+    if(!state.completed && !state.missed){
+      if(isActive && deltaStart <= 0 && deltaEnd >= 0){
+        state.holding = true;
+      }
+      if(deltaEnd <= 0){
+        if(state.holding){
+          state.completed = true;
+        }else{
+          state.missed = true;
+        }
+      }
+    }
+    timelineNoteStates.set(key, state);
+
+    let color = `rgba(140,200,255,${baseAlpha})`;
+    let badge = null;
+    if(state.completed){
+      color = `rgba(120,255,180,${baseAlpha})`;
+      badge = '○';
+    }else if(state.holding){
+      color = `rgba(255,210,120,${baseAlpha})`;
+      badge = '△';
+    }else if(state.missed){
+      color = `rgba(255,120,120,${baseAlpha})`;
+      badge = '×';
+    }
+
+    // ホールド区間を帯状の弧で描画
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(4, timelineThicknessPx * 0.55) * devicePixelRatio;
+    ctx.arc(cx, cy, mid, startAng, endAng);
+    ctx.stroke();
+
+    // 音高方向の細いマーカー
+    const markR = mid;
+    const markSize = 10 * devicePixelRatio;
+    const mx = cx + markR * Math.cos(pitchAngle + startAng - nowLineAngle);
+    const my = cy + markR * Math.sin(pitchAngle + startAng - nowLineAngle);
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(mx, my, Math.max(3*devicePixelRatio, markSize*0.3), 0, 2*Math.PI);
+    ctx.fill();
+
+    if(badge){
+      ctx.save();
+      ctx.fillStyle = '#fff';
+      ctx.font = `${11*devicePixelRatio}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badge, mx, my);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
 /* ===== Main draw loop ===== */
 let prevT=null;
 // draw はキャンバス全体のメイン描画ループ。
@@ -1896,6 +2144,8 @@ function draw(){
     const tn = trainer.currentNotes();
     if(tn && tn.length) drawTargetNotes(tn, drawRot);
   }
+
+  drawTimelineRing(timelineNowSec(), drawRot, diskRadius);
 
   requestAnimationFrame(draw);
 }
@@ -2325,6 +2575,8 @@ function parseMIDI(ab){
     }
     midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
     trainer = new Trainer(midiData);
+    timelineNotes = Array.isArray(midiData.notes) ? midiData.notes.map((n, idx)=>({...n, idx})) : [];
+    timelineNoteStates.clear();
     updateTrainerUI();
     updateSeekUI(resumePos, midiData.lengthSec);
     const ctx = resumeCtx || ensureCtx();
