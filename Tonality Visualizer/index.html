@@ -198,6 +198,7 @@
     <select id="fileOp">
       <option value="play">再生</option>
       <option value="train" selected>トレーナー</option>
+      <option value="ring">リアルタイム</option>
     </select>
   </label>
   <span id="playBtns">
@@ -370,7 +371,8 @@ const I18N = {
     midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
-    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
+    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer", ring:"real-time trainer",
+    ringPrefix:"ring", ringReady:"ready", ringRunning:"running", ringDone:"done", ringEmpty:"no notes",
     trainStart:"start / restart", transpose:"transpose",
     seek:"position",
     resetDefaults:"reset settings",
@@ -397,7 +399,8 @@ const I18N = {
     midiNeedSecure:"requer HTTPS/localhost", midiUnsupported:"não compatível",
     midiReady:"pronto", midiInitFailed:"falha na inicialização", midiAllInputsStat:"todas as entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"nenhum dispositivo",
-    midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador",
+    midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador", ring:"treinador em tempo real",
+    ringPrefix:"tempo real", ringReady:"pronto", ringRunning:"executando", ringDone:"concluído", ringEmpty:"sem notas",
     trainStart:"iniciar/reiniciar", transpose:"transposição",
     seek:"posição de reprodução",
     resetDefaults:"restaurar padrões",
@@ -424,7 +427,8 @@ const I18N = {
     midiNeedSecure:"requiere HTTPS/localhost", midiUnsupported:"no compatible",
     midiReady:"listo", midiInitFailed:"fallo de inicio", midiAllInputsStat:"todas las entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"sin dispositivo",
-    midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador",
+    midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador", ring:"entrenador en tiempo real",
+    ringPrefix:"tiempo real", ringReady:"listo", ringRunning:"en curso", ringDone:"finalizado", ringEmpty:"sin notas",
     trainStart:"iniciar/reiniciar", transpose:"transposición",
     seek:"posición de reproducción",
     resetDefaults:"restablecer ajustes",
@@ -451,7 +455,8 @@ const I18N = {
     midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
-    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
+    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー", ring:"リアルタイム",
+    ringPrefix:"リアルタイム", ringReady:"準備完了", ringRunning:"実行中", ringDone:"完了", ringEmpty:"ノートなし",
     trainStart:"開始/リスタート", transpose:"移調",
     seek:"再生位置",
     resetDefaults:"初期設定に戻す",
@@ -478,7 +483,8 @@ const I18N = {
     midiNeedSecure:"HTTPS/localhost 필요", midiUnsupported:"미지원",
     midiReady:"준비 완료", midiInitFailed:"초기화 실패", midiAllInputsStat:"모든 입력",
     midiInputStatPrefix:"입력:", midiNoDevice:"장치 없음",
-    midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너",
+    midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너", ring:"실시간 트레이너",
+    ringPrefix:"실시간", ringReady:"준비", ringRunning:"실행 중", ringDone:"완료", ringEmpty:"노트 없음",
     trainStart:"시작/재시작", transpose:"이조",
     seek:"재생 위치",
     resetDefaults:"초기 설정으로",
@@ -505,7 +511,8 @@ const I18N = {
     midiNeedSecure:"需要 HTTPS/localhost", midiUnsupported:"不支持",
     midiReady:"已准备", midiInitFailed:"初始化失败", midiAllInputsStat:"全部输入",
     midiInputStatPrefix:"输入:", midiNoDevice:"无设备",
-    midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器",
+    midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器", ring:"实时训练器",
+    ringPrefix:"实时", ringReady:"就绪", ringRunning:"运行中", ringDone:"完成", ringEmpty:"没有音符",
     trainStart:"开始/重新开始", transpose:"移调",
     seek:"播放位置",
     resetDefaults:"恢复默认设置",
@@ -585,6 +592,7 @@ function applyI18N(){
   excludeSel.querySelector('option[value="unfilled"]').textContent = t('unfilled');
   fileOp.querySelector('option[value="play"]').textContent = t('play');
   fileOp.querySelector('option[value="train"]').textContent = t('train');
+  fileOp.querySelector('option[value="ring"]').textContent = t('ring');
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
@@ -846,13 +854,22 @@ if(diskLockBtn){
 
 /* ファイル操作UIの表示切替（再生 or トレーナー） */
 function updateFileOpUI(){
-  const isPlay = (fileOp.value === 'play');
+  const mode = fileOp.value;
+  const isPlay = (mode === 'play');
+  const isRing = (mode === 'ring');
   // 再生モードでは再生ボタン群、トレーナーモードでは練習用ボタン群だけを見せる
   document.getElementById('playBtns').style.display  = isPlay ? '' : 'none';
   document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
+  btnPrev.disabled = isRing;
+  btnNext.disabled = isRing;
+  const disabledOpacity = isRing ? '0.35' : '1';
+  btnPrev.style.opacity = disabledOpacity;
+  btnNext.style.opacity = disabledOpacity;
   if(isPlay){
     // 再生モード時は最新の進行状況を再生ステータスで置き換える
     info.textContent = t('filePlayback');
+  }else if(isRing){
+    updateRingTrainerUI();
   }else{
     // トレーナーモードに切り替わると進捗インジケータを初期化
     trainerStat.textContent = `${t('trainerStepPrefix')} –`;
@@ -897,6 +914,7 @@ function mergeNoteMaps(...maps){
   }
   return merged;
 }
+function monotonicSec(){ return performance.now() / 1000; }
 // ステータス表示の更新を一元化
 function updateMIDIStat(text){ midiStat.textContent = 'MIDI: ' + text; }
 
@@ -964,6 +982,8 @@ let excludeMode = excludeSel.value;
 let midiDataRaw = null; // 未移調のMIDIデータ
 let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
 let trainer = null;
+let ringTrainer = null;
+const RING_LOOKAHEAD_SEC = 12;
 let player = null;
 let seekMuting = false;
 let seekWasRunning = false;
@@ -1895,6 +1915,10 @@ function draw(){
   if(fileOp.value==='train' && trainer && trainer.active){
     const tn = trainer.currentNotes();
     if(tn && tn.length) drawTargetNotes(tn, drawRot);
+  }else if(fileOp.value==='ring' && ringTrainer){
+    const targets = ringTrainer.targetNotes();
+    if(targets.length) drawTargetNotes(targets, drawRot);
+    updateRingTrainerUI();
   }
 
   requestAnimationFrame(draw);
@@ -2325,6 +2349,7 @@ function parseMIDI(ab){
     }
     midiData = applyTransposeToMIDI(midiDataRaw, midiTranspose);
     trainer = new Trainer(midiData);
+    ringTrainer = new RingTrainer(midiData);
     updateTrainerUI();
     updateSeekUI(resumePos, midiData.lengthSec);
     const ctx = resumeCtx || ensureCtx();
@@ -2512,6 +2537,79 @@ class Trainer{
     }
   }
 }
+class RingTrainer{
+  constructor(midi){
+    this.setMIDI(midi);
+  }
+  setMIDI(midi){
+    this.midi = midi;
+    this.events = Array.isArray(midi?.notes)
+      ? midi.notes.map(n=>({start:n.startSec, end:n.endSec, note:n.note, vel:(n.vel||0)/127})).sort((a,b)=>a.start-b.start)
+      : [];
+    this.duration = this.events.reduce((m,e)=>Math.max(m, e.end), 0);
+    this.active = false;
+    this.startedAt = null;
+    this.status = this.events.length ? 'ready' : 'empty';
+  }
+  start(){
+    if(!this.events.length){
+      this.active = false;
+      this.startedAt = null;
+      this.status = 'empty';
+      return false;
+    }
+    this.startedAt = monotonicSec();
+    this.active = true;
+    this.status = 'running';
+    return true;
+  }
+  restart(){ return this.start(); }
+  stop(){
+    this.active = false;
+    this.startedAt = null;
+    this.status = this.events.length ? 'ready' : 'empty';
+  }
+  totalLength(){ return this.duration; }
+  currentTime(){
+    if(this.active && this.startedAt!=null){
+      const now = monotonicSec() - this.startedAt;
+      if(now >= this.duration){
+        this.active = false;
+        this.status = 'done';
+        return this.duration;
+      }
+      return Math.max(0, now);
+    }
+    if(this.status === 'done') return this.duration;
+    return 0;
+  }
+  window(lookahead = RING_LOOKAHEAD_SEC){
+    const now = this.currentTime();
+    const windowEnd = now + lookahead;
+    const active = [];
+    const upcoming = [];
+    for(const ev of this.events){
+      if(ev.end >= now && ev.start <= now){
+        active.push(ev);
+      }else if(ev.start > now && ev.start <= windowEnd){
+        upcoming.push(ev);
+      }else if(ev.start > windowEnd){
+        break;
+      }
+    }
+    return {now, end:this.duration, active, upcoming, status:this.status, noteCount:this.events.length};
+  }
+  targetNotes(lookahead = RING_LOOKAHEAD_SEC){
+    const {active, upcoming} = this.window(lookahead);
+    const set = new Set();
+    for(const ev of active) set.add(ev.note);
+    for(const ev of upcoming) set.add(ev.note);
+    if(!set.size && this.events.length){
+      set.add(this.events[0].note);
+    }
+    return Array.from(set).sort((a,b)=>a-b);
+  }
+}
   /* ===== UI actions ===== */
   btnPlay.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
@@ -2561,15 +2659,51 @@ seekSlider.addEventListener('input', ()=>{
 
 btnStartTrain.onclick = ()=>{
   if(!midiData){ fileInfo.textContent='file: –'; return; }
+  if(fileOp.value === 'ring'){
+    if(player) player.stop();
+    if(!ringTrainer || ringTrainer.midi !== midiData){
+      ringTrainer = new RingTrainer(midiData);
+    }
+    ringTrainer.start();
+    updateRingTrainerUI();
+    return;
+  }
   if(player) player.stop();
   trainer = new Trainer(midiData);
   trainer.start(trainerInputState());   // 開始時点の押下状態でゲート初期化
   updateTrainerUI();
 };
-btnPrev.onclick = ()=>{ if(trainer && trainer.active){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
-btnNext.onclick = ()=>{ if(trainer && trainer.active){ trainer.next(trainerInputState()); updateTrainerUI(); } };
+btnPrev.onclick = ()=>{ if(fileOp.value==='train' && trainer && trainer.active){ trainer.prev(trainerInputState()); updateTrainerUI(); } };
+btnNext.onclick = ()=>{ if(fileOp.value==='train' && trainer && trainer.active){ trainer.next(trainerInputState()); updateTrainerUI(); } };
+
+function updateRingTrainerUI(){
+  if(fileOp.value !== 'ring'){
+    return;
+  }
+  const prefix = `${t('ringPrefix')}: `;
+  if(!ringTrainer){
+    trainerStat.textContent = `${prefix}–`;
+    return;
+  }
+  if(!ringTrainer.events.length){
+    trainerStat.textContent = `${prefix}${t('ringEmpty')}`;
+    return;
+  }
+  if(ringTrainer.active){
+    const {now, end} = ringTrainer.window(0);
+    trainerStat.textContent = `${prefix}${t('ringRunning')} ${now.toFixed(2)} / ${end.toFixed(2)}s`;
+  }else if(ringTrainer.status === 'done'){
+    trainerStat.textContent = `${prefix}${t('ringDone')}`;
+  }else{
+    trainerStat.textContent = `${prefix}${t('ringReady')} (${ringTrainer.events.length})`;
+  }
+}
 
 function updateTrainerUI(){
+  if(fileOp.value === 'ring'){
+    updateRingTrainerUI();
+    return;
+  }
   if(trainer && trainer.active){
     const tn = trainer.currentNotes();
     trainerStat.textContent = `step: ${trainer.idx+1}/${trainer.steps.length}  notes: [${tn.join(', ')}]`;
