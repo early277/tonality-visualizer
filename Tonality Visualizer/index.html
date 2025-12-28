@@ -1383,6 +1383,11 @@ function buildTrainerForMode(){
       return null;
     }
   }
+  const noteCount = Array.isArray(midiData.notes) ? midiData.notes.length : 0;
+  if(noteCount <= 0){
+    trainerStat.textContent = 'ring: no notes in MIDI';
+    return null;
+  }
   if(trainerMode === 'realtime'){
     return new RealTimeTrainer(midiData, {
       toleranceMs: timingToleranceMs,
@@ -2985,6 +2990,8 @@ btnStartTrain.onclick = ()=>{
     }else if(trainer.kind === 'realtime'){
       trainer.applyOptions({toleranceMs: timingToleranceMs, holdRatio: holdTolerancePct/100, lookaheadSec: ringLookaheadSec});
       trainer.start();
+      const n = Array.isArray(trainer.notes) ? trainer.notes.length : 0;
+      trainerStat.textContent = `ring: ready (${n} notes)`;
     }
   }
   if(!trainer){
