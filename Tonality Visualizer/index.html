@@ -2150,10 +2150,15 @@ function draw(){
       const tn = trainer.currentNotes();
       if(tn && tn.length) drawTargetNotes(tn, drawRot);
     }else if(trainer.kind === 'realtime'){
-      const nowSec = trainer.now();
-      const segs = trainer.segments(nowSec, trainer.lookaheadSec || ringLookaheadSec);
-      drawRealtimeRing(trainer, drawRot, segs, nowSec);
-      drawRealtimeTargetsOnDisk(segs, drawRot);
+      try{
+        const nowSec = trainer.now();
+        const segs = trainer.segments(nowSec, trainer.lookaheadSec || ringLookaheadSec) || [];
+        drawRealtimeRing(trainer, drawRot, segs, nowSec);
+        drawRealtimeTargetsOnDisk(segs, drawRot);
+      }catch(err){
+        console.error('realtime draw failed', err);
+        trainerStat.textContent = 'ring: draw error';
+      }
     }
   }
 
