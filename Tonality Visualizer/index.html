@@ -1784,7 +1784,7 @@ function noteNameFromMidi(midi){
   return LABEL_ENH[pc] || String(pc);
 }
 
-  function drawRealtimeRing(trainer, drawRot){
+function drawRealtimeRing(trainer, drawRot, segments = null, nowSec = null){
   if(!trainer || !trainer.active) return;
   const {rMax} = ringParams();
   const cx = cv.width/2, cy = cv.height/2;
@@ -1792,12 +1792,12 @@ function noteNameFromMidi(midi){
   const inner = (rMax + 12);
   const midR = (outer + inner) / 2;
   const baseAng = -Math.PI/2;
-  const nowSec = trainer.now();
+  const nowSec = nowSec == null ? trainer.now() : nowSec;
   const wasActive = trainer.active;
   trainer.advance(nowSec);
   if(wasActive && !trainer.active) updateTrainerUI();
   const lookahead = trainer.lookaheadSec || ringLookaheadSec;
-  const segments = trainer.segments(nowSec, lookahead);
+  const segmentsToUse = segments || trainer.segments(nowSec, lookahead);
   const firstNote = trainer.firstNoteSec;
 
   ctx.save();
@@ -1821,7 +1821,7 @@ function noteNameFromMidi(midi){
 
   ctx.lineWidth = Math.max(6*devicePixelRatio, outer-inner);
 
-  if(!segments.length && Number.isFinite(firstNote) && firstNote > nowSec){
+  if(!segmentsToUse.length && Number.isFinite(firstNote) && firstNote > nowSec){
     ctx.save();
     ctx.fillStyle = `rgba(255,255,255,${ringAlpha})`;
     ctx.textAlign = 'center';
@@ -1832,7 +1832,7 @@ function noteNameFromMidi(midi){
     ctx.restore();
   }
 
-  for(const seg of segments){
+  for(const seg of segmentsToUse){
     const startDelta = seg.startSec - nowSec;
     const endDelta = seg.endSec - nowSec;
     if(endDelta < -trainer.toleranceSec) continue;
@@ -1964,6 +1964,12 @@ function drawTargetNotes(targets, drawRot){
     ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText('TARGET', x, y+22*devicePixelRatio);
   }
+}
+
+function drawRealtimeTargetsOnDisk(segments, drawRot){
+  if(!segments || !segments.length) return;
+  const targets = Array.from(new Set(segments.map(s=>s.note)));
+  drawTargetNotes(targets, drawRot);
 }
 
 /* 移動ド数字（水面回転と同期） */
@@ -2144,7 +2150,10 @@ function draw(){
       const tn = trainer.currentNotes();
       if(tn && tn.length) drawTargetNotes(tn, drawRot);
     }else if(trainer.kind === 'realtime'){
-      drawRealtimeRing(trainer, drawRot);
+      const nowSec = trainer.now();
+      const segs = trainer.segments(nowSec, trainer.lookaheadSec || ringLookaheadSec);
+      drawRealtimeRing(trainer, drawRot, segs, nowSec);
+      drawRealtimeTargetsOnDisk(segs, drawRot);
     }
   }
 
