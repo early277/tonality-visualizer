@@ -1792,12 +1792,12 @@ function drawRealtimeRing(trainer, drawRot, segments = null, nowSec = null){
   const inner = (rMax + 12);
   const midR = (outer + inner) / 2;
   const baseAng = -Math.PI/2;
-  const nowSec = nowSec == null ? trainer.now() : nowSec;
+  const nowSecVal = nowSec == null ? trainer.now() : nowSec;
   const wasActive = trainer.active;
-  trainer.advance(nowSec);
+  trainer.advance(nowSecVal);
   if(wasActive && !trainer.active) updateTrainerUI();
   const lookahead = trainer.lookaheadSec || ringLookaheadSec;
-  const segmentsToUse = segments || trainer.segments(nowSec, lookahead);
+  const segmentsToUse = segments || trainer.segments(nowSecVal, lookahead);
   const firstNote = trainer.firstNoteSec;
 
   ctx.save();
@@ -1821,20 +1821,20 @@ function drawRealtimeRing(trainer, drawRot, segments = null, nowSec = null){
 
   ctx.lineWidth = Math.max(6*devicePixelRatio, outer-inner);
 
-  if(!segmentsToUse.length && Number.isFinite(firstNote) && firstNote > nowSec){
+  if(!segmentsToUse.length && Number.isFinite(firstNote) && firstNote > nowSecVal){
     ctx.save();
     ctx.fillStyle = `rgba(255,255,255,${ringAlpha})`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `${12*devicePixelRatio}px system-ui`;
-    const msg = `waiting… first note in ${(firstNote - nowSec).toFixed(2)}s`;
+    const msg = `waiting… first note in ${(firstNote - nowSecVal).toFixed(2)}s`;
     ctx.fillText(msg, 0, -outer - 14*devicePixelRatio);
     ctx.restore();
   }
 
   for(const seg of segmentsToUse){
-    const startDelta = seg.startSec - nowSec;
-    const endDelta = seg.endSec - nowSec;
+    const startDelta = seg.startSec - nowSecVal;
+    const endDelta = seg.endSec - nowSecVal;
     if(endDelta < -trainer.toleranceSec) continue;
     const startFrac = startDelta / lookahead;
     const endFrac = Math.min(1, Math.max(startFrac + 0.01, endDelta / lookahead));
