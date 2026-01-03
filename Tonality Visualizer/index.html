@@ -1581,7 +1581,7 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
   }
 
 const ARC_GUIDE_HALF_SPAN = 15 * Math.PI / 180;
-function drawConcentricArcGuides(cx, cy, -drawRot, rMax, step, minRadius, displayMinFreq, displayMaxFreq){
+function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, displayMinFreq, displayMaxFreq){
   if(arcGuideAlpha <= 0) return;
   const visibleMidis = [];
   for(let midi=0; midi<=127; midi++){
@@ -1599,7 +1599,7 @@ function drawConcentricArcGuides(cx, cy, -drawRot, rMax, step, minRadius, displa
   for(const {midi, freq} of visibleMidis){
     const radius = radiusFromFreq(freq, rMax, step, minRadius);
     if(!Number.isFinite(radius) || radius <= 0) continue;
-    const theta = angleForMidiDraw(midi, drawRot);
+    const theta = angleForMidiDraw(midi, - drawRot)+ Math.PI;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, theta - ARC_GUIDE_HALF_SPAN, theta + ARC_GUIDE_HALF_SPAN);
     ctx.stroke();
