@@ -1601,7 +1601,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
     if(!Number.isFinite(radius) || radius <= 0) continue;
     const theta = angleForMidiDraw(midi, drawRot);
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, -theta + ARC_GUIDE_HALF_SPAN, -theta - ARC_GUIDE_HALF_SPAN);
+    ctx.arc(cx, cy, radius, -theta - ARC_GUIDE_HALF_SPAN, -theta + ARC_GUIDE_HALF_SPAN);
     ctx.stroke();
   }
   ctx.restore();
