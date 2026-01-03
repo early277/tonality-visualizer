@@ -150,6 +150,11 @@
     <span id="noteGuideAVal">15%</span>
   </label>
 
+  <label id="arcGuideAWrap" data-lbl="arcGuideAlpha">
+    <input id="arcGuideA" type="range" min="0" max="100" step="1" value="22">
+    <span id="arcGuideAVal">22%</span>
+  </label>
+
   <label id="noteGuideLabelAWrap" data-lbl="noteGuideLabelAlpha">
     <input id="noteGuideLabelA" type="range" min="0" max="100" step="1" value="5">
     <span id="noteGuideLabelAVal">5%</span>
@@ -285,6 +290,7 @@ const highCutSlider = document.getElementById('highCut'); const highCutVal = doc
 const lineASlider = document.getElementById('lineA'); const lineAVal = document.getElementById('lineAVal');
 const straightLineASlider = document.getElementById('straightLineA'); const straightLineAVal = document.getElementById('straightLineAVal');
 const noteGuideASlider = document.getElementById('noteGuideA'); const noteGuideAVal = document.getElementById('noteGuideAVal');
+const arcGuideASlider = document.getElementById('arcGuideA'); const arcGuideAVal = document.getElementById('arcGuideAVal');
 const noteGuideLabelASlider = document.getElementById('noteGuideLabelA'); const noteGuideLabelAVal = document.getElementById('noteGuideLabelAVal');
 const waterASlider = document.getElementById('waterA'); const waterAVal = document.getElementById('waterAVal');
 const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal = document.getElementById('labelSizeVal');
@@ -343,6 +349,7 @@ function reserveValueWidths(){
   reserve(lineAVal, pctSamples);
   reserve(straightLineAVal, pctSamples);
   reserve(noteGuideAVal, pctSamples);
+  reserve(arcGuideAVal, pctSamples);
   reserve(noteGuideLabelAVal, pctSamples);
   reserve(waterAVal, pctSamples);
   reserve(movNumAVal, pctSamples);
@@ -362,7 +369,7 @@ const I18N = {
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
-    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
+    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
@@ -389,7 +396,7 @@ const I18N = {
     torqueExclude:"área sem torque", filled:"preenchido", unfilled:"não preenchido",
     uiOpacity:"opacidade da UI", diskMass:"massa do disco", damping:"amortecimento",
     snapZeroAlpha:"zerar ω quando α=0",
-    lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó",
+    lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", arcGuideAlpha:"α dos arcos concêntricos", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó",
     labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
     lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
     omegaMax:"ω máx",
@@ -416,7 +423,7 @@ const I18N = {
     torqueExclude:"zona excluida de torque", filled:"relleno", unfilled:"sin rellenar",
     uiOpacity:"opacidad de la UI", diskMass:"masa del disco", damping:"amortiguación",
     snapZeroAlpha:"detener ω cuando α=0",
-    lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do",
+    lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", arcGuideAlpha:"opacidad de arcos concéntricos", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do",
     labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
     lowCut:"corte de graves", highCut:"corte de agudos",
     omegaMax:"ω máx",
@@ -443,7 +450,7 @@ const I18N = {
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
-    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
+    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
@@ -470,7 +477,7 @@ const I18N = {
     torqueExclude:"토크 제외 영역", filled:"채움", unfilled:"비채움",
     uiOpacity:"UI 불투명도", diskMass:"디스크 질량", damping:"댐핑",
     snapZeroAlpha:"α=0에서 각속도 정지",
-    lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기",
+    lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", arcGuideAlpha:"동심원 호 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기",
     labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
     lowCut:"저음역 컷", highCut:"고음역 컷",
     omegaMax:"최대 회전 속도",
@@ -497,7 +504,7 @@ const I18N = {
     torqueExclude:"扭矩排除区域", filled:"填充", unfilled:"空心",
     uiOpacity:"界面不透明度", diskMass:"盘质量", damping:"阻尼",
     snapZeroAlpha:"α=0 时停止角速度",
-    lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小",
+    lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", arcGuideAlpha:"同心弧指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小",
     labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
     lowCut:"低频削减", highCut:"高频削减",
     omegaMax:"最大角速度",
@@ -611,7 +618,7 @@ function collectSettingsFromUI(){
     anchor: anchorSel.value, midiAll: midiAll.checked, liveMon: liveMon.checked,
     uiop: uiopSlider.value, mass: massSlider.value,
     lineA: lineASlider.value, straightLineA: straightLineASlider.value, waterA: waterASlider.value,
-    noteGuideA: noteGuideASlider.value,
+    noteGuideA: noteGuideASlider.value, arcGuideA: arcGuideASlider.value,
     noteGuideLabelA: noteGuideLabelASlider.value,
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
@@ -682,6 +689,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('noteGuideA')){
     noteGuideASlider.value = s.noteGuideA;
     noteGuideASlider.oninput();
+  }
+  if(has('arcGuideA')){
+    arcGuideASlider.value = s.arcGuideA;
+    arcGuideASlider.oninput();
   }
   if(has('noteGuideLabelA')){
     noteGuideLabelASlider.value = s.noteGuideLabelA;
@@ -917,6 +928,13 @@ let noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100; noteGuideAVal.text
 noteGuideASlider.oninput = ()=>{
   noteGuideAlpha = parseInt(noteGuideASlider.value,10)/100;
   noteGuideAVal.textContent = `${Math.round(noteGuideAlpha*100)}%`;
+  saveSettings();
+};
+
+let arcGuideAlpha = parseInt(arcGuideASlider.value,10)/100; arcGuideAVal.textContent=`${Math.round(arcGuideAlpha*100)}%`;
+arcGuideASlider.oninput = ()=>{
+  arcGuideAlpha = parseInt(arcGuideASlider.value,10)/100;
+  arcGuideAVal.textContent = `${Math.round(arcGuideAlpha*100)}%`;
   saveSettings();
 };
 
@@ -1562,6 +1580,34 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
     }
   }
 
+const ARC_GUIDE_HALF_SPAN = 15 * Math.PI / 180;
+function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, displayMinFreq, displayMaxFreq){
+  if(arcGuideAlpha <= 0) return;
+  const visibleMidis = [];
+  for(let midi=0; midi<=127; midi++){
+    const freq = midiToHz(midi);
+    if(freq < displayMinFreq || freq > displayMaxFreq) continue;
+    visibleMidis.push({midi, freq});
+  }
+  if(!visibleMidis.length) return;
+
+  ctx.save();
+  ctx.globalAlpha = arcGuideAlpha;
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  for(const {midi, freq} of visibleMidis){
+    const radius = radiusFromFreq(freq, rMax, step, minRadius);
+    if(!Number.isFinite(radius) || radius <= 0) continue;
+    const theta = angleForMidiDraw(midi, drawRot);
+    ctx.beginPath();
+    const canvasTheta = -theta;
+    ctx.arc(cx, cy, radius, canvasTheta - ARC_GUIDE_HALF_SPAN, canvasTheta + ARC_GUIDE_HALF_SPAN);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 /* ===== Drawing ===== */
 function drawNotes(points, drawRot){
   if(!points.length) return;
@@ -1845,6 +1891,19 @@ function draw(){
   }
   ctx.lineWidth = 1;
 
+  // 水面半円＋移動ド数字
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2, false);
+  ctx.closePath();
+  ctx.fillStyle=`rgba(0,128,255,${waterAlpha})`; ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2);
+  ctx.strokeStyle=`rgba(0,128,255,${waterAlpha})`; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+
+  drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, displayMinFreq, displayMaxFreq);
+
   // 外周ラベル
   const fontPx = labelFontPx * devicePixelRatio * 0.95;
   ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1871,17 +1930,6 @@ function draw(){
       ctx.fillText(text, tx2, ty2);
     }
   }
-
-  // 水面半円＋移動ド数字
-  ctx.save(); ctx.translate(cx,cy);
-  ctx.beginPath(); ctx.moveTo(0,0);
-  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2, false);
-  ctx.closePath();
-  ctx.fillStyle=`rgba(0,128,255,${waterAlpha})`; ctx.fill();
-  ctx.beginPath();
-  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2);
-  ctx.strokeStyle=`rgba(0,128,255,${waterAlpha})`; ctx.lineWidth=2; ctx.stroke();
-  ctx.restore();
   drawMovableDoNumbers(halfCenter, rMax, cx, cy);
 
   // 入力の可視化
