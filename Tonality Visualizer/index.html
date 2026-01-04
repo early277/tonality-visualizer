@@ -1517,7 +1517,7 @@ const NOTE_GUIDE_SEGMENTS = Array.from({length: NOTE_GUIDE_SEGMENT_COUNT}, (_, i
       for(let i=0; i<sortedByRadius.length; i++){
         const current = sortedByRadius[i];
         const next = sortedByRadius[i+1];
-        let inner = next ? next.rAbs : current.rAbs - (diskRadius / 12;
+        let inner = next ? next.rAbs : current.rAbs - (diskRadius / 12);
         if(!Number.isFinite(inner)) inner = 0;
         innerRadiusByMidi.set(current.midi, Math.max(0, inner));
       }
