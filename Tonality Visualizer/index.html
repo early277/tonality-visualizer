@@ -1743,15 +1743,15 @@ function drawNotes(points, drawRot){
 /* ターゲット描画（トレーナー） */
 // drawTargetNotes はトレーナーモードで指定したターゲットノートを視覚化する。
 // MIDI 番号を受け取り、表示範囲内でリング上にハイライトを描画する。
-function drawTargetNotes(targets, drawRot, activeNotes = new Map()){
+function drawTargetNotes(targets, drawRot, hitNotes = new Set()){
   if(!targets || !targets.length) return;
   const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
   for(const midi of targets){
     const freq = midiToHz(midi);
     if(freq < displayMinFreq || freq > displayMaxFreq) continue;
     const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
-    const isActive = activeNotes.has(midi);
-    const ringColor = isActive ? 'rgba(180,120,255,0.98)' : 'rgba(100,255,120,0.95)';
+    const isHit = hitNotes.has(midi);
+    const ringColor = isHit ? 'rgba(180,120,255,0.98)' : 'rgba(100,255,120,0.95)';
     ctx.beginPath(); ctx.strokeStyle=ringColor; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
   }
 }
@@ -1933,7 +1933,7 @@ function draw(){
   // ★トレーナーのターゲット表示（trainer.currentNotesを直接描画）
   if(fileOp.value==='train' && trainer && trainer.active){
     const tn = trainer.currentNotes();
-    if(tn && tn.length) drawTargetNotes(tn, drawRot, liveAndTap);
+    if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
   requestAnimationFrame(draw);
@@ -2501,54 +2501,63 @@ class Trainer{
     this.steps = midi.onsetTicks.map(tk => ({tick:tk, notes: midi.onsets.get(tk).map(o=>o.note)}));
     this.idx = 0;
     this.active = false;
-    this.gateReady = true; // 成立の立ち上がりのみ許可するゲート
+    this.hitNotes = new Set();
+    this.prevLive = new Set();
   }
 
   currentNotes(){ return (this.steps[this.idx]?.notes || []).slice().sort((a,b)=>a-b); }
-
-  satisfied(live){
-    const t = this.currentNotes();
-    if(!t.length) return true;
-    for(const n of t){ if(!live.has(n)) return false; }
-    return true;
-  }
-
-  armAccordingToState(live){
-    this.gateReady = !this.satisfied(live); // 既に成立していたら離鍵を要求
+  resetProgress(live){
+    this.hitNotes.clear();
+    this.prevLive = new Set(live.keys());
   }
 
   start(live = trainerInputState()){
     this.idx = 0;
     this.active = true;
-    this.armAccordingToState(live);
+    this.resetProgress(live);
   }
 
   next(live = trainerInputState()){
     if(!this.active) return;
     this.idx++;
     if(this.idx >= this.steps.length){ this.finish(); return; }
-    this.armAccordingToState(live);
+    this.resetProgress(live);
   }
 
   prev(live = trainerInputState()){
     if(!this.active) return;
     this.idx = Math.max(0, this.idx-1);
-    this.armAccordingToState(live);
+    this.resetProgress(live);
   }
 
   finish(){ this.active = false; }
 
   considerAdvance(live = trainerInputState()){
     if(!this.active) return;
-    const ok = this.satisfied(live);
-    if(!this.gateReady){
-      if(!ok) this.gateReady = true; // 一度“不成立”になったら武装
+    const targets = this.currentNotes();
+    if(!targets.length){
+      this.next(live);
       return;
     }
-    if(ok){
-      this.gateReady = false;        // 次は必ず離鍵
-      this.next(live);
+    const targetSet = new Set(targets);
+    const newlyPressed = [];
+    for(const [note] of live){
+      if(!this.prevLive.has(note)) newlyPressed.push(note);
     }
+    if(newlyPressed.length){
+      let hasWrong = false;
+      for(const note of newlyPressed){
+        if(targetSet.has(note)){
+          this.hitNotes.add(note);
+        }else{
+          hasWrong = true;
+        }
+      }
+      if(hasWrong) this.hitNotes.clear();
+    }
+    this.prevLive = new Set(live.keys());
+    const allHit = targets.every((note)=> this.hitNotes.has(note));
+    if(allHit) this.next(live);
   }
 }
   /* ===== UI actions ===== */
