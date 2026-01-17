@@ -1635,20 +1635,11 @@ function drawNotes(points, drawRot){
     if(!low || p.f<low.f) low=p;
     if(!high|| p.f>high.f) high=p;
   }
-  function ring(p, color, label, position = 'top'){
-    // MIDIノートを極座標に変換して円形のマーカーとラベルを描く
+  function ring(p, color){
+    // MIDIノートを極座標に変換して円形のマーカーを描く
     const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
     const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
     ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`${11*devicePixelRatio}px system-ui`; ctx.textAlign='center';
-    const labelOffset = 22 * devicePixelRatio;
-    if(position === 'bottom'){
-      ctx.textBaseline='top';
-      ctx.fillText(label, x, y + labelOffset);
-    }else{
-      ctx.textBaseline='bottom';
-      ctx.fillText(label, x, y - labelOffset);
-    }
   }
   function labelOnly(p, label, position = 'top', color = 'rgba(220,220,220,0.9)'){
     const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
@@ -1663,8 +1654,8 @@ function drawNotes(points, drawRot){
       ctx.fillText(label, x, y - labelOffset);
     }
   }
-  if(low)  ring(low,'rgba(0,200,255,0.95)','LOW','bottom');
-  if(high) ring(high,'rgba(255,160,0,0.95)','HIGH','top');
+  if(low)  ring(low,'rgba(0,200,255,0.95)');
+  if(high) ring(high,'rgba(255,160,0,0.95)');
 
   if(inRange.length){
     const strongestByMidi = new Map();
@@ -1760,7 +1751,7 @@ function drawTargetNotes(targets, drawRot, activeNotes = new Map()){
     if(freq < displayMinFreq || freq > displayMaxFreq) continue;
     const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
     const isActive = activeNotes.has(midi);
-    const ringColor = isActive ? 'rgba(255,200,80,0.98)' : 'rgba(100,255,120,0.95)';
+    const ringColor = isActive ? 'rgba(180,120,255,0.98)' : 'rgba(100,255,120,0.95)';
     ctx.beginPath(); ctx.strokeStyle=ringColor; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
   }
 }
