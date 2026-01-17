@@ -1752,16 +1752,16 @@ function drawNotes(points, drawRot){
 /* ターゲット描画（トレーナー） */
 // drawTargetNotes はトレーナーモードで指定したターゲットノートを視覚化する。
 // MIDI 番号を受け取り、表示範囲内でリング上にハイライトを描画する。
-function drawTargetNotes(targets, drawRot){
+function drawTargetNotes(targets, drawRot, activeNotes = new Map()){
   if(!targets || !targets.length) return;
   const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
   for(const midi of targets){
     const freq = midiToHz(midi);
     if(freq < displayMinFreq || freq > displayMaxFreq) continue;
     const th=angleForMidiDraw(midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
-    ctx.beginPath(); ctx.strokeStyle='rgba(100,255,120,0.95)'; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
-    ctx.fillStyle='rgba(100,255,120,0.95)'; ctx.font=`${12*devicePixelRatio}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText('TARGET', x, y+22*devicePixelRatio);
+    const isActive = activeNotes.has(midi);
+    const ringColor = isActive ? 'rgba(255,200,80,0.98)' : 'rgba(100,255,120,0.95)';
+    ctx.beginPath(); ctx.strokeStyle=ringColor; ctx.lineWidth=4; ctx.arc(x,y,15*devicePixelRatio,0,2*Math.PI); ctx.stroke();
   }
 }
 
@@ -1942,7 +1942,7 @@ function draw(){
   // ★トレーナーのターゲット表示（trainer.currentNotesを直接描画）
   if(fileOp.value==='train' && trainer && trainer.active){
     const tn = trainer.currentNotes();
-    if(tn && tn.length) drawTargetNotes(tn, drawRot);
+    if(tn && tn.length) drawTargetNotes(tn, drawRot, liveAndTap);
   }
 
   requestAnimationFrame(draw);
