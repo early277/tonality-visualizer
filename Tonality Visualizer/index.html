@@ -175,6 +175,11 @@
     <span id="movNumSizeVal">28px</span>
   </label>
 
+  <label id="noteDotSizeWrap" data-lbl="noteDotSize">
+    <input id="noteDotSize" type="range" min="50" max="200" step="5" value="100">
+    <span id="noteDotSizeVal">100%</span>
+  </label>
+
   <label id="labelSizeWrap" data-lbl="labelSize">
     <input id="labelSize" type="range" min="8" max="36" step="1" value="12">
     <span id="labelSizeVal">12px</span>
@@ -188,6 +193,19 @@
   <label id="labelAlphaWrap" data-lbl="labelAlpha">
     <input id="labelAlpha" type="range" min="0" max="100" step="1" value="0">
     <span id="labelAlphaVal">0%</span>
+  </label>
+
+  <label id="keyboardWrap" data-lbl="keyboard">
+    <input id="keyboardToggle" type="checkbox" checked>
+  </label>
+  <label id="keyboardMovableWrap" data-lbl="keyboardMovableDo">
+    <input id="keyboardMovable" type="checkbox" checked>
+  </label>
+  <label id="keyboardDistanceWrap" data-lbl="keyboardDistance">
+    <input id="keyboardDistance" type="checkbox" checked>
+  </label>
+  <label id="keyboardFifthWrap" data-lbl="keyboardFifthAngle">
+    <input id="keyboardFifth" type="checkbox" checked>
   </label>
 
   <!-- MIDI File controls（常時表示） -->
@@ -298,6 +316,11 @@ const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = doc
 const labelAlphaSlider = document.getElementById('labelAlpha'); const labelAlphaVal = document.getElementById('labelAlphaVal');
 const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
 const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
+const noteDotSizeSlider = document.getElementById('noteDotSize'); const noteDotSizeVal = document.getElementById('noteDotSizeVal');
+const keyboardToggle = document.getElementById('keyboardToggle');
+const keyboardMovableToggle = document.getElementById('keyboardMovable');
+const keyboardDistanceToggle = document.getElementById('keyboardDistance');
+const keyboardFifthToggle = document.getElementById('keyboardFifth');
 
 const omegaMaxSlider = document.getElementById('omegaMax'); const omegaMaxVal = document.getElementById('omegaMaxVal');
 
@@ -357,6 +380,7 @@ function reserveValueWidths(){
   reserve(labelAlphaVal, pctSamples);
   reserve(movNumSizeVal, ['10px', '60px']);
   reserve(labelSizeVal, ['8px', '36px']);
+  reserve(noteDotSizeVal, ['50%', '200%']);
 }
 
 /* ===== i18n + persist ===== */
@@ -369,8 +393,9 @@ const I18N = {
     torqueExclude:"Torque exclusion", filled:"filled", unfilled:"unfilled",
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
-    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size",
+    lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size", noteDotSize:"note dot size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
+    keyboard:"keyboard", keyboardMovableDo:"movable-do labels", keyboardDistance:"distance from lowest", keyboardFifthAngle:"circle-of-fifths angle",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
@@ -396,8 +421,9 @@ const I18N = {
     torqueExclude:"área sem torque", filled:"preenchido", unfilled:"não preenchido",
     uiOpacity:"opacidade da UI", diskMass:"massa do disco", damping:"amortecimento",
     snapZeroAlpha:"zerar ω quando α=0",
-    lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", arcGuideAlpha:"α dos arcos concêntricos", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó",
+    lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", arcGuideAlpha:"α dos arcos concêntricos", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó", noteDotSize:"tamanho dos pontos",
     labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
+    keyboard:"teclado", keyboardMovableDo:"rótulos do dó móvel", keyboardDistance:"distância do grave", keyboardFifthAngle:"ângulo no ciclo de quintas",
     lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: não inicializado", last:"último:", idle:"ocioso",
@@ -423,8 +449,9 @@ const I18N = {
     torqueExclude:"zona excluida de torque", filled:"relleno", unfilled:"sin rellenar",
     uiOpacity:"opacidad de la UI", diskMass:"masa del disco", damping:"amortiguación",
     snapZeroAlpha:"detener ω cuando α=0",
-    lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", arcGuideAlpha:"opacidad de arcos concéntricos", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do",
+    lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", arcGuideAlpha:"opacidad de arcos concéntricos", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do", noteDotSize:"tamaño de puntos",
     labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
+    keyboard:"teclado", keyboardMovableDo:"etiquetas de do móvil", keyboardDistance:"distancia desde la más grave", keyboardFifthAngle:"ángulo en círculo de quintas",
     lowCut:"corte de graves", highCut:"corte de agudos",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: sin inicializar", last:"último:", idle:"en espera",
@@ -450,8 +477,9 @@ const I18N = {
     torqueExclude:"トルク無効領域", filled:"塗りつぶし", unfilled:"非塗りつぶし",
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
-    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ",
+    lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ", noteDotSize:"ノート円サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
+    keyboard:"鍵盤表示", keyboardMovableDo:"移動ド文字", keyboardDistance:"最低音からの距離", keyboardFifthAngle:"五度円角度差",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
@@ -477,8 +505,9 @@ const I18N = {
     torqueExclude:"토크 제외 영역", filled:"채움", unfilled:"비채움",
     uiOpacity:"UI 불투명도", diskMass:"디스크 질량", damping:"댐핑",
     snapZeroAlpha:"α=0에서 각속도 정지",
-    lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", arcGuideAlpha:"동심원 호 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기",
+    lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", arcGuideAlpha:"동심원 호 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기", noteDotSize:"노트 점 크기",
     labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
+    keyboard:"키보드", keyboardMovableDo:"이동 도 표기", keyboardDistance:"최저음 거리", keyboardFifthAngle:"5도 원 각도 차이",
     lowCut:"저음역 컷", highCut:"고음역 컷",
     omegaMax:"최대 회전 속도",
     midiNotInit:"MIDI: 초기화되지 않음", last:"마지막:", idle:"대기",
@@ -504,8 +533,9 @@ const I18N = {
     torqueExclude:"扭矩排除区域", filled:"填充", unfilled:"空心",
     uiOpacity:"界面不透明度", diskMass:"盘质量", damping:"阻尼",
     snapZeroAlpha:"α=0 时停止角速度",
-    lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", arcGuideAlpha:"同心弧指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小",
+    lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", arcGuideAlpha:"同心弧指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小", noteDotSize:"音符点大小",
     labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
+    keyboard:"键盘显示", keyboardMovableDo:"移动do文字", keyboardDistance:"最低音距离", keyboardFifthAngle:"五度圈角度差",
     lowCut:"低频削减", highCut:"高频削减",
     omegaMax:"最大角速度",
     midiNotInit:"MIDI：未初始化", last:"最后:", idle:"空闲",
@@ -621,8 +651,13 @@ function collectSettingsFromUI(){
     noteGuideA: noteGuideASlider.value, arcGuideA: arcGuideASlider.value,
     noteGuideLabelA: noteGuideLabelASlider.value,
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
+    noteDotSize: noteDotSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
+    keyboardEnabled: keyboardToggle.checked,
+    keyboardMovableDo: keyboardMovableToggle.checked,
+    keyboardDistance: keyboardDistanceToggle.checked,
+    keyboardFifthAngle: keyboardFifthToggle.checked,
     exclude: excludeSel.value,
     lowCut: lowCutOct,
     highCut: highCutOct,
@@ -706,6 +741,10 @@ function applySettings(settings, {force = false} = {}){
     movNumSizeSlider.value = s.movNumSize;
     movNumSizeSlider.oninput();
   }
+  if(has('noteDotSize')){
+    noteDotSizeSlider.value = s.noteDotSize;
+    noteDotSizeSlider.oninput();
+  }
   if(has('labelSize')){
     labelSizeSlider.value = s.labelSize;
     labelSizeSlider.oninput();
@@ -718,6 +757,22 @@ function applySettings(settings, {force = false} = {}){
     labelAlphaSlider.value = s.labelAlpha;
     labelAlphaSlider.oninput();
   }
+  if(has('keyboardEnabled')){
+    keyboardToggle.checked = !!s.keyboardEnabled;
+  }
+  if(has('keyboardMovableDo')){
+    keyboardMovableToggle.checked = !!s.keyboardMovableDo;
+  }
+  if(has('keyboardDistance')){
+    keyboardDistanceToggle.checked = !!s.keyboardDistance;
+  }
+  if(has('keyboardFifthAngle')){
+    keyboardFifthToggle.checked = !!s.keyboardFifthAngle;
+  }
+  keyboardEnabled = keyboardToggle.checked;
+  keyboardShowMovable = keyboardMovableToggle.checked;
+  keyboardShowDistance = keyboardDistanceToggle.checked;
+  keyboardShowFifthAngle = keyboardFifthToggle.checked;
   if(has('exclude')){
     excludeSel.value = s.exclude;
   }
@@ -873,6 +928,7 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
+function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
 function ringParams(){
   const half = Math.max(1, Math.min(cv.width, cv.height) / 2);
   const safeHalf = Math.max(1, half - 4);
@@ -958,6 +1014,14 @@ movNumASlider.oninput = ()=>{ movNumAlpha = parseInt(movNumASlider.value,10)/100
 let movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`;
 movNumSizeSlider.oninput = ()=>{ movNumSizePx = parseInt(movNumSizeSlider.value,10); movNumSizeVal.textContent=`${movNumSizePx}px`; saveSettings(); };
 
+// ノート表示の円サイズ
+let noteDotScale = parseInt(noteDotSizeSlider.value,10)/100; noteDotSizeVal.textContent=`${Math.round(noteDotScale*100)}%`;
+noteDotSizeSlider.oninput = ()=>{
+  noteDotScale = parseInt(noteDotSizeSlider.value,10)/100;
+  noteDotSizeVal.textContent = `${Math.round(noteDotScale*100)}%`;
+  saveSettings();
+};
+
 // ラベル文字サイズ
 let labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`;
 labelSizeSlider.oninput = ()=>{ labelFontPx = parseInt(labelSizeSlider.value,10); labelSizeVal.textContent=`${labelFontPx}px`; saveSettings(); };
@@ -973,6 +1037,15 @@ labelAlphaSlider.oninput = ()=>{
   labelAlphaVal.textContent = `${Math.round(labelTextAlpha*100)}%`;
   saveSettings();
 };
+
+let keyboardEnabled = keyboardToggle.checked;
+let keyboardShowMovable = keyboardMovableToggle.checked;
+let keyboardShowDistance = keyboardDistanceToggle.checked;
+let keyboardShowFifthAngle = keyboardFifthToggle.checked;
+keyboardToggle.onchange = ()=>{ keyboardEnabled = keyboardToggle.checked; saveSettings(); };
+keyboardMovableToggle.onchange = ()=>{ keyboardShowMovable = keyboardMovableToggle.checked; saveSettings(); };
+keyboardDistanceToggle.onchange = ()=>{ keyboardShowDistance = keyboardDistanceToggle.checked; saveSettings(); };
+keyboardFifthToggle.onchange = ()=>{ keyboardShowFifthAngle = keyboardFifthToggle.checked; saveSettings(); };
 
 /* ===== Global state ===== */
 let worldRot = 0;          // 描画用回転（anchorにより決定）
@@ -1609,6 +1682,129 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 }
 
 /* ===== Drawing ===== */
+const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
+const SOLFEGE_LABELS = ['Do','Di','Re','Ri','Mi','Fa','Fi','So','Si','La','Li','Ti'];
+
+function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
+  if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
+  let minMidi = Math.max(0, Math.ceil(hzToMidi(displayMinFreq)));
+  let maxMidi = Math.min(127, Math.floor(hzToMidi(displayMaxFreq)));
+  if(!Number.isFinite(minMidi)) minMidi = 0;
+  if(!Number.isFinite(maxMidi)) maxMidi = 127;
+  if(minMidi > maxMidi) [minMidi, maxMidi] = [maxMidi, minMidi];
+  return {minMidi, maxMidi};
+}
+
+function fifthAngleDeltaDegrees(midi, baseMidi){
+  const pc = ((midi%12)+12)%12;
+  const basePc = ((baseMidi%12)+12)%12;
+  let delta = FIFTH_INDEX[pc] - FIFTH_INDEX[basePc];
+  while(delta > 6) delta -= 12;
+  while(delta < -6) delta += 12;
+  return delta * 30;
+}
+
+function drawKeyboard(displayMinFreq, displayMaxFreq){
+  if(!keyboardEnabled) return;
+  const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
+  if(minMidi > maxMidi) return;
+
+  const keys = [];
+  for(let midi=minMidi; midi<=maxMidi; midi++){
+    const pc = ((midi%12)+12)%12;
+    keys.push({midi, pc, isBlack: BLACK_KEY_PCS.has(pc)});
+  }
+  const whiteKeys = keys.filter(k=>!k.isBlack);
+  if(!whiteKeys.length) return;
+
+  const padding = 16 * devicePixelRatio;
+  const keyboardHeight = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const y = cv.height - keyboardHeight - padding;
+  const x = padding;
+  const width = cv.width - padding * 2;
+  if(width <= 0 || keyboardHeight <= 0) return;
+
+  const whiteWidth = width / whiteKeys.length;
+  const blackWidth = whiteWidth * 0.6;
+  const blackHeight = keyboardHeight * 0.6;
+
+  let whiteIndex = 0;
+  for(const key of keys){
+    if(!key.isBlack){
+      key.x = x + whiteIndex * whiteWidth;
+      key.y = y;
+      key.width = whiteWidth;
+      key.height = keyboardHeight;
+      key.whiteIndex = whiteIndex;
+      whiteIndex++;
+    }else{
+      const leftWhiteIndex = whiteIndex - 1;
+      key.width = blackWidth;
+      key.height = blackHeight;
+      key.y = y;
+      key.x = x + leftWhiteIndex * whiteWidth + whiteWidth * 0.7 - blackWidth/2;
+    }
+  }
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  for(const key of keys){
+    if(key.isBlack) continue;
+    ctx.fillStyle = 'rgba(245,245,245,0.95)';
+    ctx.strokeStyle = 'rgba(30,30,30,0.9)';
+    ctx.fillRect(key.x, key.y, key.width, key.height);
+    ctx.strokeRect(key.x, key.y, key.width, key.height);
+  }
+
+  for(const key of keys){
+    if(!key.isBlack) continue;
+    ctx.fillStyle = 'rgba(20,20,20,0.95)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillRect(key.x, key.y, key.width, key.height);
+    ctx.strokeRect(key.x, key.y, key.width, key.height);
+  }
+
+  const buildLabels = (midi)=>{
+    const labels = [];
+    const dist = midi - minMidi;
+    if(keyboardShowMovable) labels.push(SOLFEGE_LABELS[dist % 12]);
+    if(keyboardShowDistance) labels.push(String(dist));
+    if(keyboardShowFifthAngle){
+      const deg = fifthAngleDeltaDegrees(midi, minMidi);
+      const sign = deg > 0 ? '+' : '';
+      labels.push(`${sign}${deg}°`);
+    }
+    return labels;
+  };
+
+  const drawKeyLabels = (key, labels, color, fontPx)=>{
+    if(!labels.length) return;
+    ctx.fillStyle = color;
+    ctx.font = `${fontPx}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const lineHeight = fontPx * 1.1;
+    let yCursor = key.y + key.height - 6 * devicePixelRatio;
+    for(let i=labels.length-1; i>=0; i--){
+      ctx.fillText(labels[i], key.x + key.width/2, yCursor);
+      yCursor -= lineHeight;
+    }
+  };
+
+  const whiteFont = Math.max(9 * devicePixelRatio, keyboardHeight / 6);
+  const blackFont = Math.max(8 * devicePixelRatio, keyboardHeight / 8);
+  for(const key of keys){
+    const labels = buildLabels(key.midi);
+    if(!labels.length) continue;
+    if(key.isBlack){
+      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)', blackFont);
+    }else{
+      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)', whiteFont);
+    }
+  }
+  ctx.restore();
+}
+
 function drawNotes(points, drawRot){
   if(!points.length) return;
   const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
@@ -1639,7 +1835,8 @@ function drawNotes(points, drawRot){
     // MIDIノートを極座標に変換して円形のマーカーを描く
     const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
     const th=angleForMidiDraw(p.midi, drawRot), r=radiusFromFreq(freq,rMax,step,minRadius), {x,y}=polarToXY(cx,cy,r,th);
-    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,16+10*p.vel*devicePixelRatio,0,2*Math.PI); ctx.stroke();
+    const ringRadius = (16 + 10 * p.vel * devicePixelRatio) * noteDotScale;
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.arc(x,y,ringRadius,0,2*Math.PI); ctx.stroke();
   }
   function labelOnly(p, label, position = 'top', color = 'rgba(220,220,220,0.9)'){
     const freq = (p && p.f!=null) ? p.f : midiToHz(p.midi);
@@ -1703,7 +1900,7 @@ function drawNotes(points, drawRot){
   }
 
   for(const p of notePositions){
-    const radius=4+12*p.vel, alpha=0.3+0.6*p.vel;
+    const radius=(4+12*p.vel)*noteDotScale, alpha=0.3+0.6*p.vel;
     ctx.beginPath(); ctx.fillStyle=`rgba(255,255,255,${alpha})`; ctx.arc(p.x,p.y,radius,0,2*Math.PI); ctx.fill();
   }
 
@@ -1727,7 +1924,7 @@ function drawNotes(points, drawRot){
       for(const p of list){
         const theta = angleForMidiDraw(p.midi, drawRot);
         const {x,y}=polarToXY(cx,cy,radius,theta);
-        const markerRadius=4+12*p.vel;
+        const markerRadius=(4+12*p.vel)*noteDotScale;
         ctx.beginPath(); ctx.fillStyle=color; ctx.arc(x,y,markerRadius,0,2*Math.PI); ctx.fill();
       }
     };
@@ -1935,6 +2132,8 @@ function draw(){
     const tn = trainer.currentNotes();
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
+
+  drawKeyboard(displayMinFreq, displayMaxFreq);
 
   requestAnimationFrame(draw);
 }
