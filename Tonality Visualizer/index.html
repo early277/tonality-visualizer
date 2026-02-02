@@ -395,7 +395,7 @@ const I18N = {
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size", noteDotSize:"note dot size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α",
-    keyboard:"keyboard", keyboardMovableDo:"movable-do labels", keyboardDistance:"distance from lowest", keyboardFifthAngle:"circle-of-fifths angle",
+    keyboard:"keyboard", keyboardMovableDo:"movable-do numbers", keyboardDistance:"distance from lowest (octave)", keyboardFifthAngle:"circle-of-fifths steps",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
@@ -423,7 +423,7 @@ const I18N = {
     snapZeroAlpha:"zerar ω quando α=0",
     lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", arcGuideAlpha:"α dos arcos concêntricos", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó", noteDotSize:"tamanho dos pontos",
     labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
-    keyboard:"teclado", keyboardMovableDo:"rótulos do dó móvel", keyboardDistance:"distância do grave", keyboardFifthAngle:"ângulo no ciclo de quintas",
+    keyboard:"teclado", keyboardMovableDo:"números do dó móvel", keyboardDistance:"distância do grave (oitava)", keyboardFifthAngle:"passos no ciclo de quintas",
     lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: não inicializado", last:"último:", idle:"ocioso",
@@ -451,7 +451,7 @@ const I18N = {
     snapZeroAlpha:"detener ω cuando α=0",
     lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", arcGuideAlpha:"opacidad de arcos concéntricos", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do", noteDotSize:"tamaño de puntos",
     labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
-    keyboard:"teclado", keyboardMovableDo:"etiquetas de do móvil", keyboardDistance:"distancia desde la más grave", keyboardFifthAngle:"ángulo en círculo de quintas",
+    keyboard:"teclado", keyboardMovableDo:"números de do móvil", keyboardDistance:"distancia desde la más grave (octava)", keyboardFifthAngle:"pasos en círculo de quintas",
     lowCut:"corte de graves", highCut:"corte de agudos",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: sin inicializar", last:"último:", idle:"en espera",
@@ -479,7 +479,7 @@ const I18N = {
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ", noteDotSize:"ノート円サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度",
-    keyboard:"鍵盤表示", keyboardMovableDo:"移動ド文字", keyboardDistance:"最低音からの距離", keyboardFifthAngle:"五度円角度差",
+    keyboard:"鍵盤表示", keyboardMovableDo:"移動ド数字", keyboardDistance:"最低音からの距離(オクターブ)", keyboardFifthAngle:"五度円ステップ",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
@@ -507,7 +507,7 @@ const I18N = {
     snapZeroAlpha:"α=0에서 각속도 정지",
     lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", arcGuideAlpha:"동심원 호 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기", noteDotSize:"노트 점 크기",
     labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
-    keyboard:"키보드", keyboardMovableDo:"이동 도 표기", keyboardDistance:"최저음 거리", keyboardFifthAngle:"5도 원 각도 차이",
+    keyboard:"키보드", keyboardMovableDo:"이동 도 숫자", keyboardDistance:"최저음 거리(옥타브)", keyboardFifthAngle:"5도 원 스텝",
     lowCut:"저음역 컷", highCut:"고음역 컷",
     omegaMax:"최대 회전 속도",
     midiNotInit:"MIDI: 초기화되지 않음", last:"마지막:", idle:"대기",
@@ -535,7 +535,7 @@ const I18N = {
     snapZeroAlpha:"α=0 时停止角速度",
     lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", arcGuideAlpha:"同心弧指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小", noteDotSize:"音符点大小",
     labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
-    keyboard:"键盘显示", keyboardMovableDo:"移动do文字", keyboardDistance:"最低音距离", keyboardFifthAngle:"五度圈角度差",
+    keyboard:"键盘显示", keyboardMovableDo:"移动do数字", keyboardDistance:"最低音距离(八度)", keyboardFifthAngle:"五度圈步数",
     lowCut:"低频削减", highCut:"高频削减",
     omegaMax:"最大角速度",
     midiNotInit:"MIDI：未初始化", last:"最后:", idle:"空闲",
@@ -929,13 +929,22 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
 function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
+function keyboardMetrics(){
+  if(!keyboardEnabled) return {active:false, height:0, padding:0};
+  const padding = 16 * devicePixelRatio;
+  const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  return {active:true, height, padding};
+}
 function ringParams(){
+  const keyboard = keyboardMetrics();
+  const reserved = keyboard.active ? (keyboard.height + keyboard.padding * 2) : 0;
   const half = Math.max(1, Math.min(cv.width, cv.height) / 2);
   const safeHalf = Math.max(1, half - 4);
   let rMax = half - MARGIN;
   if(!Number.isFinite(rMax)) rMax = safeHalf;
   if(rMax < 1) rMax = safeHalf;
-  rMax = Math.max(1, Math.min(rMax, safeHalf));
+  const maxByHeight = Math.max(1, (cv.height / 2) - reserved);
+  rMax = Math.max(1, Math.min(rMax, safeHalf, maxByHeight));
   const octaves = activeOctaveCount();
   const minRadius = (highCutOct > 0) ? rMax * 0.1 : 0;
   const span = Math.max(0, rMax - minRadius);
@@ -1683,7 +1692,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 
 /* ===== Drawing ===== */
 const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
-const SOLFEGE_LABELS = ['Do','Di','Re','Ri','Mi','Fa','Fi','So','Si','La','Li','Ti'];
+const MOVABLE_DO_NUMBERS = ['1','-2','2','-3','3','4','+4','5','-6','6','-7','7'];
 
 function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
@@ -1695,13 +1704,13 @@ function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   return {minMidi, maxMidi};
 }
 
-function fifthAngleDeltaDegrees(midi, baseMidi){
+function fifthAngleDeltaSteps(midi, baseMidi){
   const pc = ((midi%12)+12)%12;
   const basePc = ((baseMidi%12)+12)%12;
   let delta = FIFTH_INDEX[pc] - FIFTH_INDEX[basePc];
   while(delta > 6) delta -= 12;
   while(delta < -6) delta += 12;
-  return delta * 30;
+  return delta;
 }
 
 function drawKeyboard(displayMinFreq, displayMaxFreq){
@@ -1709,6 +1718,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq){
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
 
+  const keyboard = keyboardMetrics();
   const keys = [];
   for(let midi=minMidi; midi<=maxMidi; midi++){
     const pc = ((midi%12)+12)%12;
@@ -1717,8 +1727,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq){
   const whiteKeys = keys.filter(k=>!k.isBlack);
   if(!whiteKeys.length) return;
 
-  const padding = 16 * devicePixelRatio;
-  const keyboardHeight = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const padding = keyboard.padding;
+  const keyboardHeight = keyboard.height;
   const y = cv.height - keyboardHeight - padding;
   const x = padding;
   const width = cv.width - padding * 2;
@@ -1767,26 +1777,31 @@ function drawKeyboard(displayMinFreq, displayMaxFreq){
   const buildLabels = (midi)=>{
     const labels = [];
     const dist = midi - minMidi;
-    if(keyboardShowMovable) labels.push(SOLFEGE_LABELS[dist % 12]);
-    if(keyboardShowDistance) labels.push(String(dist));
+    if(keyboardShowMovable){
+      labels.push({text: MOVABLE_DO_NUMBERS[dist % 12], color: 'rgba(255,215,120,0.95)'});
+    }
+    if(keyboardShowDistance){
+      labels.push({text: String(dist % 12), color: 'rgba(120,200,255,0.95)'});
+    }
     if(keyboardShowFifthAngle){
-      const deg = fifthAngleDeltaDegrees(midi, minMidi);
-      const sign = deg > 0 ? '+' : '';
-      labels.push(`${sign}${deg}°`);
+      const step = fifthAngleDeltaSteps(midi, minMidi);
+      const sign = step > 0 ? '+' : '';
+      labels.push({text: `${sign}${step}`, color: 'rgba(210,170,255,0.95)'});
     }
     return labels;
   };
 
-  const drawKeyLabels = (key, labels, color, fontPx)=>{
+  const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
     if(!labels.length) return;
-    ctx.fillStyle = color;
     ctx.font = `${fontPx}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     const lineHeight = fontPx * 1.1;
     let yCursor = key.y + key.height - 6 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
-      ctx.fillText(labels[i], key.x + key.width/2, yCursor);
+      const label = labels[i];
+      ctx.fillStyle = label.color || fallbackColor;
+      ctx.fillText(label.text, key.x + key.width/2, yCursor);
       yCursor -= lineHeight;
     }
   };
