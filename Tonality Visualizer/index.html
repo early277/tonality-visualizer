@@ -1721,7 +1721,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
   const keyboard = keyboardMetrics();
   const base = (baseMidi != null && Number.isFinite(baseMidi)) ? baseMidi : minMidi;
   const maxSpan = 24;
-  const startMidi = Math.max(minMidi, Math.min(base, maxMidi));
+  const startMidi = minMidi;
   const endMidi = Math.min(maxMidi, startMidi + maxSpan);
   const keys = [];
   for(let midi=startMidi; midi<=endMidi; midi++){
@@ -1756,7 +1756,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
       key.width = blackWidth;
       key.height = blackHeight;
       key.y = y;
-      key.x = x + leftWhiteIndex * whiteWidth + whiteWidth * 0.7 - blackWidth/2;
+      key.x = x + leftWhiteIndex * whiteWidth + whiteWidth * 0.7;
     }
   }
 
@@ -1782,15 +1782,17 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
     const labels = [];
     const dist = midi - base;
     if(keyboardShowMovable){
-      labels.push({text: MOVABLE_DO_NUMBERS[dist % 12], color: 'rgba(255,215,120,0.95)'});
+      labels.push({text: MOVABLE_DO_NUMBERS[dist % 12], color: 'rgba(255,120,0,0.95)'});
     }
     if(keyboardShowDistance){
-      labels.push({text: String((dist % 12 + 12) % 12), color: 'rgba(120,200,255,0.95)'});
+      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','M7','♭7'];
+      labels.push({text: degreeLabels[(dist % 12 + 12) % 12], color: 'rgba(0,120,255,0.95)'});
     }
     if(keyboardShowFifthAngle){
       const step = fifthAngleDeltaSteps(midi, base);
       const sign = step > 0 ? '+' : '';
-      labels.push({text: `${sign}${step}`, color: 'rgba(210,170,255,0.95)'});
+      const deg = step * 30;
+      labels.push({text: `${sign}${deg}°`, color: 'rgba(140,90,255,0.95)'});
     }
     return labels;
   };
@@ -1801,11 +1803,16 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     const lineHeight = fontPx * 1.1;
+    const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = Math.max(2, Math.round(fontPx * 0.18));
     let yCursor = key.y + key.height - 6 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
+      const text = label.text;
+      ctx.strokeStyle = strokeColor;
+      ctx.strokeText(text, key.x + key.width/2, yCursor);
       ctx.fillStyle = label.color || fallbackColor;
-      ctx.fillText(label.text, key.x + key.width/2, yCursor);
+      ctx.fillText(text, key.x + key.width/2, yCursor);
       yCursor -= lineHeight;
     }
   };
