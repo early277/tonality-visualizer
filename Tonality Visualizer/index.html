@@ -1713,14 +1713,18 @@ function fifthAngleDeltaSteps(midi, baseMidi){
   return delta;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq){
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
 
   const keyboard = keyboardMetrics();
+  const base = (baseMidi != null && Number.isFinite(baseMidi)) ? baseMidi : minMidi;
+  const maxSpan = 24;
+  const startMidi = Math.max(minMidi, Math.min(base, maxMidi));
+  const endMidi = Math.min(maxMidi, startMidi + maxSpan);
   const keys = [];
-  for(let midi=minMidi; midi<=maxMidi; midi++){
+  for(let midi=startMidi; midi<=endMidi; midi++){
     const pc = ((midi%12)+12)%12;
     keys.push({midi, pc, isBlack: BLACK_KEY_PCS.has(pc)});
   }
@@ -1776,15 +1780,15 @@ function drawKeyboard(displayMinFreq, displayMaxFreq){
 
   const buildLabels = (midi)=>{
     const labels = [];
-    const dist = midi - minMidi;
+    const dist = midi - base;
     if(keyboardShowMovable){
       labels.push({text: MOVABLE_DO_NUMBERS[dist % 12], color: 'rgba(255,215,120,0.95)'});
     }
     if(keyboardShowDistance){
-      labels.push({text: String(dist % 12), color: 'rgba(120,200,255,0.95)'});
+      labels.push({text: String((dist % 12 + 12) % 12), color: 'rgba(120,200,255,0.95)'});
     }
     if(keyboardShowFifthAngle){
-      const step = fifthAngleDeltaSteps(midi, minMidi);
+      const step = fifthAngleDeltaSteps(midi, base);
       const sign = step > 0 ? '+' : '';
       labels.push({text: `${sign}${step}`, color: 'rgba(210,170,255,0.95)'});
     }
@@ -2138,6 +2142,11 @@ function draw(){
   // 入力の可視化
   const livePts = mapToPoints(mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes));
   const filePts = mapToPoints(fileNotes);
+  const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
+  let baseMidi = null;
+  for(const midi of activeNotes.keys()){
+    if(baseMidi == null || midi < baseMidi) baseMidi = midi;
+  }
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -2148,7 +2157,7 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawKeyboard(displayMinFreq, displayMaxFreq);
+  drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi);
 
   requestAnimationFrame(draw);
 }
