@@ -930,21 +930,41 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
 function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
 function keyboardMetrics(){
-  if(!keyboardEnabled) return {active:false, height:0, padding:0};
+  if(!keyboardEnabled) return {active:false, height:0, padding:0, reserved:0};
   const padding = 16 * devicePixelRatio;
   const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
-  return {active:true, height, padding};
+  return {active:true, height, padding, reserved: height + padding * 2};
+}
+function canvasCenter(){
+  const keyboard = keyboardMetrics();
+  const availableHeight = Math.max(1, cv.height - keyboard.reserved);
+  return {
+    cx: cv.width / 2,
+    cy: availableHeight / 2,
+    reserved: keyboard.reserved
+  };
+}
+function canvasCenterCss(){
+  const rect = cv.getBoundingClientRect();
+  const keyboard = keyboardMetrics();
+  const reservedCss = keyboard.reserved / devicePixelRatio;
+  const availableHeightCss = Math.max(1, rect.height - reservedCss);
+  return {
+    cx: rect.left + rect.width / 2,
+    cy: rect.top + availableHeightCss / 2
+  };
 }
 function ringParams(){
   const keyboard = keyboardMetrics();
-  const reserved = keyboard.active ? (keyboard.height + keyboard.padding * 2) : 0;
-  const half = Math.max(1, Math.min(cv.width, cv.height) / 2);
+  const availableHeight = Math.max(1, cv.height - keyboard.reserved);
+  const halfHeight = availableHeight / 2;
+  const halfWidth = cv.width / 2;
+  const half = Math.max(1, Math.min(halfWidth, halfHeight));
   const safeHalf = Math.max(1, half - 4);
   let rMax = half - MARGIN;
   if(!Number.isFinite(rMax)) rMax = safeHalf;
   if(rMax < 1) rMax = safeHalf;
-  const maxByHeight = Math.max(1, (cv.height / 2) - reserved);
-  rMax = Math.max(1, Math.min(rMax, safeHalf, maxByHeight));
+  rMax = Math.max(1, Math.min(rMax, safeHalf));
   const octaves = activeOctaveCount();
   const minRadius = (highCutOct > 0) ? rMax * 0.1 : 0;
   const span = Math.max(0, rMax - minRadius);
@@ -1085,9 +1105,7 @@ const dragRot = {
   moved: false
 };
 function clientAngle(ev){
-  const rect = cv.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
+  const {cx, cy} = canvasCenterCss();
   const x = (ev.clientX != null) ? ev.clientX : (ev.touches && ev.touches[0] && ev.touches[0].clientX);
   const y = (ev.clientY != null) ? ev.clientY : (ev.touches && ev.touches[0] && ev.touches[0].clientY);
   if(x == null || y == null) return null;
@@ -1096,9 +1114,7 @@ function clientAngle(ev){
   return Math.atan2(dy, dx);
 }
 function clientPolar(ev){
-  const rect = cv.getBoundingClientRect();
-  const cxCss = rect.left + rect.width / 2;
-  const cyCss = rect.top + rect.height / 2;
+  const {cx: cxCss, cy: cyCss} = canvasCenterCss();
   const x = (ev.clientX != null) ? ev.clientX : (ev.touches && ev.touches[0] && ev.touches[0].clientX);
   const y = (ev.clientY != null) ? ev.clientY : (ev.touches && ev.touches[0] && ev.touches[0].clientY);
   if(x == null || y == null) return null;
@@ -1693,6 +1709,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 /* ===== Drawing ===== */
 const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
 const MOVABLE_DO_NUMBERS = ['1','-2','2','-3','3','4','+4','5','-6','6','-7','7'];
+const MOVABLE_DO_SEQUENCE = ['7','3','6','2','5','1','4','-7','-3','-6','-2','+4'];
 
 function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
@@ -1713,7 +1730,18 @@ function fifthAngleDeltaSteps(midi, baseMidi){
   return delta;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
+function movableDoLabelForMidi(midi, drawRot, halfCenter){
+  const pc = ((midi%12)+12)%12;
+  const idx = FIFTH_INDEX[pc];
+  const theta = baseAngleFromFifthIndex(idx) + drawRot;
+  const start = halfCenter - Math.PI/2;
+  let delta = theta - start;
+  delta = ((delta % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const step = Math.round(delta / (Math.PI/6)) % 12;
+  return MOVABLE_DO_SEQUENCE[step];
+}
+
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
@@ -1782,7 +1810,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi){
     const labels = [];
     const dist = midi - base;
     if(keyboardShowMovable){
-      labels.push({text: MOVABLE_DO_NUMBERS[dist % 12], color: 'rgba(255,120,0,0.95)'});
+      labels.push({text: movableDoLabelForMidi(midi, drawRot, halfCenter), color: 'rgba(255,120,0,0.95)'});
     }
     if(keyboardShowDistance){
       const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','M7','♭7'];
@@ -2006,7 +2034,8 @@ let prevT=null;
 // draw はキャンバス全体のメイン描画ループ。
 // 物理演算の結果を反映しながら、水面・ノート・補助情報を毎フレーム再描画する。
 function draw(){
-  const w=cv.width, h=cv.height, cx=w/2, cy=h/2;
+  const w=cv.width, h=cv.height;
+  const {cx, cy} = canvasCenter();
   const {rMax, step, octaves, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
   const now = performance.now()/1000;
   // 前フレームとの経過時間を計算し、極端な変動はクランプ
@@ -2164,7 +2193,7 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi);
+  drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter);
 
   requestAnimationFrame(draw);
 }
