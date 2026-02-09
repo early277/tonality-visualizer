@@ -1805,18 +1805,48 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
+  const colorStepForKey = (midi)=>{
+    if(keyboardShowMovable) return movableDoStepForMidi(midi, drawRot, halfCenter);
+    if(keyboardShowDistance){
+      const dist = midi - base;
+      return (dist % 12 + 12) % 12;
+    }
+    if(keyboardShowFifthAngle){
+      const step = fifthAngleDeltaSteps(midi, base);
+      return (step + 12) % 12;
+    }
+    return ((midi % 12) + 12) % 12;
+  };
+
+  const drawKeyBand = (key)=>{
+    const step = colorStepForKey(key.midi);
+    const hue = (step * 30 + 360) % 360;
+    const light = key.isBlack ? 60 : 35;
+    ctx.fillStyle = `hsla(${hue}, 70%, ${light}%, 0.85)`;
+    const bandHeight = Math.max(4 * devicePixelRatio, keyboardHeight * 0.08);
+    ctx.fillRect(key.x, key.y + key.height - bandHeight, key.width, bandHeight);
+  };
+
+  for(const key of keys){
+    drawKeyBand(key);
+  }
+
   const buildLabels = (midi)=>{
     const labels = [];
     const dist = midi - base;
     if(keyboardShowMovable){
-      labels.push({kind:'movable', step: movableDoStepForMidi(midi, drawRot, halfCenter), color: 'rgba(255,120,0,0.95)'});
+      const step = movableDoStepForMidi(midi, drawRot, halfCenter);
+      labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: 'rgba(255,120,0,0.95)'});
     }
     if(keyboardShowDistance){
-      labels.push({kind:'distance', step: (dist % 12 + 12) % 12, color: 'rgba(0,120,255,0.95)'});
+      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
+      const step = (dist % 12 + 12) % 12;
+      labels.push({kind:'distance', step, text: degreeLabels[step], color: 'rgba(0,120,255,0.95)'});
     }
     if(keyboardShowFifthAngle){
       const step = fifthAngleDeltaSteps(midi, base);
-      labels.push({kind:'fifth', step, color: 'rgba(140,90,255,0.95)'});
+      const sign = step > 0 ? '+' : '';
+      labels.push({kind:'fifth', step, text: `${sign}${step * 30}°`, color: 'rgba(140,90,255,0.95)'});
     }
     return labels;
   };
@@ -1859,13 +1889,25 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
     if(!labels.length) return;
-    const lineHeight = fontPx * 1.1;
+    const textSize = Math.max(8 * devicePixelRatio, fontPx * 0.6);
+    const lineHeight = fontPx * 0.9 + textSize + 8 * devicePixelRatio;
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     const glyphRadius = Math.max(6 * devicePixelRatio, fontPx * 0.45);
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
-      drawGlyph(label, key.x + key.width/2, yCursor, glyphRadius, strokeColor);
+      const x = key.x + key.width/2;
+      drawGlyph(label, x, yCursor - textSize * 0.3, glyphRadius, strokeColor);
+      if(label.text){
+        ctx.font = `${textSize}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = label.color || fallbackColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
+        ctx.strokeText(label.text, x, yCursor + glyphRadius * 0.7);
+        ctx.fillText(label.text, x, yCursor + glyphRadius * 0.7);
+      }
       yCursor -= lineHeight;
     }
   };
