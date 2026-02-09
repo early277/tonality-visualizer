@@ -1840,24 +1840,29 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (step - 9) / 3));
   };
 
-  const bandColorForKey = (midi)=>{
-    if(keyboardShowMovable){
-      const step = movableDoStepForMidi(midi, drawRot, halfCenter);
-      return colorForMovableStep(step);
-    }
-    if(keyboardShowDistance){
-      const dist = midi - base;
-      return colorForDistanceStep((dist % 12 + 12) % 12);
-    }
-    return null;
+  const bandColorsForKey = (midi)=>{
+    const movable = keyboardShowMovable
+      ? colorForMovableStep(movableDoStepForMidi(midi, drawRot, halfCenter))
+      : null;
+    const distance = keyboardShowDistance
+      ? colorForDistanceStep(((midi - base) % 12 + 12) % 12)
+      : null;
+    return {movable, distance};
   };
 
   const drawKeyBand = (key)=>{
-    const color = bandColorForKey(key.midi);
-    if(!color) return;
-    ctx.fillStyle = color;
-    const bandHeight = Math.max(4 * devicePixelRatio, keyboardHeight * 0.08);
-    ctx.fillRect(key.x, key.y + key.height - bandHeight, key.width, bandHeight);
+    const {movable, distance} = bandColorsForKey(key.midi);
+    if(!movable && !distance) return;
+    const totalHeight = Math.max(8 * devicePixelRatio, keyboardHeight * 0.16);
+    const bandHeight = totalHeight / 2;
+    if(movable){
+      ctx.fillStyle = movable;
+      ctx.fillRect(key.x, key.y + key.height - totalHeight, key.width, bandHeight);
+    }
+    if(distance){
+      ctx.fillStyle = distance;
+      ctx.fillRect(key.x, key.y + key.height - bandHeight, key.width, bandHeight);
+    }
   };
 
   for(const key of keys){
@@ -1885,53 +1890,15 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     return labels;
   };
 
-  const drawGlyph = (label, x, y, r, strokeColor)=>{
-    const angleBase = -Math.PI/2;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = Math.max(1, Math.round(r * 0.2));
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.fillStyle = label.color;
-    if(label.kind === 'movable'){
-      const start = angleBase + label.step * (Math.PI/6) - (Math.PI/12);
-      const end = start + (Math.PI/6);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, r, start, end);
-      ctx.closePath();
-      ctx.fill();
-    }else if(label.kind === 'distance'){
-      const angle = angleBase + label.step * (Math.PI/6);
-      const dotR = Math.max(2, r * 0.25);
-      ctx.beginPath();
-      ctx.arc(Math.cos(angle) * r * 0.75, Math.sin(angle) * r * 0.75, dotR, 0, 2 * Math.PI);
-      ctx.fill();
-    }else if(label.kind === 'fifth'){
-      const angle = angleBase + label.step * (Math.PI/6);
-      ctx.lineWidth = Math.max(2, Math.round(r * 0.25));
-      ctx.strokeStyle = label.color;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
-      ctx.stroke();
-    }
-    ctx.restore();
-  };
-
   const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
     if(!labels.length) return;
     const textSize = Math.max(8 * devicePixelRatio, fontPx * 0.6);
-    const lineHeight = fontPx * 0.9 + textSize + 8 * devicePixelRatio;
+    const lineHeight = textSize + 6 * devicePixelRatio;
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
-    const glyphRadius = Math.max(6 * devicePixelRatio, fontPx * 0.45);
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
-      drawGlyph(label, x, yCursor - textSize * 0.3, glyphRadius, strokeColor);
       if(label.text){
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
