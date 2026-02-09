@@ -1813,7 +1813,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       labels.push({text: movableDoLabelForMidi(midi, drawRot, halfCenter), color: 'rgba(255,120,0,0.95)'});
     }
     if(keyboardShowDistance){
-      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','M7','♭7'];
+      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
       labels.push({text: degreeLabels[(dist % 12 + 12) % 12], color: 'rgba(0,120,255,0.95)'});
     }
     if(keyboardShowFifthAngle){
@@ -1861,7 +1861,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
 function drawNotes(points, drawRot){
   if(!points.length) return;
-  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams();
+  const {cx, cy} = canvasCenter();
 
   const inRange = [];
   const belowRange = [];
@@ -1996,7 +1997,8 @@ function drawNotes(points, drawRot){
 // MIDI 番号を受け取り、表示範囲内でリング上にハイライトを描画する。
 function drawTargetNotes(targets, drawRot, hitNotes = new Set()){
   if(!targets || !targets.length) return;
-  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams(); const cx=cv.width/2, cy=cv.height/2;
+  const {rMax, step, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq}=ringParams();
+  const {cx, cy} = canvasCenter();
   for(const midi of targets){
     const freq = midiToHz(midi);
     if(freq < displayMinFreq || freq > displayMaxFreq) continue;
