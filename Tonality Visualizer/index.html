@@ -1853,7 +1853,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawKeyBand = (key)=>{
     const {movable, distance} = bandColorsForKey(key.midi);
     if(!movable && !distance) return;
-    const totalHeight = Math.max(8 * devicePixelRatio, keyboardHeight * 0.16);
+    const totalHeight = Math.max(16 * devicePixelRatio, keyboardHeight * 0.32);
     const bandHeight = totalHeight / 2;
     if(movable){
       ctx.fillStyle = movable;
@@ -1906,8 +1906,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         ctx.fillStyle = label.color || fallbackColor;
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
-        ctx.strokeText(label.text, x, yCursor + glyphRadius * 0.7);
-        ctx.fillText(label.text, x, yCursor + glyphRadius * 0.7);
+        ctx.strokeText(label.text, x, yCursor);
+        ctx.fillText(label.text, x, yCursor);
       }
       yCursor -= lineHeight;
     }
