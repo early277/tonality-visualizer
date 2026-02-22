@@ -1812,20 +1812,11 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     a: a.a + (b.a - a.a) * t
   });
   const rgba = (c)=>`rgba(${c.r},${c.g},${c.b},${c.a})`;
-  const COLOR_BLUE = {r:40,g:130,b:255,a:0.95};
-  const COLOR_ORANGE = {r:255,g:130,b:0,a:0.95};
   const COLOR_RED = {r:230,g:70,b:70,a:0.95};
   const COLOR_GREEN = {r:40,g:190,b:90,a:0.95};
   const COLOR_BLACK = {r:10,g:10,b:10,a:0.95};
   const COLOR_CLEAR = {r:0,g:0,b:0,a:0};
 
-  const colorForMovableStep = (step)=>{
-    const angleBase = -Math.PI/2;
-    const angle = angleBase + step * (Math.PI/6);
-    const blueAngle = angleBase + 9 * (Math.PI/6);
-    const t = (1 - Math.cos(angle - blueAngle)) / 2;
-    return rgba(mixColor(COLOR_BLUE, COLOR_ORANGE, t));
-  };
   const colorForDistanceStep = (step)=>{
     if(step === 0) return null;
     if(step <= 3){
@@ -1839,6 +1830,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     }
     return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (step - 9) / 3));
   };
+  const colorForMovableStep = (step)=> colorForDistanceStep(step);
 
   const bandColorsForKey = (midi)=>{
     const movable = keyboardShowMovable
@@ -1874,10 +1866,11 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const dist = midi - base;
     if(keyboardShowMovable){
       const step = movableDoStepForMidi(midi, drawRot, halfCenter);
-      labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: colorForMovableStep(step)});
+      const movColor = colorForMovableStep(step) || 'rgba(245,245,245,0.95)';
+      labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: movColor});
     }
     if(keyboardShowDistance){
-      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
+      const degreeLabels = ['1','P4','♭7','♭3','♭6','♭2','#4','7','3','6','2','5'];
       const step = (dist % 12 + 12) % 12;
       const distColor = colorForDistanceStep(step) || 'rgba(120,120,120,0.9)';
       labels.push({kind:'distance', step, text: degreeLabels[step], color: distColor});
@@ -1929,15 +1922,17 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       const label = labels[i];
       const x = key.x + key.width/2;
       if(label.kind === 'fifth'){
-        drawMiniDisk(x, yCursor + blackWidth * 0.45, label);
+        drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2, label);
         yCursor -= lineHeightDisk;
       }else if(label.text){
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillStyle = label.color || fallbackColor;
-        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.strokeText(label.text, x, yCursor);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.strokeText(label.text, x, yCursor);
         ctx.fillText(label.text, x, yCursor);
         yCursor -= lineHeightText;
