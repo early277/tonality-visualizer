@@ -1853,7 +1853,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawKeyBand = (key)=>{
     const {movable, distance} = bandColorsForKey(key.midi);
     if(!movable && !distance) return;
-    const totalHeight = Math.max(16 * devicePixelRatio, keyboardHeight * 0.32);
+    const totalHeight = key.height;
     const bandHeight = totalHeight / 2;
     if(movable){
       ctx.fillStyle = movable;
