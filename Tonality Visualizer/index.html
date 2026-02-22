@@ -1761,8 +1761,11 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const padding = keyboard.padding;
   const keyboardHeight = keyboard.height;
   const y = cv.height - keyboardHeight - padding;
-  const x = padding;
-  const width = cv.width - padding * 2;
+  const {cx} = canvasCenter();
+  const {rMax} = ringParams();
+  const diskDiameter = (rMax + 8) * 2;
+  const width = Math.min(cv.width - padding * 2, diskDiameter);
+  const x = cx - width / 2;
   if(width <= 0 || keyboardHeight <= 0) return;
 
   const whiteWidth = width / whiteKeys.length;
@@ -1792,17 +1795,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   for(const key of keys){
     if(key.isBlack) continue;
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    ctx.strokeStyle = 'rgba(20,20,20,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
-    ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
   for(const key of keys){
     if(!key.isBlack) continue;
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    ctx.strokeStyle = 'rgba(15,15,15,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
-    ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
   const mixColor = (a, b, t)=>({
@@ -1881,7 +1880,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: movColor});
     }
     if(keyboardShowDistance){
-      const degreeLabels = ['1','P4','♭7','♭3','♭6','♭2','#4','7','3','6','2','5'];
+      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
       const step = (dist % 12 + 12) % 12;
       const distColor = colorForDistanceStep(step) || 'rgba(120,120,120,0.9)';
       labels.push({kind:'distance', step, text: degreeLabels[step], color: distColor});
@@ -1907,7 +1906,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, radius, -(halfCenter + Math.PI/2), -(halfCenter - Math.PI/2), true);
+    ctx.arc(0, 0, radius, -(halfCenter - Math.PI/2), -(halfCenter + Math.PI/2), false);
     ctx.closePath();
     ctx.fillStyle = 'rgba(0,128,255,0.25)';
     ctx.fill();
@@ -1922,9 +1921,9 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.restore();
   };
 
-  const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
+  const drawKeyLabels = (key, labels, fallbackColor)=>{
     if(!labels.length) return;
-    const textSize = Math.max(8 * devicePixelRatio, fontPx * 0.6);
+    const textSize = Math.max(8 * devicePixelRatio, blackWidth * 0.9);
     const lineHeightText = textSize + 6 * devicePixelRatio;
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
@@ -1949,16 +1948,19 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     }
   };
 
-  const whiteFont = Math.max(9 * devicePixelRatio, keyboardHeight / 6);
-  const blackFont = Math.max(8 * devicePixelRatio, keyboardHeight / 8);
   for(const key of keys){
     const labels = buildLabels(key.midi);
     if(!labels.length) continue;
     if(key.isBlack){
-      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)', blackFont);
+      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)');
     }else{
-      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)', whiteFont);
+      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
     }
+  }
+
+  for(const key of keys){
+    ctx.strokeStyle = key.isBlack ? 'rgba(15,15,15,0.95)' : 'rgba(20,20,20,0.95)';
+    ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
   ctx.restore();
 }
