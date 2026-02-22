@@ -1708,7 +1708,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 
 /* ===== Drawing ===== */
 const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
-const MOVABLE_DO_SEQUENCE = ['7','3','6','2','5','1','4','-7','-3','-6','-2','+4'];
+const MOVABLE_DO_SEQUENCE = ['7','+4','-2','-6','-3','-7','4','1','5','2','6','3'];
 
 function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
@@ -1788,19 +1788,19 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   }
 
   ctx.save();
-  ctx.lineWidth = 1;
+  ctx.lineWidth = Math.max(1.8, 2 * devicePixelRatio);
   for(const key of keys){
     if(key.isBlack) continue;
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    ctx.strokeStyle = 'rgba(30,30,30,0.9)';
+    ctx.strokeStyle = 'rgba(20,20,20,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
   for(const key of keys){
     if(!key.isBlack) continue;
-    ctx.fillStyle = 'rgba(20,20,20,0.95)';
-    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillStyle = 'rgba(245,245,245,0.95)';
+    ctx.strokeStyle = 'rgba(15,15,15,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
@@ -1853,7 +1853,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawKeyBand = (key)=>{
     const {movable, distance} = bandColorsForKey(key.midi);
     if(!movable && !distance) return;
-    const totalHeight = key.height;
+    const totalHeight = key.isBlack ? key.height : Math.max(1, key.height - blackHeight);
     const bandHeight = totalHeight / 2;
     if(movable){
       ctx.fillStyle = movable;
@@ -1884,22 +1884,54 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     }
     if(keyboardShowFifthAngle){
       const step = fifthAngleDeltaSteps(midi, base);
-      const sign = step > 0 ? '+' : '';
-      labels.push({kind:'fifth', step, text: `${sign}${step * 30}°`, color: 'rgba(140,90,255,0.95)'});
+      labels.push({kind:'fifth', step, text: null, color: 'rgba(140,90,255,0.95)', midi});
     }
     return labels;
+  };
+
+  const drawMiniDisk = (x, y, label)=>{
+    const radius = Math.max(4 * devicePixelRatio, blackWidth / 2);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fill();
+    ctx.lineWidth = Math.max(1, radius * 0.12);
+    ctx.strokeStyle = 'rgba(15,15,15,0.95)';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, -(halfCenter + Math.PI/2), -(halfCenter - Math.PI/2), true);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,128,255,0.25)';
+    ctx.fill();
+
+    const theta = angleForMidiDraw(label.midi, drawRot);
+    ctx.lineWidth = Math.max(1.5, radius * 0.18);
+    ctx.strokeStyle = 'rgba(90,50,210,0.95)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(theta) * radius * 0.85, -Math.sin(theta) * radius * 0.85);
+    ctx.stroke();
+    ctx.restore();
   };
 
   const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
     if(!labels.length) return;
     const textSize = Math.max(8 * devicePixelRatio, fontPx * 0.6);
-    const lineHeight = textSize + 6 * devicePixelRatio;
+    const lineHeightText = textSize + 6 * devicePixelRatio;
+    const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
-      if(label.text){
+      if(label.kind === 'fifth'){
+        drawMiniDisk(x, yCursor + blackWidth * 0.45, label);
+        yCursor -= lineHeightDisk;
+      }else if(label.text){
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -1908,8 +1940,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
         ctx.strokeText(label.text, x, yCursor);
         ctx.fillText(label.text, x, yCursor);
+        yCursor -= lineHeightText;
       }
-      yCursor -= lineHeight;
     }
   };
 
