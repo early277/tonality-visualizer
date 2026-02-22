@@ -1845,15 +1845,26 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawKeyBand = (key)=>{
     const {movable, distance} = bandColorsForKey(key.midi);
     if(!movable && !distance) return;
-    const totalHeight = key.isBlack ? key.height : Math.max(1, key.height - blackHeight);
-    const bandHeight = totalHeight / 2;
+    if(key.isBlack){
+      const boundaryY = key.y + key.height / 2;
+      if(movable){
+        ctx.fillStyle = movable;
+        ctx.fillRect(key.x, key.y, key.width, boundaryY - key.y);
+      }
+      if(distance){
+        ctx.fillStyle = distance;
+        ctx.fillRect(key.x, boundaryY, key.width, key.y + key.height - boundaryY);
+      }
+      return;
+    }
+    const boundaryY = key.y + blackHeight;
     if(movable){
       ctx.fillStyle = movable;
-      ctx.fillRect(key.x, key.y + key.height - totalHeight, key.width, bandHeight);
+      ctx.fillRect(key.x, key.y, key.width, Math.max(0, boundaryY - key.y));
     }
     if(distance){
       ctx.fillStyle = distance;
-      ctx.fillRect(key.x, key.y + key.height - bandHeight, key.width, bandHeight);
+      ctx.fillRect(key.x, boundaryY, key.width, Math.max(0, key.y + key.height - boundaryY));
     }
   };
 
@@ -1928,11 +1939,9 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillStyle = label.color || fallbackColor;
+        ctx.fillStyle = 'rgba(0,0,0,0.95)';
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.strokeText(label.text, x, yCursor);
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
         ctx.strokeText(label.text, x, yCursor);
         ctx.fillText(label.text, x, yCursor);
         yCursor -= lineHeightText;
