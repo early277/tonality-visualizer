@@ -1857,7 +1857,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       }
       return;
     }
-    const boundaryY = key.y + blackHeight;
+    const boundaryY = key.y + blackHeight / 2;
     if(movable){
       ctx.fillStyle = movable;
       ctx.fillRect(key.x, key.y, key.width, Math.max(0, boundaryY - key.y));
