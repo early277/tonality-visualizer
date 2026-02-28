@@ -1709,6 +1709,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 /* ===== Drawing ===== */
 const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
 const MOVABLE_DO_SEQUENCE = ['7','+4','-2','-6','-3','-7','4','1','5','2','6','3'];
+const MOVABLE_DO_SOLFEGE = {'1':'Do','-2':'Ra','2':'Re','-3':'Me','3':'Mi','4':'Fa','+4':'Fi','5':'Sol','-6':'Le','6':'La','-7':'Te','7':'Ti'};
 
 function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
@@ -1816,20 +1817,38 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const COLOR_BLACK = {r:10,g:10,b:10,a:0.95};
   const COLOR_CLEAR = {r:0,g:0,b:0,a:0};
 
-  const colorForDistanceStep = (step)=>{
-    if(step === 0) return null;
-    if(step <= 3){
-      return rgba(mixColor(COLOR_CLEAR, COLOR_RED, step / 3));
-    }
-    if(step <= 6){
-      return rgba(mixColor(COLOR_RED, COLOR_BLACK, (step - 3) / 3));
-    }
-    if(step <= 9){
-      return rgba(mixColor(COLOR_BLACK, COLOR_GREEN, (step - 6) / 3));
-    }
-    return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (step - 9) / 3));
+  const DISTANCE_DEGREE_BY_SEMITONE = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
+  const DISTANCE_GRADIENT_ORDER = ['1','P4','♭7','♭3','♭6','♭2','#4','7','3','6','2','P5'];
+  const MOVABLE_GRADIENT_ORDER = ['1','4','-7','-3','-6','-2','+4','7','3','6','2','5'];
+
+  const gradientRankByOrder = (symbol, order)=>{
+    const idx = order.indexOf(symbol);
+    return idx >= 0 ? idx : 0;
   };
-  const colorForMovableStep = (step)=> colorForDistanceStep(step);
+
+  const colorForGradientRank = (rank)=>{
+    if(rank === 0) return null;
+    if(rank <= 3){
+      return rgba(mixColor(COLOR_CLEAR, COLOR_RED, rank / 3));
+    }
+    if(rank <= 6){
+      return rgba(mixColor(COLOR_RED, COLOR_BLACK, (rank - 3) / 3));
+    }
+    if(rank <= 9){
+      return rgba(mixColor(COLOR_BLACK, COLOR_GREEN, (rank - 6) / 3));
+    }
+    return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (rank - 9) / 3));
+  };
+  const colorForDistanceStep = (step)=>{
+    const degree = DISTANCE_DEGREE_BY_SEMITONE[((step % 12) + 12) % 12];
+    const rank = gradientRankByOrder(degree, DISTANCE_GRADIENT_ORDER);
+    return colorForGradientRank(rank);
+  };
+  const colorForMovableStep = (step)=>{
+    const symbol = MOVABLE_DO_SEQUENCE[((step % 12) + 12) % 12];
+    const rank = gradientRankByOrder(symbol, MOVABLE_GRADIENT_ORDER);
+    return colorForGradientRank(rank);
+  };
 
   const bandColorsForKey = (midi)=>{
     const movable = keyboardShowMovable
@@ -1877,7 +1896,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     if(keyboardShowMovable){
       const step = movableDoStepForMidi(midi, drawRot, halfCenter);
       const movColor = colorForMovableStep(step) || 'rgba(245,245,245,0.95)';
-      labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: movColor});
+      const symbol = MOVABLE_DO_SEQUENCE[step];
+      labels.push({kind:'movable', step, text: MOVABLE_DO_SOLFEGE[symbol] || symbol, color: movColor});
     }
     if(keyboardShowDistance){
       const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
