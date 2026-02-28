@@ -1973,8 +1973,17 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
+  const whiteMaskPad = Math.max(1, ctx.lineWidth);
   ctx.fillStyle = 'rgba(245,245,245,0.95)';
-  ctx.fillRect(x, y, width, blackHeight);
+  for(const key of keys){
+    if(!key.isBlack) continue;
+    ctx.fillRect(
+      key.x - whiteMaskPad,
+      key.y - whiteMaskPad,
+      key.width + whiteMaskPad * 2,
+      key.height + whiteMaskPad
+    );
+  }
   drawBlackKeyOverlay();
   ctx.restore();
 }
