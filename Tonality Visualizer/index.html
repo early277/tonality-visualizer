@@ -1088,6 +1088,7 @@ let player = null;
 let seekMuting = false;
 let seekWasRunning = false;
 let diskLocked = false;
+let lastKeyboardBaseMidi = null;
 
 function applySeekMuteState(){
   if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
@@ -1770,7 +1771,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   if(width <= 0 || keyboardHeight <= 0) return;
 
   const whiteWidth = width / whiteKeys.length;
-  const blackWidth = whiteWidth * 0.6;
+  const blackWidth = whiteWidth * 0.54;
   const blackHeight = keyboardHeight * 0.6;
 
   let whiteIndex = 0;
@@ -1913,7 +1914,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   };
 
   const drawMiniDisk = (x, y, label)=>{
-    const radius = Math.max(4 * devicePixelRatio, blackWidth / 2);
+    const radius = Math.max(4 * devicePixelRatio, blackWidth / 2) * 0.75;
     ctx.save();
     ctx.translate(x, y);
     ctx.beginPath();
@@ -1943,7 +1944,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   const drawKeyLabels = (key, labels, fallbackColor)=>{
     if(!labels.length) return;
-    const textSize = Math.max(8 * devicePixelRatio, blackWidth * 0.54);
+    const textSize = Math.max(8 * devicePixelRatio, blackWidth * 0.486);
     const lineHeightText = textSize + 6 * devicePixelRatio;
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
@@ -1952,7 +1953,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       const label = labels[i];
       const x = key.x + key.width/2;
       if(label.kind === 'fifth'){
-        drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2, label);
+        const miniRadius = Math.max(4 * devicePixelRatio, blackWidth / 2) * 0.75;
+        drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2 - miniRadius / 4, label);
         yCursor -= lineHeightDisk;
       }else if(label.text){
         ctx.font = `${textSize}px system-ui`;
@@ -1974,10 +1976,6 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       ctx.fillStyle = 'rgba(245,245,245,0.95)';
       ctx.fillRect(key.x, key.y, key.width, key.height);
       drawKeyBand(key);
-      const labels = buildLabels(key.midi);
-      if(labels.length){
-        drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)');
-      }
       ctx.strokeStyle = 'rgba(15,15,15,0.95)';
       ctx.strokeRect(key.x, key.y, key.width, key.height);
     }
@@ -1985,10 +1983,6 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   for(const key of keys){
     if(key.isBlack) continue;
-    const labels = buildLabels(key.midi);
-    if(labels.length){
-      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
-    }
     ctx.strokeStyle = 'rgba(20,20,20,0.95)';
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
@@ -2005,6 +1999,16 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     );
   }
   drawBlackKeyOverlay();
+
+  for(const key of keys){
+    const labels = buildLabels(key.midi);
+    if(!labels.length) continue;
+    if(key.isBlack){
+      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)');
+    }else{
+      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
+    }
+  }
   ctx.restore();
 }
 
@@ -2334,6 +2338,7 @@ function draw(){
   for(const midi of activeNotes.keys()){
     if(baseMidi == null || midi < baseMidi) baseMidi = midi;
   }
+  if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -2344,7 +2349,7 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter);
+  drawKeyboard(displayMinFreq, displayMaxFreq, (baseMidi != null ? baseMidi : lastKeyboardBaseMidi), drawRot, halfCenter);
 
   requestAnimationFrame(draw);
 }
