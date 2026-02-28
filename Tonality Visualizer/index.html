@@ -1949,6 +1949,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
+    const movableTopY = key.y + 6 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
@@ -1957,15 +1958,16 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2 - miniRadius / 4, label);
         yCursor -= lineHeightDisk;
       }else if(label.text){
+        const textY = (label.kind === 'movable') ? movableTopY : yCursor;
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillStyle = 'rgba(0,0,0,0.95)';
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
         ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.strokeText(label.text, x, yCursor);
-        ctx.fillText(label.text, x, yCursor);
-        yCursor -= lineHeightText;
+        ctx.strokeText(label.text, x, textY);
+        ctx.fillText(label.text, x, textY);
+        if(label.kind !== 'movable') yCursor -= lineHeightText;
       }
     }
   };
