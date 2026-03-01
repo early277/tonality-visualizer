@@ -1876,23 +1876,23 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     if(!movable && !distance) return;
     if(key.isBlack){
       const boundaryY = key.y + key.height / 2;
-      if(movable){
-        ctx.fillStyle = movable;
-        ctx.fillRect(key.x, key.y, key.width, boundaryY - key.y);
-      }
       if(distance){
         ctx.fillStyle = distance;
+        ctx.fillRect(key.x, key.y, key.width, boundaryY - key.y);
+      }
+      if(movable){
+        ctx.fillStyle = movable;
         ctx.fillRect(key.x, boundaryY, key.width, key.y + key.height - boundaryY);
       }
       return;
     }
     const boundaryY = key.y + blackHeight / 2;
-    if(movable){
-      ctx.fillStyle = movable;
-      ctx.fillRect(key.x, key.y, key.width, Math.max(0, boundaryY - key.y));
-    }
     if(distance){
       ctx.fillStyle = distance;
+      ctx.fillRect(key.x, key.y, key.width, Math.max(0, boundaryY - key.y));
+    }
+    if(movable){
+      ctx.fillStyle = movable;
       ctx.fillRect(key.x, boundaryY, key.width, Math.max(0, key.y + key.height - boundaryY));
     }
   };
@@ -1986,8 +1986,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
-    const movableTopY = key.y + 6 * devicePixelRatio;
-    const distanceY = key.y + blackHeight - textSize - 2 * devicePixelRatio;
+    const distanceTopY = key.y + 6 * devicePixelRatio;
+    const movableBottomY = key.y + blackHeight - textSize - 2 * devicePixelRatio;
     const miniDiskY = key.y + blackHeight / 2;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
@@ -2003,8 +2003,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         drawMiniDisk(diskX, miniDiskY, label);
       }else if(label.text){
         const textY = (label.kind === 'movable')
-          ? movableTopY
-          : ((label.kind === 'distance') ? distanceY : yCursor);
+          ? movableBottomY
+          : ((label.kind === 'distance') ? distanceTopY : yCursor);
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
