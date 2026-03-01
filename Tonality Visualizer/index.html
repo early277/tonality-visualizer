@@ -1742,7 +1742,7 @@ function movableDoStepForMidi(midi, drawRot, halfCenter){
   return step;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, highestMidi=null){
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, lowestMidi=null, highestMidi=null){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
@@ -2048,6 +2048,44 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   }
   drawBlackKeyOverlay();
 
+  const highlightKeysForMidi = (targetMidi)=>{
+    if(targetMidi == null) return [];
+    if(targetMidi >= startMidi && targetMidi <= endMidi){
+      return keys.filter((key)=> key.midi === targetMidi);
+    }
+    const targetPc = ((targetMidi % 12) + 12) % 12;
+    return keys.filter((key)=> key.pc === targetPc);
+  };
+
+  const drawHighlight = (targetKeys, strokeStyle, shadowColor)=>{
+    if(!targetKeys.length) return;
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = Math.max(2, 3 * devicePixelRatio);
+    ctx.shadowColor = shadowColor;
+    ctx.shadowBlur = 12 * devicePixelRatio;
+    for(const key of targetKeys){
+      ctx.strokeRect(
+        key.x - ctx.lineWidth / 2,
+        key.y - ctx.lineWidth / 2,
+        key.width + ctx.lineWidth,
+        key.height + ctx.lineWidth
+      );
+    }
+    ctx.restore();
+  };
+
+  drawHighlight(
+    highlightKeysForMidi(lowestMidi),
+    'rgba(0,200,255,0.98)',
+    'rgba(100,220,255,0.85)'
+  );
+  drawHighlight(
+    highlightKeysForMidi(highestMidi),
+    'rgba(255,160,0,0.98)',
+    'rgba(255,200,0,0.85)'
+  );
+
   for(const key of keys){
     const labels = buildLabels(key.midi);
     if(!labels.length) continue;
@@ -2056,24 +2094,6 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     }else{
       drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
     }
-  }
-
-  const highlightedKey = (highestMidi != null)
-    ? keys.find((key)=> key.midi === highestMidi)
-    : null;
-  if(highlightedKey){
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,160,0,0.98)';
-    ctx.lineWidth = Math.max(2, 3 * devicePixelRatio);
-    ctx.shadowColor = 'rgba(255,200,0,0.85)';
-    ctx.shadowBlur = 12 * devicePixelRatio;
-    ctx.strokeRect(
-      highlightedKey.x - ctx.lineWidth / 2,
-      highlightedKey.y - ctx.lineWidth / 2,
-      highlightedKey.width + ctx.lineWidth,
-      highlightedKey.height + ctx.lineWidth
-    );
-    ctx.restore();
   }
   ctx.restore();
 }
@@ -2401,9 +2421,11 @@ function draw(){
   const filePts = mapToPoints(fileNotes);
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
   let baseMidi = null;
+  let lowestMidi = null;
   let highestMidi = null;
   for(const midi of activeNotes.keys()){
     if(baseMidi == null || midi < baseMidi) baseMidi = midi;
+    if(lowestMidi == null || midi < lowestMidi) lowestMidi = midi;
     if(highestMidi == null || midi > highestMidi) highestMidi = midi;
   }
   if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
@@ -2423,6 +2445,7 @@ function draw(){
     (baseMidi != null ? baseMidi : lastKeyboardBaseMidi),
     drawRot,
     halfCenter,
+    lowestMidi,
     highestMidi
   );
 
