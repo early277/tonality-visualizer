@@ -1959,7 +1959,9 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
-    const movableTopY = key.y + 6 * devicePixelRatio;
+    const movableTopY = key.isBlack
+      ? (key.y + 6 * devicePixelRatio)
+      : (key.y + blackHeight + 6 * devicePixelRatio);
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
