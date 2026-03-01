@@ -1987,20 +1987,24 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
     const movableTopY = key.y + 6 * devicePixelRatio;
-    const distanceBottomY = key.y + blackHeight + 6 * devicePixelRatio;
+    const distanceY = key.y + blackHeight - textSize - 2 * devicePixelRatio;
     const miniDiskY = key.y + blackHeight / 2;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
-      const textX = (label.kind === 'movable' && !key.isBlack)
+      const centerX = (!key.isBlack)
         ? movableLabelXForWhiteKey(key)
         : x;
+      const textX = (label.kind === 'movable' || label.kind === 'distance')
+        ? centerX
+        : x;
       if(label.kind === 'fifth'){
-        drawMiniDisk(x, miniDiskY, label);
+        const diskX = !key.isBlack ? centerX : x;
+        drawMiniDisk(diskX, miniDiskY, label);
       }else if(label.text){
         const textY = (label.kind === 'movable')
           ? movableTopY
-          : ((label.kind === 'distance') ? distanceBottomY : yCursor);
+          : ((label.kind === 'distance') ? distanceY : yCursor);
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
