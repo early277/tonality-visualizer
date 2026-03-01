@@ -1774,6 +1774,14 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const blackWidth = whiteWidth * 0.54;
   const blackHeight = keyboardHeight * 0.6;
 
+  const BLACK_CENTER_OFFSET_RATIO = {
+    1: -0.12766, // C#
+    3:  0.12766, // D#
+    6: -0.12766, // F#
+    8:  0.0,     // G#
+    10: 0.12766  // A#
+  };
+
   let whiteIndex = 0;
   for(const key of keys){
     if(!key.isBlack){
@@ -1784,11 +1792,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       key.whiteIndex = whiteIndex;
       whiteIndex++;
     }else{
-      const leftWhiteIndex = whiteIndex - 1;
       key.width = blackWidth;
       key.height = blackHeight;
       key.y = y;
-      key.x = x + leftWhiteIndex * whiteWidth + whiteWidth * 0.7;
+      const boundaryX = x + whiteIndex * whiteWidth;
+      const centerOffset = (BLACK_CENTER_OFFSET_RATIO[key.pc] ?? 0) * whiteWidth;
+      const blackCenterX = boundaryX + centerOffset;
+      key.x = blackCenterX - key.width / 2;
     }
   }
 
