@@ -79,7 +79,7 @@ extension WebView {
                      runOpenPanelWith parameters: WKOpenPanelParameters,
                      initiatedByFrame frame: WKFrameInfo,
                      completionHandler: @escaping ([URL]?) -> Void) {
-            let types: [UTType] = [.midi, .audio, .data]
+            let types: [UTType] = [.midi]
             let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
             picker.delegate = self
             picker.allowsMultipleSelection = false
@@ -167,4 +167,3 @@ extension WebView {
 }
 
 private var WebViewAssocKey: UInt8 = 0
-
