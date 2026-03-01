@@ -1952,6 +1952,33 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.restore();
   };
 
+  const movableLabelXForWhiteKey = (whiteKey)=>{
+    const keyLeft = whiteKey.x;
+    const keyRight = whiteKey.x + whiteKey.width;
+    const overlaps = [];
+    for(const k of keys){
+      if(!k.isBlack) continue;
+      const left = Math.max(keyLeft, k.x);
+      const right = Math.min(keyRight, k.x + k.width);
+      if(right - left > 0.5) overlaps.push([left, right]);
+    }
+    if(!overlaps.length) return whiteKey.x + whiteKey.width / 2;
+    overlaps.sort((a,b)=>a[0]-b[0]);
+    const segments = [];
+    let cursor = keyLeft;
+    for(const [left, right] of overlaps){
+      if(left > cursor) segments.push([cursor, left]);
+      if(right > cursor) cursor = right;
+    }
+    if(cursor < keyRight) segments.push([cursor, keyRight]);
+    if(!segments.length) return whiteKey.x + whiteKey.width / 2;
+    let best = segments[0];
+    for(const seg of segments){
+      if((seg[1]-seg[0]) > (best[1]-best[0])) best = seg;
+    }
+    return (best[0] + best[1]) / 2;
+  };
+
   const drawKeyLabels = (key, labels, fallbackColor)=>{
     if(!labels.length) return;
     const textSize = Math.max(8 * devicePixelRatio, blackWidth * 0.486);
@@ -1959,12 +1986,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
-    const movableTopY = key.isBlack
-      ? (key.y + 6 * devicePixelRatio)
-      : (key.y + blackHeight + 6 * devicePixelRatio);
+    const movableTopY = key.y + 6 * devicePixelRatio;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
+      const textX = (label.kind === 'movable' && !key.isBlack)
+        ? movableLabelXForWhiteKey(key)
+        : x;
       if(label.kind === 'fifth'){
         const miniRadius = Math.max(4 * devicePixelRatio, blackWidth / 2) * 0.75;
         drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2 - miniRadius / 4, label);
@@ -1977,8 +2005,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         ctx.fillStyle = 'rgba(0,0,0,0.95)';
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
         ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.strokeText(label.text, x, textY);
-        ctx.fillText(label.text, x, textY);
+        ctx.strokeText(label.text, textX, textY);
+        ctx.fillText(label.text, textX, textY);
         if(label.kind !== 'movable') yCursor -= lineHeightText;
       }
     }
