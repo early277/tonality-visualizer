@@ -1088,6 +1088,7 @@ let player = null;
 let seekMuting = false;
 let seekWasRunning = false;
 let diskLocked = false;
+let lastKeyboardBaseMidi = null;
 
 function applySeekMuteState(){
   if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
@@ -1709,6 +1710,7 @@ function drawConcentricArcGuides(cx, cy, drawRot, rMax, step, minRadius, display
 /* ===== Drawing ===== */
 const BLACK_KEY_PCS = new Set([1,3,6,8,10]);
 const MOVABLE_DO_SEQUENCE = ['7','+4','-2','-6','-3','-7','4','1','5','2','6','3'];
+const MOVABLE_DO_SOLFEGE = {'1':'Do','-2':'Ra','2':'Re','-3':'Me','3':'Mi','4':'Fa','+4':'Fi','5':'Sol','-6':'Le','6':'La','-7':'Te','7':'Ti'};
 
 function midiRangeFromDisplay(displayMinFreq, displayMaxFreq){
   if(displayMinFreq <= 0 || displayMaxFreq <= 0) return {minMidi:0, maxMidi:-1};
@@ -1761,13 +1763,24 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const padding = keyboard.padding;
   const keyboardHeight = keyboard.height;
   const y = cv.height - keyboardHeight - padding;
-  const x = padding;
-  const width = cv.width - padding * 2;
+  const {cx} = canvasCenter();
+  const {rMax} = ringParams();
+  const diskDiameter = (rMax + 8) * 2;
+  const width = Math.min(cv.width - padding * 2, diskDiameter);
+  const x = cx - width / 2;
   if(width <= 0 || keyboardHeight <= 0) return;
 
   const whiteWidth = width / whiteKeys.length;
-  const blackWidth = whiteWidth * 0.6;
+  const blackWidth = whiteWidth * 0.54;
   const blackHeight = keyboardHeight * 0.6;
+
+  const BLACK_CENTER_OFFSET_RATIO = {
+    1: -0.12766, // C#
+    3:  0.12766, // D#
+    6: -0.12766, // F#
+    8:  0.0,     // G#
+    10: 0.12766  // A#
+  };
 
   let whiteIndex = 0;
   for(const key of keys){
@@ -1779,11 +1792,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       key.whiteIndex = whiteIndex;
       whiteIndex++;
     }else{
-      const leftWhiteIndex = whiteIndex - 1;
       key.width = blackWidth;
       key.height = blackHeight;
       key.y = y;
-      key.x = x + leftWhiteIndex * whiteWidth + whiteWidth * 0.7;
+      const boundaryX = x + whiteIndex * whiteWidth;
+      const centerOffset = (BLACK_CENTER_OFFSET_RATIO[key.pc] ?? 0) * whiteWidth;
+      const blackCenterX = boundaryX + centerOffset;
+      key.x = blackCenterX - key.width / 2;
     }
   }
 
@@ -1792,17 +1807,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   for(const key of keys){
     if(key.isBlack) continue;
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    ctx.strokeStyle = 'rgba(20,20,20,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
-    ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
   for(const key of keys){
     if(!key.isBlack) continue;
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    ctx.strokeStyle = 'rgba(15,15,15,0.95)';
     ctx.fillRect(key.x, key.y, key.width, key.height);
-    ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
   const mixColor = (a, b, t)=>({
@@ -1817,20 +1828,38 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const COLOR_BLACK = {r:10,g:10,b:10,a:0.95};
   const COLOR_CLEAR = {r:0,g:0,b:0,a:0};
 
-  const colorForDistanceStep = (step)=>{
-    if(step === 0) return null;
-    if(step <= 3){
-      return rgba(mixColor(COLOR_CLEAR, COLOR_RED, step / 3));
-    }
-    if(step <= 6){
-      return rgba(mixColor(COLOR_RED, COLOR_BLACK, (step - 3) / 3));
-    }
-    if(step <= 9){
-      return rgba(mixColor(COLOR_BLACK, COLOR_GREEN, (step - 6) / 3));
-    }
-    return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (step - 9) / 3));
+  const DISTANCE_DEGREE_BY_SEMITONE = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
+  const DISTANCE_GRADIENT_ORDER = ['1','P4','♭7','♭3','♭6','♭2','#4','7','3','6','2','P5'];
+  const MOVABLE_GRADIENT_ORDER = ['1','4','-7','-3','-6','-2','+4','7','3','6','2','5'];
+
+  const gradientRankByOrder = (symbol, order)=>{
+    const idx = order.indexOf(symbol);
+    return idx >= 0 ? idx : 0;
   };
-  const colorForMovableStep = (step)=> colorForDistanceStep(step);
+
+  const colorForGradientRank = (rank)=>{
+    if(rank === 0) return null;
+    if(rank <= 3){
+      return rgba(mixColor(COLOR_CLEAR, COLOR_RED, rank / 3));
+    }
+    if(rank <= 6){
+      return rgba(mixColor(COLOR_RED, COLOR_BLACK, (rank - 3) / 3));
+    }
+    if(rank <= 9){
+      return rgba(mixColor(COLOR_BLACK, COLOR_GREEN, (rank - 6) / 3));
+    }
+    return rgba(mixColor(COLOR_GREEN, COLOR_CLEAR, (rank - 9) / 3));
+  };
+  const colorForDistanceStep = (step)=>{
+    const degree = DISTANCE_DEGREE_BY_SEMITONE[((step % 12) + 12) % 12];
+    const rank = gradientRankByOrder(degree, DISTANCE_GRADIENT_ORDER);
+    return colorForGradientRank(rank);
+  };
+  const colorForMovableStep = (step)=>{
+    const symbol = MOVABLE_DO_SEQUENCE[((step % 12) + 12) % 12];
+    const rank = gradientRankByOrder(symbol, MOVABLE_GRADIENT_ORDER);
+    return colorForGradientRank(rank);
+  };
 
   const bandColorsForKey = (midi)=>{
     const movable = keyboardShowMovable
@@ -1857,7 +1886,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       }
       return;
     }
-    const boundaryY = key.y + blackHeight;
+    const boundaryY = key.y + blackHeight / 2;
     if(movable){
       ctx.fillStyle = movable;
       ctx.fillRect(key.x, key.y, key.width, Math.max(0, boundaryY - key.y));
@@ -1878,10 +1907,11 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     if(keyboardShowMovable){
       const step = movableDoStepForMidi(midi, drawRot, halfCenter);
       const movColor = colorForMovableStep(step) || 'rgba(245,245,245,0.95)';
-      labels.push({kind:'movable', step, text: MOVABLE_DO_SEQUENCE[step], color: movColor});
+      const symbol = MOVABLE_DO_SEQUENCE[step];
+      labels.push({kind:'movable', step, text: MOVABLE_DO_SOLFEGE[symbol] || symbol, color: movColor});
     }
     if(keyboardShowDistance){
-      const degreeLabels = ['1','P4','♭7','♭3','♭6','♭2','#4','7','3','6','2','5'];
+      const degreeLabels = ['1','♭2','2','♭3','3','P4','#4','P5','♭6','6','♭7','7'];
       const step = (dist % 12 + 12) % 12;
       const distColor = colorForDistanceStep(step) || 'rgba(120,120,120,0.9)';
       labels.push({kind:'distance', step, text: degreeLabels[step], color: distColor});
@@ -1894,7 +1924,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   };
 
   const drawMiniDisk = (x, y, label)=>{
-    const radius = Math.max(4 * devicePixelRatio, blackWidth / 2);
+    const radius = Math.max(4 * devicePixelRatio, blackWidth / 2) * 0.75;
     ctx.save();
     ctx.translate(x, y);
     ctx.beginPath();
@@ -1907,7 +1937,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, radius, -(halfCenter + Math.PI/2), -(halfCenter - Math.PI/2), true);
+    ctx.arc(0, 0, radius, halfCenter - Math.PI/2, halfCenter + Math.PI/2, false);
     ctx.closePath();
     ctx.fillStyle = 'rgba(0,128,255,0.25)';
     ctx.fill();
@@ -1922,42 +1952,109 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.restore();
   };
 
-  const drawKeyLabels = (key, labels, fallbackColor, fontPx)=>{
+  const movableLabelXForWhiteKey = (whiteKey)=>{
+    const keyLeft = whiteKey.x;
+    const keyRight = whiteKey.x + whiteKey.width;
+    const overlaps = [];
+    for(const k of keys){
+      if(!k.isBlack) continue;
+      const left = Math.max(keyLeft, k.x);
+      const right = Math.min(keyRight, k.x + k.width);
+      if(right - left > 0.5) overlaps.push([left, right]);
+    }
+    if(!overlaps.length) return whiteKey.x + whiteKey.width / 2;
+    overlaps.sort((a,b)=>a[0]-b[0]);
+    const segments = [];
+    let cursor = keyLeft;
+    for(const [left, right] of overlaps){
+      if(left > cursor) segments.push([cursor, left]);
+      if(right > cursor) cursor = right;
+    }
+    if(cursor < keyRight) segments.push([cursor, keyRight]);
+    if(!segments.length) return whiteKey.x + whiteKey.width / 2;
+    let best = segments[0];
+    for(const seg of segments){
+      if((seg[1]-seg[0]) > (best[1]-best[0])) best = seg;
+    }
+    return (best[0] + best[1]) / 2;
+  };
+
+  const drawKeyLabels = (key, labels, fallbackColor)=>{
     if(!labels.length) return;
-    const textSize = Math.max(8 * devicePixelRatio, fontPx * 0.6);
+    const textSize = Math.max(8 * devicePixelRatio, blackWidth * 0.486);
     const lineHeightText = textSize + 6 * devicePixelRatio;
     const lineHeightDisk = Math.max(blackWidth + 6 * devicePixelRatio, lineHeightText);
     const strokeColor = key.isBlack ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
     let yCursor = key.y + key.height - 8 * devicePixelRatio;
+    const movableTopY = key.y + 6 * devicePixelRatio;
+    const distanceY = key.y + blackHeight - textSize - 2 * devicePixelRatio;
+    const miniDiskY = key.y + blackHeight / 2;
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
       const x = key.x + key.width/2;
+      const centerX = (!key.isBlack)
+        ? movableLabelXForWhiteKey(key)
+        : x;
+      const textX = (label.kind === 'movable' || label.kind === 'distance')
+        ? centerX
+        : x;
       if(label.kind === 'fifth'){
-        drawMiniDisk(x, yCursor + blackWidth * 0.45 - blackWidth / 2, label);
-        yCursor -= lineHeightDisk;
+        const diskX = !key.isBlack ? centerX : x;
+        drawMiniDisk(diskX, miniDiskY, label);
       }else if(label.text){
+        const textY = (label.kind === 'movable')
+          ? movableTopY
+          : ((label.kind === 'distance') ? distanceY : yCursor);
         ctx.font = `${textSize}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillStyle = 'rgba(0,0,0,0.95)';
         ctx.lineWidth = Math.max(1, Math.round(textSize * 0.2));
         ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.strokeText(label.text, x, yCursor);
-        ctx.fillText(label.text, x, yCursor);
-        yCursor -= lineHeightText;
+        ctx.strokeText(label.text, textX, textY);
+        ctx.fillText(label.text, textX, textY);
+        if(label.kind !== 'movable' && label.kind !== 'distance') yCursor -= lineHeightText;
       }
     }
   };
 
-  const whiteFont = Math.max(9 * devicePixelRatio, keyboardHeight / 6);
-  const blackFont = Math.max(8 * devicePixelRatio, keyboardHeight / 8);
+  const drawBlackKeyOverlay = ()=>{
+    for(const key of keys){
+      if(!key.isBlack) continue;
+      ctx.fillStyle = 'rgba(245,245,245,0.95)';
+      ctx.fillRect(key.x, key.y, key.width, key.height);
+      drawKeyBand(key);
+      ctx.strokeStyle = 'rgba(15,15,15,0.95)';
+      ctx.strokeRect(key.x, key.y, key.width, key.height);
+    }
+  };
+
+  for(const key of keys){
+    if(key.isBlack) continue;
+    ctx.strokeStyle = 'rgba(20,20,20,0.95)';
+    ctx.strokeRect(key.x, key.y, key.width, key.height);
+  }
+
+  const whiteMaskPad = Math.max(1, ctx.lineWidth);
+  ctx.fillStyle = 'rgba(245,245,245,0.95)';
+  for(const key of keys){
+    if(!key.isBlack) continue;
+    ctx.fillRect(
+      key.x - whiteMaskPad,
+      key.y - whiteMaskPad,
+      key.width + whiteMaskPad * 2,
+      key.height + whiteMaskPad
+    );
+  }
+  drawBlackKeyOverlay();
+
   for(const key of keys){
     const labels = buildLabels(key.midi);
     if(!labels.length) continue;
     if(key.isBlack){
-      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)', blackFont);
+      drawKeyLabels(key, labels, 'rgba(255,255,255,0.9)');
     }else{
-      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)', whiteFont);
+      drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
     }
   }
   ctx.restore();
@@ -2289,6 +2386,7 @@ function draw(){
   for(const midi of activeNotes.keys()){
     if(baseMidi == null || midi < baseMidi) baseMidi = midi;
   }
+  if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -2299,7 +2397,7 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter);
+  drawKeyboard(displayMinFreq, displayMaxFreq, (baseMidi != null ? baseMidi : lastKeyboardBaseMidi), drawRot, halfCenter);
 
   requestAnimationFrame(draw);
 }
