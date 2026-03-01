@@ -1742,7 +1742,7 @@ function movableDoStepForMidi(midi, drawRot, halfCenter){
   return step;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter){
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, highestMidi=null){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
@@ -2056,6 +2056,24 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     }else{
       drawKeyLabels(key, labels, 'rgba(10,10,10,0.9)');
     }
+  }
+
+  const highlightedKey = (highestMidi != null)
+    ? keys.find((key)=> key.midi === highestMidi)
+    : null;
+  if(highlightedKey){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,160,0,0.98)';
+    ctx.lineWidth = Math.max(2, 3 * devicePixelRatio);
+    ctx.shadowColor = 'rgba(255,200,0,0.85)';
+    ctx.shadowBlur = 12 * devicePixelRatio;
+    ctx.strokeRect(
+      highlightedKey.x - ctx.lineWidth / 2,
+      highlightedKey.y - ctx.lineWidth / 2,
+      highlightedKey.width + ctx.lineWidth,
+      highlightedKey.height + ctx.lineWidth
+    );
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -2383,8 +2401,10 @@ function draw(){
   const filePts = mapToPoints(fileNotes);
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
   let baseMidi = null;
+  let highestMidi = null;
   for(const midi of activeNotes.keys()){
     if(baseMidi == null || midi < baseMidi) baseMidi = midi;
+    if(highestMidi == null || midi > highestMidi) highestMidi = midi;
   }
   if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
 
@@ -2397,7 +2417,14 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawKeyboard(displayMinFreq, displayMaxFreq, (baseMidi != null ? baseMidi : lastKeyboardBaseMidi), drawRot, halfCenter);
+  drawKeyboard(
+    displayMinFreq,
+    displayMaxFreq,
+    (baseMidi != null ? baseMidi : lastKeyboardBaseMidi),
+    drawRot,
+    halfCenter,
+    highestMidi
+  );
 
   requestAnimationFrame(draw);
 }
