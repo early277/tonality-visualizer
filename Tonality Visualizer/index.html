@@ -932,7 +932,10 @@ function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
 function keyboardMetrics(){
   if(!keyboardEnabled) return {active:false, height:0, padding:0, reserved:0};
   const padding = 16 * devicePixelRatio;
-  const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const halfWidth = cv.width / 2;
+  const widthLimitedRadius = Math.max(1, halfWidth - MARGIN);
+  const heightLimitedRadius = Math.max(1, (cv.height - padding * 2 - MARGIN * 2) / 3);
+  const height = Math.min(widthLimitedRadius, heightLimitedRadius);
   return {active:true, height, padding, reserved: height + padding * 2};
 }
 function canvasCenter(){
