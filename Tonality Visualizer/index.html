@@ -1766,13 +1766,15 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const {cx} = canvasCenter();
   const {rMax} = ringParams();
   const diskDiameter = (rMax + 8) * 2;
-  const width = Math.min(cv.width - padding * 2, diskDiameter);
+  const width = Math.min(cv.width - padding * 2, diskDiameter * 2);
   const x = cx - width / 2;
   if(width <= 0 || keyboardHeight <= 0) return;
 
   const whiteWidth = width / whiteKeys.length;
   const blackWidth = whiteWidth * 0.54;
   const blackHeight = keyboardHeight * 0.6;
+  const whiteLowerHeight = Math.max(0, (keyboardHeight - blackHeight) * 0.5);
+  const whiteHeight = blackHeight + whiteLowerHeight;
 
   const BLACK_CENTER_OFFSET_RATIO = {
     1: -0.12766, // C#
@@ -1788,7 +1790,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       key.x = x + whiteIndex * whiteWidth;
       key.y = y;
       key.width = whiteWidth;
-      key.height = keyboardHeight;
+      key.height = whiteHeight;
       key.whiteIndex = whiteIndex;
       whiteIndex++;
     }else{
