@@ -932,7 +932,14 @@ function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
 function keyboardMetrics(){
   if(!keyboardEnabled) return {active:false, height:0, padding:0, reserved:0};
   const padding = 16 * devicePixelRatio;
-  const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const halfWidth = cv.width / 2;
+  const radiusByWidth = Math.max(1, halfWidth - MARGIN);
+  const minDiskRadius = radiusByWidth * 0.85;
+  const maxHeightForDisk = cv.height - (minDiskRadius + MARGIN) * 2 - padding * 2;
+  const minHeight = 72 * devicePixelRatio;
+  const preferredHeight = Math.min(180 * devicePixelRatio, cv.height * 0.28);
+  const clampedMax = Math.max(0, maxHeightForDisk);
+  const height = Math.max(0, Math.min(clampedMax, Math.max(minHeight, preferredHeight)));
   return {active:true, height, padding, reserved: height + padding * 2};
 }
 function canvasCenter(){
@@ -1766,7 +1773,10 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const {cx} = canvasCenter();
   const {rMax} = ringParams();
   const diskDiameter = (rMax + 8) * 2;
-  const width = Math.min(cv.width - padding * 2, diskDiameter);
+  const maxWidth = Math.min(cv.width - padding * 2, diskDiameter * 2);
+  const maxWhiteWidth = keyboardHeight / 2.2;
+  const aspectLimitedWidth = whiteKeys.length * maxWhiteWidth;
+  const width = Math.min(maxWidth, aspectLimitedWidth);
   const x = cx - width / 2;
   if(width <= 0 || keyboardHeight <= 0) return;
 
