@@ -930,42 +930,51 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
 function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
 function keyboardMetrics(){
-  if(!keyboardEnabled) return {active:false, height:0, padding:0, reserved:0};
+  if(!keyboardEnabled) return {active:false, mode:'none', height:0, padding:0, reservedBottom:0, reservedRight:0, panelWidth:0, panelGap:0};
   const padding = 16 * devicePixelRatio;
-  const halfWidth = cv.width / 2;
-  const radiusByWidth = Math.max(1, halfWidth - MARGIN);
-  const minDiskRadius = radiusByWidth * 0.85;
-  const maxHeightForDisk = cv.height - (minDiskRadius + MARGIN) * 2 - padding * 2;
-  const minHeight = 72 * devicePixelRatio;
-  const preferredHeight = Math.min(180 * devicePixelRatio, cv.height * 0.28);
-  const clampedMax = Math.max(0, maxHeightForDisk);
-  const height = Math.max(0, Math.min(clampedMax, Math.max(minHeight, preferredHeight)));
-  return {active:true, height, padding, reserved: height + padding * 2};
+  const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const landscape = cv.width > cv.height * 1.25;
+  if(landscape){
+    const panelGap = 24 * devicePixelRatio;
+    const desiredPanelWidth = cv.width * 0.36;
+    const minDiskAreaWidth = cv.height * 0.9;
+    const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
+    const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
+    if(panelWidth >= 180 * devicePixelRatio){
+      return {active:true, mode:'side', height, padding, reservedBottom:0, reservedRight:panelWidth + panelGap, panelWidth, panelGap};
+    }
+  }
+  return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2, reservedRight:0, panelWidth:0, panelGap:0};
 }
 function canvasCenter(){
   const keyboard = keyboardMetrics();
-  const availableHeight = Math.max(1, cv.height - keyboard.reserved);
+  const availableWidth = Math.max(1, cv.width - keyboard.reservedRight);
+  const availableHeight = Math.max(1, cv.height - keyboard.reservedBottom);
   return {
-    cx: cv.width / 2,
+    cx: availableWidth / 2,
     cy: availableHeight / 2,
-    reserved: keyboard.reserved
+    reserved: keyboard.reservedBottom,
+    reservedRight: keyboard.reservedRight
   };
 }
 function canvasCenterCss(){
   const rect = cv.getBoundingClientRect();
   const keyboard = keyboardMetrics();
-  const reservedCss = keyboard.reserved / devicePixelRatio;
-  const availableHeightCss = Math.max(1, rect.height - reservedCss);
+  const reservedBottomCss = keyboard.reservedBottom / devicePixelRatio;
+  const reservedRightCss = keyboard.reservedRight / devicePixelRatio;
+  const availableWidthCss = Math.max(1, rect.width - reservedRightCss);
+  const availableHeightCss = Math.max(1, rect.height - reservedBottomCss);
   return {
-    cx: rect.left + rect.width / 2,
+    cx: rect.left + availableWidthCss / 2,
     cy: rect.top + availableHeightCss / 2
   };
 }
 function ringParams(){
   const keyboard = keyboardMetrics();
-  const availableHeight = Math.max(1, cv.height - keyboard.reserved);
+  const availableWidth = Math.max(1, cv.width - keyboard.reservedRight);
+  const availableHeight = Math.max(1, cv.height - keyboard.reservedBottom);
   const halfHeight = availableHeight / 2;
-  const halfWidth = cv.width / 2;
+  const halfWidth = availableWidth / 2;
   const half = Math.max(1, Math.min(halfWidth, halfHeight));
   const safeHalf = Math.max(1, half - 4);
   let rMax = half - MARGIN;
@@ -1769,16 +1778,20 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   const padding = keyboard.padding;
   const keyboardHeight = keyboard.height;
-  const y = cv.height - keyboardHeight - padding;
   const {cx} = canvasCenter();
   const {rMax} = ringParams();
   const diskDiameter = (rMax + 8) * 2;
-  const maxWidth = Math.min(cv.width - padding * 2, diskDiameter * 2);
-  const maxWhiteWidth = keyboardHeight / 2.2;
-  const aspectLimitedWidth = whiteKeys.length * maxWhiteWidth;
-  const width = Math.min(maxWidth, aspectLimitedWidth);
-  const x = cx - width / 2;
+  const areaWidth = (keyboard.mode === 'side')
+    ? Math.max(1, keyboard.panelWidth - padding * 2)
+    : Math.max(1, cv.width - padding * 2);
+  const width = Math.min(areaWidth, diskDiameter * 2);
   if(width <= 0 || keyboardHeight <= 0) return;
+  const x = (keyboard.mode === 'side')
+    ? (cv.width - keyboard.panelWidth) + (keyboard.panelWidth - width) / 2
+    : cx - width / 2;
+  const y = (keyboard.mode === 'side')
+    ? (cv.height - keyboardHeight) / 2
+    : cv.height - keyboardHeight - padding;
 
   const whiteWidth = width / whiteKeys.length;
   const blackWidth = whiteWidth * 0.54;
