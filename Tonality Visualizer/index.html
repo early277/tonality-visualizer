@@ -2101,11 +2101,13 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       const targetPc = ((targetMidi % 12) + 12) % 12;
       candidates = keys.filter((key)=> key.pc === targetPc);
     }
-    if(role === 'lowest' && highestMidi != null){
-      candidates = candidates.filter((key)=> key.midi <= highestMidi);
+    const lowestOctaveGuardTop = startMidi + 12;
+    const highestOctaveGuardBottom = endMidi - 12;
+    if(role === 'highest'){
+      candidates = candidates.filter((key)=> key.midi >= lowestOctaveGuardTop);
     }
-    if(role === 'highest' && lowestMidi != null){
-      candidates = candidates.filter((key)=> key.midi >= lowestMidi);
+    if(role === 'lowest'){
+      candidates = candidates.filter((key)=> key.midi <= highestOctaveGuardBottom);
     }
     return candidates;
   };
