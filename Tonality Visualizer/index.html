@@ -640,6 +640,15 @@ document.getElementById('lang').addEventListener('change', e=>{
   applyI18N(); saveSettings();
 });
 
+function collectKeyboardSettings(){
+  return {
+    enabled: keyboardToggle.checked,
+    movableDo: keyboardMovableToggle.checked,
+    distance: keyboardDistanceToggle.checked,
+    fifthAngle: keyboardFifthToggle.checked
+  };
+}
+
 // UIの状態をオブジェクトにまとめて保存用に返す
 function collectSettingsFromUI(){
   // 保存対象のプロパティを列挙
@@ -654,6 +663,7 @@ function collectSettingsFromUI(){
     noteDotSize: noteDotSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
     labelAlpha: labelAlphaSlider.value,
+    keyboard: collectKeyboardSettings(),
     keyboardEnabled: keyboardToggle.checked,
     keyboardMovableDo: keyboardMovableToggle.checked,
     keyboardDistance: keyboardDistanceToggle.checked,
@@ -756,6 +766,13 @@ function applySettings(settings, {force = false} = {}){
   if(has('labelAlpha')){
     labelAlphaSlider.value = s.labelAlpha;
     labelAlphaSlider.oninput();
+  }
+  const keyboardPreset = (s.keyboard && typeof s.keyboard === 'object') ? s.keyboard : null;
+  if(keyboardPreset){
+    if('enabled' in keyboardPreset) keyboardToggle.checked = !!keyboardPreset.enabled;
+    if('movableDo' in keyboardPreset) keyboardMovableToggle.checked = !!keyboardPreset.movableDo;
+    if('distance' in keyboardPreset) keyboardDistanceToggle.checked = !!keyboardPreset.distance;
+    if('fifthAngle' in keyboardPreset) keyboardFifthToggle.checked = !!keyboardPreset.fifthAngle;
   }
   if(has('keyboardEnabled')){
     keyboardToggle.checked = !!s.keyboardEnabled;
@@ -2075,13 +2092,22 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   }
   drawBlackKeyOverlay();
 
-  const highlightKeysForMidi = (targetMidi)=>{
+  const highlightKeysForMidi = (targetMidi, role)=>{
     if(targetMidi == null) return [];
+    let candidates;
     if(targetMidi >= startMidi && targetMidi <= endMidi){
-      return keys.filter((key)=> key.midi === targetMidi);
+      candidates = keys.filter((key)=> key.midi === targetMidi);
+    }else{
+      const targetPc = ((targetMidi % 12) + 12) % 12;
+      candidates = keys.filter((key)=> key.pc === targetPc);
     }
-    const targetPc = ((targetMidi % 12) + 12) % 12;
-    return keys.filter((key)=> key.pc === targetPc);
+    if(role === 'lowest' && highestMidi != null){
+      candidates = candidates.filter((key)=> key.midi <= highestMidi);
+    }
+    if(role === 'highest' && lowestMidi != null){
+      candidates = candidates.filter((key)=> key.midi >= lowestMidi);
+    }
+    return candidates;
   };
 
   const drawHighlight = (targetKeys, strokeStyle, shadowColor)=>{
@@ -2103,12 +2129,12 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   };
 
   drawHighlight(
-    highlightKeysForMidi(lowestMidi),
+    highlightKeysForMidi(lowestMidi, 'lowest'),
     'rgba(0,200,255,0.98)',
     'rgba(100,220,255,0.85)'
   );
   drawHighlight(
-    highlightKeysForMidi(highestMidi),
+    highlightKeysForMidi(highestMidi, 'highest'),
     'rgba(255,160,0,0.98)',
     'rgba(255,200,0,0.85)'
   );
