@@ -1784,7 +1784,9 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const areaWidth = (keyboard.mode === 'side')
     ? Math.max(1, keyboard.panelWidth - padding * 2)
     : Math.max(1, cv.width - padding * 2);
-  const width = Math.min(areaWidth, diskDiameter * 2);
+  const maxWhiteWidth = keyboardHeight * 0.42;
+  const aspectWidthCap = whiteKeys.length * maxWhiteWidth;
+  const width = Math.min(areaWidth, diskDiameter * 2, aspectWidthCap);
   if(width <= 0 || keyboardHeight <= 0) return;
   const x = (keyboard.mode === 'side')
     ? (cv.width - keyboard.panelWidth) + (keyboard.panelWidth - width) / 2
