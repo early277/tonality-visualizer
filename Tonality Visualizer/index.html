@@ -935,9 +935,11 @@ function keyboardMetrics(){
   const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
   const landscape = cv.width > cv.height * 1.25;
   if(landscape){
-    const panelGap = 24 * devicePixelRatio;
-    const desiredPanelWidth = cv.width * 0.36;
-    const minDiskAreaWidth = cv.height * 0.9;
+    const panelGap = 12 * devicePixelRatio;
+    const targetDiskAreaWidth = cv.height * 1.02;
+    const panelFromTarget = cv.width - targetDiskAreaWidth - panelGap;
+    const desiredPanelWidth = Math.max(cv.width * 0.30, panelFromTarget);
+    const minDiskAreaWidth = cv.height * 0.82;
     const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
     const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
     if(panelWidth >= 180 * devicePixelRatio){
