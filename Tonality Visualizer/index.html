@@ -243,6 +243,8 @@
   <span id="midiLast">最後: –</span>
   <span id="fileInfo">file: –</span>
   <span id="trainerStat">step: –</span>
+  <span id="activeRootPc">Root: NONE</span>
+  <span id="activeUniquePcs">Unique Pitch Classes: NONE</span>
 </div>
 
 <canvas id="cv"></canvas>
@@ -334,6 +336,8 @@ const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const fileInfo = document.getElementById('fileInfo');
 const trainerStat = document.getElementById('trainerStat');
+const activeRootPc = document.getElementById('activeRootPc');
+const activeUniquePcs = document.getElementById('activeUniquePcs');
 const transposeSlider = document.getElementById('transpose');
 const transposeVal = document.getElementById('transposeVal');
 const seekSlider = document.getElementById('seek');
@@ -411,7 +415,8 @@ const I18N = {
     presetSaveFailed:"save failed",
     uiHide:"hide UI", uiShow:"show UI",
     octaveSuffix:"oct", transposeSuffix:"st",
-    filePlayback:"file playback", trainerStepPrefix:"step:"
+    filePlayback:"file playback", trainerStepPrefix:"step:",
+    rootPitchClass:"Root", uniquePitchClasses:"Unique Pitch Classes", nonRootPitchClasses:"Non-root", none:"NONE"
     , diskLock:"lock disk", diskUnlock:"unlock disk"
   },
   "pt-BR":{
@@ -439,7 +444,8 @@ const I18N = {
     presetSaveFailed:"falha ao salvar",
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oit", transposeSuffix:"semitons",
-    filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:"
+    filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:",
+    rootPitchClass:"Tônica", uniquePitchClasses:"Classes de altura únicas", nonRootPitchClasses:"Sem tônica", none:"NONE"
     , diskLock:"travar disco", diskUnlock:"destravar disco"
   },
   "es-MX":{
@@ -468,6 +474,7 @@ const I18N = {
     uiHide:"ocultar UI", uiShow:"mostrar UI",
     octaveSuffix:"oct.", transposeSuffix:"semitonos",
     filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:",
+    rootPitchClass:"Raíz", uniquePitchClasses:"Clases de altura únicas", nonRootPitchClasses:"Sin raíz", none:"NONE",
     diskLock:"bloquear disco", diskUnlock:"desbloquear disco"
   },
   ja:{
@@ -496,6 +503,7 @@ const I18N = {
     uiHide:"UI隠す", uiShow:"UI表示",
     octaveSuffix:"オクターブ", transposeSuffix:"半音",
     filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:",
+    rootPitchClass:"Root", uniquePitchClasses:"Unique Pitch Classes", nonRootPitchClasses:"Root以外", none:"NONE",
     diskLock:"円盤ロック", diskUnlock:"ロック解除"
   },
   ko:{
@@ -524,6 +532,7 @@ const I18N = {
     uiHide:"UI 숨기기", uiShow:"UI 표시",
     octaveSuffix:"옥타브", transposeSuffix:"반음",
     filePlayback:"파일 재생", trainerStepPrefix:"스텝:",
+    rootPitchClass:"Root", uniquePitchClasses:"Unique Pitch Classes", nonRootPitchClasses:"Root 외", none:"NONE",
     diskLock:"디스크 잠금", diskUnlock:"잠금 해제"
   },
   zh:{
@@ -552,6 +561,7 @@ const I18N = {
     uiHide:"隐藏界面", uiShow:"显示界面",
     octaveSuffix:"八度", transposeSuffix:"半音",
     filePlayback:"文件播放", trainerStepPrefix:"步骤:",
+    rootPitchClass:"Root", uniquePitchClasses:"Unique Pitch Classes", nonRootPitchClasses:"Root以外", none:"NONE",
     diskLock:"锁定圆盘", diskUnlock:"解除锁定"
   }
 };
@@ -579,6 +589,7 @@ let lang = navigatorLang.startsWith('ja') ? 'ja'
   : navigatorLang.startsWith('es') ? 'es-MX'
   : 'en';
 let midiTranspose = 0;
+let latestActiveNotesForDisplay = new Map();
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
 function setLabelText(labelEl, key){
@@ -632,7 +643,26 @@ function applyI18N(){
   info.textContent = t('idle');
   midiStat.textContent = t('midiNotInit');
   midiLast.textContent = t('last') + ' –';
+  updateActivePitchClassDisplay(latestActiveNotesForDisplay);
   updateFileOpUI();
+}
+
+function updateActivePitchClassDisplay(activeNotes){
+  const noteKeys = Array.from(activeNotes.keys()).sort((a,b)=>a-b);
+  if(!noteKeys.length){
+    activeRootPc.textContent = `${t('rootPitchClass')}: ${t('none')}`;
+    activeUniquePcs.textContent = `${t('uniquePitchClasses')}: ${t('none')}`;
+    return;
+  }
+  const rootMidi = noteKeys[0];
+  const rootPc = ((rootMidi % 12) + 12) % 12;
+  const uniquePitchClasses = [...new Set(noteKeys.map((midi)=>((midi % 12) + 12) % 12))];
+  const nonRootPitchClasses = uniquePitchClasses.filter((pc)=> pc !== rootPc);
+  const pcToLabel = (pc)=> LABEL_ENH[pc] || String(pc);
+  activeRootPc.textContent = `${t('rootPitchClass')}: ${pcToLabel(rootPc)}`;
+  const uniqueText = uniquePitchClasses.map(pcToLabel).join(', ');
+  const nonRootText = nonRootPitchClasses.length ? nonRootPitchClasses.map(pcToLabel).join(', ') : t('none');
+  activeUniquePcs.textContent = `${t('uniquePitchClasses')}: ${uniqueText} (${t('nonRootPitchClasses')}: ${nonRootText})`;
 }
 // 言語選択ドロップダウンの変更ハンドラ
 document.getElementById('lang').addEventListener('change', e=>{
@@ -2479,6 +2509,8 @@ function draw(){
   const livePts = mapToPoints(mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes));
   const filePts = mapToPoints(fileNotes);
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
+  latestActiveNotesForDisplay = activeNotes;
+  updateActivePitchClassDisplay(activeNotes);
   let baseMidi = null;
   let lowestMidi = null;
   let highestMidi = null;
