@@ -273,6 +273,9 @@ const ANG0 = Math.PI/2;                          // Cを上（0°相当）
 const GRAV_ABS = ANG0;                           // 重力方向=0°固定
 const EXCLUDE_PAD_RAD = 0.1 * Math.PI / 180;       // 無効領域+0.1°
 const LABEL_ENH = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"};
+const PITCH_CLASS_LABELS = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const DEGREE_BY_SEMITONE = ['1','-2','2','-3','3','4','+4','5','-6','6','-7','7'];
+const ROMAN_BY_DEGREE = {'1':'I','-2':'bII','2':'II','-3':'bIII','3':'III','4':'IV','+4':'#IV','5':'V','-6':'bVI','6':'VI','-7':'bVII','7':'VII'};
 // 完全5度圏の配置を事前計算しておく
 const FIFTH_ORDER_PCS = (()=>{ let a=[],pc=0; for(let k=0;k<12;k++){ a.push(pc); pc=(pc+7)%12; } return a; })();
 const FIFTH_INDEX = (()=>{ const m=Array(12).fill(0); FIFTH_ORDER_PCS.forEach((pc,i)=>m[pc]=i); return m; })();
@@ -2329,6 +2332,77 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
   ctx.font=pf; ctx.globalAlpha=pa; ctx.fillStyle=ps; ctx.textAlign=pal; ctx.textBaseline=pb;
 }
 
+function degreeForPitchClass(pc, drawRot, halfCenter){
+  const step = movableDoStepForMidi(pc, drawRot, halfCenter);
+  return MOVABLE_DO_SEQUENCE[step];
+}
+function noteCompositionSummary(activeNotes, drawRot, halfCenter){
+  if(!activeNotes || activeNotes.size === 0) return null;
+  const sortedMidis = Array.from(activeNotes.keys()).sort((a,b)=>a-b);
+  if(!sortedMidis.length) return null;
+  const rootMidi = sortedMidis[0];
+  const rootPc = ((rootMidi % 12) + 12) % 12;
+  const uniquePcs = [];
+  const seen = new Set();
+  for(const midi of sortedMidis){
+    const pc = ((midi % 12) + 12) % 12;
+    if(seen.has(pc)) continue;
+    seen.add(pc);
+    uniquePcs.push(pc);
+  }
+  const absolute = uniquePcs.map((pc)=> PITCH_CLASS_LABELS[pc]);
+  const intervals = uniquePcs.map((pc)=> ((pc - rootPc) % 12 + 12) % 12);
+  const relative = intervals.map((i)=> DEGREE_BY_SEMITONE[i]);
+  const rootRoman = ROMAN_BY_DEGREE[degreeForPitchClass(rootPc, drawRot, halfCenter)] || 'I';
+  return {
+    absoluteLine: absolute.join(' '),
+    relativeLine: [rootRoman, ...relative.slice(1)].join(' ')
+  };
+}
+function drawCompositionOverlay(summary){
+  if(!summary) return;
+  const keyboard = keyboardMetrics();
+  const pad = 14 * devicePixelRatio;
+  const lineGap = 6 * devicePixelRatio;
+  const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
+  ctx.save();
+  ctx.font = `${textSize}px system-ui`;
+  const line1 = summary.absoluteLine;
+  const line2 = summary.relativeLine;
+  const w1 = ctx.measureText(line1).width;
+  const w2 = ctx.measureText(line2).width;
+  const boxW = Math.max(w1, w2) + pad * 2;
+  const boxH = textSize * 2 + lineGap + pad * 2;
+  let x = cv.width - boxW - 12 * devicePixelRatio;
+  let y = 12 * devicePixelRatio;
+  if(keyboard.active){
+    if(keyboard.mode === 'side'){
+      x = cv.width - keyboard.panelWidth + 12 * devicePixelRatio;
+      y = 12 * devicePixelRatio;
+    }else{
+      const keyTop = cv.height - keyboard.height - keyboard.padding;
+      y = Math.max(12 * devicePixelRatio, keyTop - boxH - 10 * devicePixelRatio);
+      x = (cv.width - boxW) / 2;
+    }
+  }else{
+    const {cx, cy} = canvasCenter();
+    const {rMax} = ringParams();
+    x = Math.min(cv.width - boxW - 12 * devicePixelRatio, cx + rMax * 0.35);
+    y = Math.max(12 * devicePixelRatio, cy - rMax - boxH * 0.2);
+  }
+  ctx.fillStyle = 'rgba(10,14,20,0.76)';
+  ctx.fillRect(x, y, boxW, boxH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = Math.max(1, 1.2 * devicePixelRatio);
+  ctx.strokeRect(x, y, boxW, boxH);
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(line1, x + pad, y + pad);
+  ctx.fillText(line2, x + pad, y + pad + textSize + lineGap);
+  ctx.restore();
+}
+
 /* ===== Main draw loop ===== */
 let prevT=null;
 // draw はキャンバス全体のメイン描画ループ。
@@ -2488,6 +2562,7 @@ function draw(){
     if(highestMidi == null || midi > highestMidi) highestMidi = midi;
   }
   if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
+  const compositionSummary = noteCompositionSummary(activeNotes, drawRot, halfCenter);
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
@@ -2497,6 +2572,8 @@ function draw(){
     const tn = trainer.currentNotes();
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
+
+  drawCompositionOverlay(compositionSummary);
 
   drawKeyboard(
     displayMinFreq,
