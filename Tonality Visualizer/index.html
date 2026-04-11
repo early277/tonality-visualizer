@@ -2356,7 +2356,7 @@ function degreeForPitchClass(pc, drawRot, halfCenter){
   const step = movableDoStepForMidi(pc, drawRot, halfCenter);
   return MOVABLE_DO_SEQUENCE[step];
 }
-function k2Analysis(activeNotes, drawRot, halfCenter, anchorMode){
+function k2Analysis(activeNotes, drawRot, halfCenter){
   if(!activeNotes || activeNotes.size === 0) return null;
   const pcs = new Set();
   for(const midi of activeNotes.keys()){
@@ -2373,8 +2373,10 @@ function k2Analysis(activeNotes, drawRot, halfCenter, anchorMode){
     .sort((a,b)=>K2_OUTSIDE_BITS.indexOf(a)-K2_OUTSIDE_BITS.indexOf(b));
   const mask = uniqueOutside.reduce((acc, deg)=> acc | (1 << K2_OUTSIDE_BITS.indexOf(deg)), 0);
   const rawDeltaDeg = K2_DELTA_BY_MASK[mask] ?? 0;
-  const anchorCorrected = (anchorMode === 'disk');
-  const appliedDeltaDeg = anchorCorrected ? -rawDeltaDeg : rawDeltaDeg;
+  // K2 の 30°刻み補正は、K2基準角 (GRAV_ABS + diskAngle) と同じ向きで適用する。
+  // anchor=disk 時だけ符号を反転すると、回転方向が逆転して見えるため反転は行わない。
+  const anchorCorrected = false;
+  const appliedDeltaDeg = rawDeltaDeg;
   const k1StartDeg = 90;
   const k1EndDeg = 270;
   const k2StartDeg = k1StartDeg + appliedDeltaDeg;
@@ -2411,7 +2413,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const intervals = uniquePcs.map((pc)=> ((pc - rootPc) % 12 + 12) % 12);
   const relative = intervals.map((i)=> DEGREE_BY_SEMITONE[i]);
   const rootRoman = ROMAN_BY_DEGREE[degreeForPitchClass(rootPc, drawRot, halfCenter)] || 'I';
-  const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
+  const k2 = k2Analysis(activeNotes, drawRot, halfCenter);
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
     ? `K2: ${Math.round(k2.k2StartDeg)}°→${Math.round(k2.k2EndDeg)}°`
@@ -2549,7 +2551,7 @@ function draw(){
   const drawRot = (anchor==='water') ? diskAngle : 0;
   const halfCenter = (anchor==='water') ? GRAV_ABS : (GRAV_ABS + diskAngle);
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
-  const k2Info = k2Analysis(activeNotes, drawRot, halfCenter, anchor);
+  const k2Info = k2Analysis(activeNotes, drawRot, halfCenter);
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
