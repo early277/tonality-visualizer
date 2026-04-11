@@ -2613,7 +2613,7 @@ function draw(){
   if(k2Info){
     // K2 は 30°刻みの判定Δに加えて、円盤回転そのものにも追従させる
     // （anchor設定に関係なく diskAngle を常に反映）
-    const k2BaseCenter = GRAV_ABS + diskAngle;
+    const k2BaseCenter = GRAV_ABS - diskAngle;
     const k2Center = k2BaseCenter + (k2Info.appliedDeltaDeg * Math.PI / 180);
     ctx.save(); ctx.translate(cx,cy);
     const k2Path = halfPlanePath(k2Center, rMax+6);
