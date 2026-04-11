@@ -2583,11 +2583,16 @@ function draw(){
   ctx.lineWidth = 1;
 
   // 水面半円＋移動ド数字
+  const halfPlanePath = (centerAngle, radius)=>{
+    const p = new Path2D();
+    p.moveTo(0,0);
+    p.arc(0,0, radius, centerAngle - Math.PI/2, centerAngle + Math.PI/2, false);
+    p.closePath();
+    return p;
+  };
   ctx.save(); ctx.translate(cx,cy);
-  ctx.beginPath(); ctx.moveTo(0,0);
-  ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2, false);
-  ctx.closePath();
-  ctx.fillStyle=`rgba(0,128,255,${waterAlpha})`; ctx.fill();
+  const k1Path = halfPlanePath(halfCenter, rMax+6);
+  ctx.fillStyle=`rgba(0,128,255,${waterAlpha})`; ctx.fill(k1Path);
   ctx.beginPath();
   ctx.arc(0,0, rMax+6, halfCenter - Math.PI/2, halfCenter + Math.PI/2);
   ctx.strokeStyle=`rgba(0,128,255,${waterAlpha})`; ctx.lineWidth=2; ctx.stroke();
@@ -2596,11 +2601,15 @@ function draw(){
   if(k2Info){
     const k2Center = halfCenter + (k2Info.appliedDeltaDeg * Math.PI / 180);
     ctx.save(); ctx.translate(cx,cy);
-    ctx.beginPath(); ctx.moveTo(0,0);
-    ctx.arc(0,0, rMax+6, k2Center - Math.PI/2, k2Center + Math.PI/2, false);
-    ctx.closePath();
+    const k2Path = halfPlanePath(k2Center, rMax+6);
+    // K2（赤）は K1（青）との重なりを除外して描画する
+    ctx.clip(k2Path);
+    const outsideK1 = new Path2D();
+    outsideK1.rect(-cv.width, -cv.height, cv.width*2, cv.height*2);
+    outsideK1.addPath(k1Path);
+    ctx.clip(outsideK1, 'evenodd');
     ctx.fillStyle='rgba(255,0,0,0.22)';
-    ctx.fill();
+    ctx.fill(k2Path);
     ctx.beginPath();
     ctx.arc(0,0, rMax+6, k2Center - Math.PI/2, k2Center + Math.PI/2);
     ctx.strokeStyle='rgba(255,80,80,0.55)';
