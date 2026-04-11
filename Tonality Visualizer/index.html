@@ -2611,7 +2611,7 @@ function draw(){
   ctx.restore();
 
   if(k2Info){
-    const k2Center = k2BaseCenter + (k2Info.appliedDeltaDeg * Math.PI / 180);
+    const k2Center =(k2Info.appliedDeltaDeg * Math.PI / 180);
     ctx.save(); ctx.translate(cx,cy);
     const k2Path = halfPlanePath(k2Center, rMax+6);
     // K2（赤）は K1（青）との重なりを除外して描画する
