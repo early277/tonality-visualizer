@@ -2356,6 +2356,34 @@ function degreeForPitchClass(pc, drawRot, halfCenter){
   const step = movableDoStepForMidi(pc, drawRot, halfCenter);
   return MOVABLE_DO_SEQUENCE[step];
 }
+function normalizeAngleDeg(value){
+  let out = value % 360;
+  if(out < 0) out += 360;
+  return out;
+}
+function kOuterAnglesInK(k2, degrees){
+  if(!k2 || !degrees || !degrees.length) return [];
+  return degrees
+    .map((deg)=>{
+      const outer = K2_OUTSIDE_ANGLE_DEG[deg];
+      if(outer == null) return null;
+      return {degree: deg, angle: normalizeAngleDeg(outer - k2.k2StartDeg)};
+    })
+    .filter(Boolean);
+}
+function nearestOuterAnglesFromRoot(rootAngle, outers){
+  if(!Number.isFinite(rootAngle) || !outers || !outers.length) return null;
+  let ccw = null;
+  let cw = null;
+  for(const outer of outers){
+    if(Math.abs(outer.angle - rootAngle) < 1e-6) continue;
+    const ccwDelta = normalizeAngleDeg(outer.angle - rootAngle);
+    const cwDelta = normalizeAngleDeg(rootAngle - outer.angle);
+    if(ccwDelta > 0 && (!ccw || ccwDelta < ccw.delta)) ccw = {...outer, delta: ccwDelta};
+    if(cwDelta > 0 && (!cw || cwDelta < cw.delta)) cw = {...outer, delta: cwDelta};
+  }
+  return {ccw, cw};
+}
 function k2Analysis(activeNotes, drawRot, halfCenter, anchorMode){
   if(!activeNotes || activeNotes.size === 0) return null;
   const pcs = new Set();
@@ -2411,7 +2439,20 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const intervals = uniquePcs.map((pc)=> ((pc - rootPc) % 12 + 12) % 12);
   const relative = intervals.map((i)=> DEGREE_BY_SEMITONE[i]);
   const rootRoman = ROMAN_BY_DEGREE[degreeForPitchClass(rootPc, drawRot, halfCenter)] || 'I';
+  const rootDegree = degreeForPitchClass(rootPc, drawRot, halfCenter);
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
+  const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
+  const rootOuter = outerAngles.find((entry)=>entry.degree === rootDegree) || null;
+  const aroundRoot = rootOuter ? nearestOuterAnglesFromRoot(rootOuter.angle, outerAngles) : null;
+  const outerFromRootLine1 = rootOuter
+    ? `rootAngleInK: ${Math.round(rootOuter.angle)} (${rootOuter.degree})`
+    : 'rootAngleInK: –';
+  const outerFromRootLine2 = (aroundRoot && aroundRoot.ccw)
+    ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.angle)} (${aroundRoot.ccw.degree})`
+    : 'ccwOuterAngleFromRoot: –';
+  const outerFromRootLine3 = (aroundRoot && aroundRoot.cw)
+    ? `cwOuterAngleFromRoot: ${Math.round(aroundRoot.cw.angle)} (${aroundRoot.cw.degree})`
+    : 'cwOuterAngleFromRoot: –';
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
     ? `K2: ${Math.round(k2.k2StartDeg)}°→${Math.round(k2.k2EndDeg)}°`
@@ -2428,7 +2469,10 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
-    k2Line3: `${maskText} | ${deltaText}`
+    k2Line3: `${maskText} | ${deltaText}`,
+    k2Line4: outerFromRootLine1,
+    k2Line5: outerFromRootLine2,
+    k2Line6: outerFromRootLine3
   };
 }
 function drawCompositionOverlay(summary){
@@ -2439,18 +2483,18 @@ function drawCompositionOverlay(summary){
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
-  const line1 = summary.absoluteLine;
-  const line2 = summary.relativeLine;
-  const line3 = summary.k2Line1 || '';
-  const line4 = summary.k2Line2 || '';
-  const line5 = summary.k2Line3 || '';
-  const w1 = ctx.measureText(line1).width;
-  const w2 = ctx.measureText(line2).width;
-  const w3 = ctx.measureText(line3).width;
-  const w4 = ctx.measureText(line4).width;
-  const w5 = ctx.measureText(line5).width;
-  const boxW = Math.max(w1, w2, w3, w4, w5) + pad * 2;
-  const boxH = textSize * 5 + lineGap * 4 + pad * 2;
+  const lines = [
+    summary.absoluteLine,
+    summary.relativeLine,
+    summary.k2Line1 || '',
+    summary.k2Line2 || '',
+    summary.k2Line3 || '',
+    summary.k2Line4 || '',
+    summary.k2Line5 || '',
+    summary.k2Line6 || ''
+  ];
+  const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
+  const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
   let x = cv.width - boxW - 12 * devicePixelRatio;
   let y = 12 * devicePixelRatio;
   if(keyboard.active){
@@ -2479,11 +2523,9 @@ function drawCompositionOverlay(summary){
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(line1, x + pad, y + pad);
-  ctx.fillText(line2, x + pad, y + pad + textSize + lineGap);
-  ctx.fillText(line3, x + pad, y + pad + (textSize + lineGap) * 2);
-  ctx.fillText(line4, x + pad, y + pad + (textSize + lineGap) * 3);
-  ctx.fillText(line5, x + pad, y + pad + (textSize + lineGap) * 4);
+  lines.forEach((line, idx)=>{
+    ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx);
+  });
   ctx.restore();
 }
 
