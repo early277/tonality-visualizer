@@ -2478,12 +2478,13 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
       .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK) <= aroundRoot.ccw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
-  const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)} (${rootDegree})`;
+  const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
+  const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)}(${rootMovableDo})`;
   const outerFromRootLine2 = (aroundRoot && aroundRoot.ccw)
-    ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.angle)} (${aroundRoot.ccw.degree})`
+    ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${aroundRoot.ccw.degree})`
     : 'ccwOuterAngleFromRoot: –';
   const outerFromRootLine3 = (aroundRoot && aroundRoot.cw)
-    ? `cwOuterAngleFromRoot: ${Math.round(aroundRoot.cw.angle)} (${aroundRoot.cw.degree})`
+    ? `cwOuterAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${aroundRoot.cw.degree})`
     : 'cwOuterAngleFromRoot: –';
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
