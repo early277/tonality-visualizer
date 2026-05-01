@@ -2462,23 +2462,23 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const rootDegree = degreeForPitchClass(rootPc, drawRot, halfCenter);
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
+  const rootStepInK = movableDoStepForMidi(rootPc, drawRot, halfCenter);
+  const rootAngleInK = normalizeAngleDeg(rootStepInK * 30);
   const rootOuter = outerAngles.find((entry)=>entry.degree === rootDegree) || null;
-  const aroundRoot = rootOuter ? nearestOuterAnglesFromRoot(rootOuter.angle, outerAngles) : null;
-  const cwHighlightDegrees = (rootOuter && aroundRoot?.cw)
+  const aroundRoot = nearestOuterAnglesFromRoot(rootAngleInK, outerAngles);
+  const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
       .filter((entry)=> entry.degree !== rootDegree)
-      .filter((entry)=> normalizeAngleDeg(rootOuter.angle - entry.angle) <= aroundRoot.cw.delta + 1e-6)
+      .filter((entry)=> normalizeAngleDeg(rootAngleInK - entry.angle) <= aroundRoot.cw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
-  const ccwHighlightDegrees = (rootOuter && aroundRoot?.ccw)
+  const ccwHighlightDegrees = (aroundRoot?.ccw)
     ? outerAngles
       .filter((entry)=> entry.degree !== rootDegree)
-      .filter((entry)=> normalizeAngleDeg(entry.angle - rootOuter.angle) <= aroundRoot.ccw.delta + 1e-6)
+      .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK) <= aroundRoot.ccw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
-  const outerFromRootLine1 = rootOuter
-    ? `rootAngleInK: ${Math.round(rootOuter.angle)} (${rootOuter.degree})`
-    : 'rootAngleInK: –';
+  const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)} (${rootDegree})`;
   const outerFromRootLine2 = (aroundRoot && aroundRoot.ccw)
     ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.angle)} (${aroundRoot.ccw.degree})`
     : 'ccwOuterAngleFromRoot: –';
@@ -2505,7 +2505,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line4: outerFromRootLine1,
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
-    rootAngleInK: rootOuter ? rootOuter.angle : null,
+    rootAngleInK,
     ccwOuterAngleFromRoot: aroundRoot?.ccw ? aroundRoot.ccw.angle : null,
     cwOuterAngleFromRoot: aroundRoot?.cw ? aroundRoot.cw.angle : null,
     activePcs: uniquePcs,
@@ -2539,7 +2539,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
       const angleInK = normalizeAngleDeg(step * 30);
       const inK2 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, drawRot, halfCenter));
       if(!inK2 && !activePcs.has(pc)) continue;
-      const theta = ((normalizeAngleDeg(angleInK + k2Start) * Math.PI) / 180) - drawRot;
+      const theta = angleForMidiDraw(pc, drawRot);
       if(normalizeAngleDeg(rootAngle - angleInK) <= cwSpan + 1e-6){
         drawMarker(theta, `rgba(255,90,90,${outerHighlightAlpha})`);
       }
