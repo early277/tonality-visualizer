@@ -2427,6 +2427,11 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   if(!sortedMidis.length) return null;
   const rootMidi = sortedMidis[0];
   const rootPc = ((rootMidi % 12) + 12) % 12;
+  const degreeToMidi = new Map();
+  for(const midi of sortedMidis){
+    const deg = degreeForPitchClass(((midi % 12) + 12) % 12, drawRot, halfCenter);
+    if(!degreeToMidi.has(deg)) degreeToMidi.set(deg, midi);
+  }
   const uniquePcs = [];
   const seen = new Set();
   for(const midi of sortedMidis){
@@ -2444,6 +2449,18 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
   const rootOuter = outerAngles.find((entry)=>entry.degree === rootDegree) || null;
   const aroundRoot = rootOuter ? nearestOuterAnglesFromRoot(rootOuter.angle, outerAngles) : null;
+  const cwHighlightDegrees = (rootOuter && aroundRoot?.cw)
+    ? outerAngles
+      .filter((entry)=> entry.degree !== rootDegree)
+      .filter((entry)=> normalizeAngleDeg(rootOuter.angle - entry.angle) <= aroundRoot.cw.delta + 1e-6)
+      .map((entry)=> entry.degree)
+    : [];
+  const ccwHighlightDegrees = (rootOuter && aroundRoot?.ccw)
+    ? outerAngles
+      .filter((entry)=> entry.degree !== rootDegree)
+      .filter((entry)=> normalizeAngleDeg(entry.angle - rootOuter.angle) <= aroundRoot.ccw.delta + 1e-6)
+      .map((entry)=> entry.degree)
+    : [];
   const outerFromRootLine1 = rootOuter
     ? `rootAngleInK: ${Math.round(rootOuter.angle)} (${rootOuter.degree})`
     : 'rootAngleInK: –';
@@ -2472,8 +2489,29 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line3: `${maskText} | ${deltaText}`,
     k2Line4: outerFromRootLine1,
     k2Line5: outerFromRootLine2,
-    k2Line6: outerFromRootLine3
+    k2Line6: outerFromRootLine3,
+    highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
+    highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
+    highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null)
   };
+}
+function drawOuterAngleHighlights(summary, drawRot, rMax){
+  if(!summary) return;
+  const {cx, cy} = canvasCenter();
+  const radius = rMax + 18;
+  const markerRadius = Math.max(6, 7 * devicePixelRatio);
+  const drawMarker = (midi, color)=>{
+    if(midi == null) return;
+    const theta = angleForMidiDraw(midi, drawRot);
+    const {x, y} = polarToXY(cx, cy, radius, theta);
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(x, y, markerRadius, 0, 2 * Math.PI);
+    ctx.fill();
+  };
+  drawMarker(summary.highlightRootMidi, 'rgba(255,255,255,0.98)');
+  for(const midi of summary.highlightCwMidis || []) drawMarker(midi, 'rgba(255,90,90,0.95)');
+  for(const midi of summary.highlightCcwMidis || []) drawMarker(midi, 'rgba(90,255,120,0.95)');
 }
 function drawCompositionOverlay(summary){
   if(!summary) return;
@@ -2716,6 +2754,7 @@ function draw(){
   }
   if(baseMidi != null) lastKeyboardBaseMidi = baseMidi;
   const compositionSummary = noteCompositionSummary(activeNotes, drawRot, halfCenter);
+  drawOuterAngleHighlights(compositionSummary, drawRot, rMax);
 
   if(livePts.length) drawNotes(livePts, drawRot);
   if(filePts.length && fileOp.value==='play') drawNotes(filePts, drawRot);
