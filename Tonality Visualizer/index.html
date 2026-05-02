@@ -2471,40 +2471,45 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
   const rootStepInK = movableDoStepForMidi(rootPc, drawRot, halfCenter);
   const rootAngleInK = normalizeAngleDeg(rootStepInK * 30);
-  const rootOuter = outerAngles.find((entry)=>entry.degree === rootDegree) || null;
-  const aroundRoot = nearestOuterAnglesFromRoot(rootAngleInK, outerAngles);
+  const compositionAngles = uniquePcs.map((pc)=>{
+    const angle = normalizeAngleDeg(movableDoStepForMidi(pc, drawRot, halfCenter) * 30);
+    const midi = degreeToMidi.get(degreeForPitchClass(pc, drawRot, halfCenter));
+    return {pc, angle, midi};
+  });
+  const aroundRoot = nearestOuterAnglesFromRoot(
+    rootAngleInK,
+    compositionAngles
+      .filter((entry)=>entry.pc !== rootPc)
+      .map((entry)=>({
+        degree: distanceLabelFromMidi(entry.midi),
+        angle: entry.angle
+      }))
+  );
   const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
-      .filter((entry)=> entry.degree !== rootDegree)
       .filter((entry)=> normalizeAngleDeg(rootAngleInK - entry.angle) <= aroundRoot.cw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
   const ccwHighlightDegrees = (aroundRoot?.ccw)
     ? outerAngles
-      .filter((entry)=> entry.degree !== rootDegree)
       .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK) <= aroundRoot.ccw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
   const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
   const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)}(${rootMovableDo})`;
-  const hasOuterInComposition = !!(k2 && k2.outsideDegrees && k2.outsideDegrees.length);
   const singleCompositionTone = uniquePcs.length === 1;
-  const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
-  const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
-  const outerFromRootLine2 = !hasOuterInComposition
-    ? `ccwOuterAngleFromRoot: 0(${ccwDistance})`
-    : singleCompositionTone
-      ? `ccwOuterAngleFromRoot: 0(1)`
-      : (aroundRoot && aroundRoot.ccw)
-        ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
-        : `ccwOuterAngleFromRoot: 0(1)`;
-  const outerFromRootLine3 = !hasOuterInComposition
-    ? `cwOuterAngleFromRoot: 0(${cwDistance})`
-    : singleCompositionTone
-      ? `cwOuterAngleFromRoot: 0(1)`
-      : (aroundRoot && aroundRoot.cw)
-        ? `cwOuterAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
-        : `cwOuterAngleFromRoot: 0(1)`;
+  const ccwDistance = aroundRoot?.ccw?.degree || '1';
+  const cwDistance = aroundRoot?.cw?.degree || '1';
+  const outerFromRootLine2 = singleCompositionTone
+    ? `ccwOuterAngleFromRoot: 0(1)`
+    : (aroundRoot && aroundRoot.ccw)
+      ? `ccwOuterAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
+      : `ccwOuterAngleFromRoot: 0(1)`;
+  const outerFromRootLine3 = singleCompositionTone
+    ? `cwOuterAngleFromRoot: 0(1)`
+    : (aroundRoot && aroundRoot.cw)
+      ? `cwOuterAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
+      : `cwOuterAngleFromRoot: 0(1)`;
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
     ? `K2: ${Math.round(k2.k2StartDeg)}°→${Math.round(k2.k2EndDeg)}°`
@@ -2526,8 +2531,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
     rootAngleInK,
-    ccwOuterAngleFromRoot: !hasOuterInComposition ? rootAngleInK : (singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK)),
-    cwOuterAngleFromRoot: !hasOuterInComposition ? rootAngleInK : (singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK)),
+    ccwOuterAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
+    cwOuterAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
     activePcs: uniquePcs,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
