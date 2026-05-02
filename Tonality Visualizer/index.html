@@ -2524,7 +2524,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
   const rootAngleInK1 = kAngleInKForPitchClass(rootPc, drawRot, halfCenter);
-  const rootAngleInK2 = normalizeAngleDeg(rootAngleInK1 + (k2?.appliedDeltaDeg || 0));
+  const rootAngleInK2 = normalizeAngleDeg(rootAngleInK1 - (k2?.appliedDeltaDeg || 0));
   const compositionAngles = uniquePcs.map((pc)=>{
     const angle = kAngleInKForPitchClass(pc, drawRot, halfCenter);
     const midi = degreeToMidi.get(degreeForPitchClass(pc, drawRot, halfCenter));
