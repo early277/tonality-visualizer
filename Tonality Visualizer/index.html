@@ -2371,6 +2371,11 @@ function degreeForPitchClass(pc, drawRot, halfCenter){
   const step = movableDoStepForMidi(pc, drawRot, halfCenter);
   return MOVABLE_DO_SEQUENCE[step];
 }
+function kAngleInKForPitchClass(pc, drawRot, halfCenter){
+  const step = movableDoStepForMidi(pc, drawRot, halfCenter);
+  // 画面描画はY軸反転系のため、K内角は符号反転した向きで扱う
+  return normalizeAngleDeg(-step * 30);
+}
 function normalizeAngleDeg(value){
   let out = value % 360;
   if(out < 0) out += 360;
@@ -2469,10 +2474,9 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const rootDegree = degreeForPitchClass(rootPc, drawRot, halfCenter);
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
-  const rootStepInK = movableDoStepForMidi(rootPc, drawRot, halfCenter);
-  const rootAngleInK = normalizeAngleDeg(rootStepInK * 30);
+  const rootAngleInK = kAngleInKForPitchClass(rootPc, drawRot, halfCenter);
   const compositionAngles = uniquePcs.map((pc)=>{
-    const angle = normalizeAngleDeg(movableDoStepForMidi(pc, drawRot, halfCenter) * 30);
+    const angle = kAngleInKForPitchClass(pc, drawRot, halfCenter);
     const midi = degreeToMidi.get(degreeForPitchClass(pc, drawRot, halfCenter));
     return {pc, angle, midi};
   });
@@ -2560,8 +2564,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
     const cwSpan = normalizeAngleDeg(rootAngle - cwLimit);
     const ccwSpan = normalizeAngleDeg(ccwLimit - rootAngle);
     for(let pc=0; pc<12; pc++){
-      const step = movableDoStepForMidi(pc, drawRot, halfCenter);
-      const angleInK = normalizeAngleDeg(step * 30);
+      const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
       const inK2 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, drawRot, halfCenter));
       if(!inK2 && !activePcs.has(pc)) continue;
       const theta = angleForMidiDraw(pc, drawRot);
