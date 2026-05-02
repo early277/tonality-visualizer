@@ -2577,8 +2577,8 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
   const radius = rMax + 18;
   const markerRadius = Math.max(18, 21 * devicePixelRatio);
   const rootAngle = summary.rootAngleInK;
-  const ccwLimit = summary.brightAngleFromRoot;
-  const cwLimit = summary.darkAngleFromRoot;
+  const ccwLimit = summary.darkAngleFromRoot;
+  const cwLimit = summary.brightAngleFromRoot;
   const activePcs = new Set(summary.activePcs || []);
   const k2Start = summary.k2?.k2StartDeg ?? 90;
   const drawMarker = (theta, color)=>{
