@@ -2533,15 +2533,15 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
   const outerFromRootLine2 = singleCompositionTone
-    ? `BrightAngleFromRoot: 0(1)`
-    : (aroundRoot && aroundRoot.ccw)
-      ? `BrightAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
-      : `BrightAngleFromRoot: 0(1)`;
-  const outerFromRootLine3 = singleCompositionTone
     ? `DarkAngleFromRoot: 0(1)`
-    : (aroundRoot && aroundRoot.cw)
-      ? `DarkAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
+    : (aroundRoot && aroundRoot.ccw)
+      ? `DarkAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
       : `DarkAngleFromRoot: 0(1)`;
+  const outerFromRootLine3 = singleCompositionTone
+    ? `BrightAngleFromRoot: 0(1)`
+    : (aroundRoot && aroundRoot.cw)
+      ? `BrightAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
+      : `BrightAngleFromRoot: 0(1)`;
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
     ? `K2: ${Math.round(k2.k2StartDeg)}°→${Math.round(k2.k2EndDeg)}°`
@@ -2563,8 +2563,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
     rootAngleInK,
-    brightAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
-    darkAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
+    darkAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
+    brightAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
     activePcs: uniquePcs,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
@@ -2597,10 +2597,10 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
       if(!inK2 && !activePcs.has(pc)) continue;
       const theta = angleForMidiDraw(pc, drawRot);
       if(normalizeAngleDeg(rootAngle - angleInK) <= cwSpan + 1e-6){
-        drawMarker(theta, `rgba(255,90,90,${outerHighlightAlpha})`);
+        drawMarker(theta, `rgba(90,255,120,${outerHighlightAlpha})`);
       }
       if(normalizeAngleDeg(angleInK - rootAngle) <= ccwSpan + 1e-6){
-        drawMarker(theta, `rgba(90,255,120,${outerHighlightAlpha})`);
+        drawMarker(theta, `rgba(255,90,90,${outerHighlightAlpha})`);
       }
     }
   }
