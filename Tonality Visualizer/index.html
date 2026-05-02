@@ -2534,13 +2534,13 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
   const outerFromRootLine2 = singleCompositionTone
     ? `DarkAngleFromRoot: 0(1)`
-    : (aroundRoot && aroundRoot.ccw)
-      ? `DarkAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
+    : (aroundRoot && aroundRoot.cw)
+      ? `DarkAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
       : `DarkAngleFromRoot: 0(1)`;
   const outerFromRootLine3 = singleCompositionTone
     ? `BrightAngleFromRoot: 0(1)`
-    : (aroundRoot && aroundRoot.cw)
-      ? `BrightAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
+    : (aroundRoot && aroundRoot.ccw)
+      ? `BrightAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
       : `BrightAngleFromRoot: 0(1)`;
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
@@ -2563,8 +2563,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
     rootAngleInK,
-    darkAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
-    brightAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
+    darkAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
+    brightAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
     activePcs: uniquePcs,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
@@ -2577,8 +2577,8 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
   const radius = rMax + 18;
   const markerRadius = Math.max(18, 21 * devicePixelRatio);
   const rootAngle = summary.rootAngleInK;
-  const ccwLimit = summary.darkAngleFromRoot;
-  const cwLimit = summary.brightAngleFromRoot;
+  const ccwLimit = summary.brightAngleFromRoot;
+  const cwLimit = summary.darkAngleFromRoot;
   const activePcs = new Set(summary.activePcs || []);
   const k2Start = summary.k2?.k2StartDeg ?? 90;
   const drawMarker = (theta, color)=>{
@@ -2597,10 +2597,10 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
       if(!inK2 && !activePcs.has(pc)) continue;
       const theta = angleForMidiDraw(pc, drawRot);
       if(normalizeAngleDeg(rootAngle - angleInK) <= cwSpan + 1e-6){
-        drawMarker(theta, `rgba(90,255,120,${outerHighlightAlpha})`);
+        drawMarker(theta, `rgba(255,90,90,${outerHighlightAlpha})`);
       }
       if(normalizeAngleDeg(angleInK - rootAngle) <= ccwSpan + 1e-6){
-        drawMarker(theta, `rgba(255,90,90,${outerHighlightAlpha})`);
+        drawMarker(theta, `rgba(90,255,120,${outerHighlightAlpha})`);
       }
     }
   }
