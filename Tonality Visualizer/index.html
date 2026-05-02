@@ -2422,11 +2422,12 @@ function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCent
   if(cw && ccw && Math.abs(cw.cwDelta - 180) < 1e-6 && Math.abs(ccw.ccwDelta - 180) < 1e-6){
     const cwCount = cwPool.length;
     const ccwCount = ccwPool.length;
-    const cwK2Count = cwPool.filter((e)=>e.inK2).length;
-    const ccwK2Count = ccwPool.filter((e)=>e.inK2).length;
+    const darkPriorityAngles = new Set([0,30,60,90,300,330]);
+    const rootRounded = normalizeAngleDeg(Math.round(rootAngle));
+    // dark=ccw / bright=cw の対応で優先側を決める
     const keepCw = (cwCount !== ccwCount)
       ? (cwCount > ccwCount)
-      : (cwK2Count !== ccwK2Count ? (cwK2Count > ccwK2Count) : true);
+      : !darkPriorityAngles.has(rootRounded);
     if(keepCw) ccw = null;
     else cw = null;
   }
