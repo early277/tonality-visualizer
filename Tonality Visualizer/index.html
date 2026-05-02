@@ -2412,7 +2412,7 @@ function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCent
     const cwDelta = normalizeAngleDeg(rootAngle - entry.angle);
     const ccwDelta = normalizeAngleDeg(entry.angle - rootAngle);
     const degree = degreeForPitchClass(entry.pc, drawRot, halfCenter);
-    const inK2 = K2_OUTSIDE_BITS.includes(degree);
+    const inK2 = !K2_OUTSIDE_BITS.includes(degree);
     return {...entry, cwDelta, ccwDelta, degree, inK2};
   });
   const cwPool = entries.filter((e)=>e.cwDelta > 0 && e.cwDelta <= 180 + 1e-6);
@@ -2593,7 +2593,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
     const ccwSpan = normalizeAngleDeg(ccwLimit - rootAngle);
     for(let pc=0; pc<12; pc++){
       const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
-      const inK2 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, drawRot, halfCenter));
+      const inK2 = !K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, drawRot, halfCenter));
       if(!inK2 && !activePcs.has(pc)) continue;
       const theta = angleForMidiDraw(pc, drawRot);
       if(normalizeAngleDeg(rootAngle - angleInK) <= cwSpan + 1e-6){
