@@ -2404,6 +2404,37 @@ function nearestOuterAnglesFromRoot(rootAngle, outers){
   }
   return {ccw, cw};
 }
+function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCenter){
+  if(!Number.isFinite(rootAngle) || !compositionAngles || !compositionAngles.length){
+    return {cw:null, ccw:null};
+  }
+  const entries = compositionAngles.map((entry)=>{
+    const cwDelta = normalizeAngleDeg(rootAngle - entry.angle);
+    const ccwDelta = normalizeAngleDeg(entry.angle - rootAngle);
+    const degree = degreeForPitchClass(entry.pc, drawRot, halfCenter);
+    const inK2 = K2_OUTSIDE_BITS.includes(degree);
+    return {...entry, cwDelta, ccwDelta, degree, inK2};
+  });
+  const cwPool = entries.filter((e)=>e.cwDelta > 0 && e.cwDelta <= 180 + 1e-6);
+  const ccwPool = entries.filter((e)=>e.ccwDelta > 0 && e.ccwDelta <= 180 + 1e-6);
+  let cw = cwPool.length ? cwPool.reduce((a,b)=> (b.cwDelta < a.cwDelta ? b : a)) : null;
+  let ccw = ccwPool.length ? ccwPool.reduce((a,b)=> (b.ccwDelta < a.ccwDelta ? b : a)) : null;
+  if(cw && ccw && Math.abs(cw.cwDelta - 180) < 1e-6 && Math.abs(ccw.ccwDelta - 180) < 1e-6){
+    const cwCount = cwPool.length;
+    const ccwCount = ccwPool.length;
+    const cwK2Count = cwPool.filter((e)=>e.inK2).length;
+    const ccwK2Count = ccwPool.filter((e)=>e.inK2).length;
+    const keepCw = (cwCount !== ccwCount)
+      ? (cwCount > ccwCount)
+      : (cwK2Count !== ccwK2Count ? (cwK2Count > ccwK2Count) : true);
+    if(keepCw) ccw = null;
+    else cw = null;
+  }
+  return {
+    cw: cw ? {angle: cw.angle, delta: cw.cwDelta, degree: cw.degree} : null,
+    ccw: ccw ? {angle: ccw.angle, delta: ccw.ccwDelta, degree: ccw.degree} : null
+  };
+}
 function k2Analysis(activeNotes, drawRot, halfCenter, anchorMode){
   if(!activeNotes || activeNotes.size === 0) return null;
   const pcs = new Set();
@@ -2480,14 +2511,11 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     const midi = degreeToMidi.get(degreeForPitchClass(pc, drawRot, halfCenter));
     return {pc, angle, midi};
   });
-  const aroundRoot = nearestOuterAnglesFromRoot(
+  const aroundRoot = pickCwCcwWithinHalfTurn(
     rootAngleInK,
-    compositionAngles
-      .filter((entry)=>entry.pc !== rootPc)
-      .map((entry)=>({
-        degree: distanceLabelFromMidi(entry.midi),
-        angle: entry.angle
-      }))
+    compositionAngles.filter((entry)=>entry.pc !== rootPc),
+    drawRot,
+    halfCenter
   );
   const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
@@ -2502,8 +2530,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
   const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)}(${rootMovableDo})`;
   const singleCompositionTone = uniquePcs.length === 1;
-  const ccwDistance = aroundRoot?.ccw?.degree || '1';
-  const cwDistance = aroundRoot?.cw?.degree || '1';
+  const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
+  const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
   const outerFromRootLine2 = singleCompositionTone
     ? `ccwOuterAngleFromRoot: 0(1)`
     : (aroundRoot && aroundRoot.ccw)
