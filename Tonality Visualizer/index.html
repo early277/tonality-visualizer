@@ -2465,20 +2465,22 @@ function generateChordName(rootPc, notesPcs){
   mods.sort((a,b)=>CHORD_PAREN_ORDER.indexOf(a)-CHORD_PAREN_ORDER.indexOf(b));
   return mods.length ? `${base}(${mods.join(',')})` : base;
 }
-function buildChordDisplaySummary(activeNotes, drawRot, halfCenter){
-  if(!activeNotes || !activeNotes.size) return null;
-  const sorted = Array.from(activeNotes.keys()).sort((a,b)=>a-b);
-  const rootMidi = sorted[0];
-  const rootPc = ((rootMidi%12)+12)%12;
-  const pcs = uniqueSorted(sorted.map((m)=>((m%12)+12)%12));
-  if(!pcs.includes(rootPc)) pcs.unshift(rootPc);
-  const formalCode = generateChordName(rootPc, pcs);
-  const optionalPcs = pcs.filter((pc)=>pc!==rootPc);
+function buildChordDisplaySummary(compositionSummary){
+  if(!compositionSummary) return null;
+  const rootPc = compositionSummary.rootPc;
+  const formalPcs = uniqueSorted(compositionSummary.activePcs || []);
+  if(rootPc == null || !formalPcs.length) return null;
+  const highlighted = new Set();
+  for(const midi of (compositionSummary.highlightCwMidis || [])) highlighted.add(((midi%12)+12)%12);
+  for(const midi of (compositionSummary.highlightCcwMidis || [])) highlighted.add(((midi%12)+12)%12);
+  const optionalPcs = uniqueSorted(Array.from(highlighted).filter((pc)=> pc!==rootPc && !formalPcs.includes(pc)));
+
+  const formalCode = generateChordName(rootPc, formalPcs);
   const candidates = [];
   for(const mask of subsetMasks(optionalPcs.length)){
     const picked=[];
     for(let i=0;i<optionalPcs.length;i++) if(mask & (1<<i)) picked.push(optionalPcs[i]);
-    const name = generateChordName(rootPc, [rootPc, ...picked]);
+    const name = generateChordName(rootPc, [...formalPcs, ...picked]);
     if(name===formalCode) continue;
     const intervals = picked.map((pc)=>((pc-rootPc)%12+12)%12);
     candidates.push({name, picked, score:scoreCandidateChord(name, intervals)});
@@ -2489,7 +2491,7 @@ function buildChordDisplaySummary(activeNotes, drawRot, halfCenter){
     if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
   }
   const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length);
-  return {formalCode, candidates: out, rootPc};
+  return {formalCode, candidates: out, rootPc, optionalPcs};
 }
 
 function degreeForPitchClass(pc, drawRot, halfCenter){
@@ -2694,6 +2696,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
     brightAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK1),
     activePcs: uniquePcs,
+    rootPc,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null)
@@ -2736,7 +2739,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
     drawMarker(angleForMidiDraw(summary.highlightRootMidi, drawRot), `rgba(255,255,255,${outerHighlightAlpha})`);
   }
 }
-function drawCompositionOverlay(summary, chordSummary){
+function drawCompositionOverlay(summary){
   if(!summary) return;
   const keyboard = keyboardMetrics();
   const pad = 14 * devicePixelRatio;
@@ -2744,12 +2747,6 @@ function drawCompositionOverlay(summary, chordSummary){
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
-  const chordLines = chordSummary
-    ? [
-      `Formal: ${chordSummary.formalCode}`,
-      ...chordSummary.candidates.slice(0, 8).map((c,idx)=>`${idx+1}. ${c.name} [${c.picked.map((pc)=>PITCH_CLASS_LABELS[pc]).join(', ')}]`)
-    ]
-    : [];
   const lines = [
     summary.absoluteLine,
     summary.relativeLine,
@@ -2758,8 +2755,7 @@ function drawCompositionOverlay(summary, chordSummary){
     summary.k2Line3 || '',
     summary.k2Line4 || '',
     summary.k2Line5 || '',
-    summary.k2Line6 || '',
-    ...chordLines
+    summary.k2Line6 || ''
   ];
   const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
   const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
@@ -2795,6 +2791,35 @@ function drawCompositionOverlay(summary, chordSummary){
   lines.forEach((line, idx)=>{
     ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx);
   });
+  ctx.restore();
+}
+
+
+function drawChordOverlay(chordSummary){
+  if(!chordSummary) return;
+  const pad = 12 * devicePixelRatio;
+  const lineGap = 5 * devicePixelRatio;
+  const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
+  const lines = [
+    `正式コード: ${chordSummary.formalCode}`,
+    ...chordSummary.candidates.map((c,idx)=>`${idx+1}. ${c.name}  使用候補音:${c.picked.map((pc)=>PITCH_CLASS_LABELS[pc]).join(', ')}`)
+  ];
+  ctx.save();
+  ctx.font = `${textSize}px system-ui`;
+  const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
+  const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
+  const x = 12 * devicePixelRatio;
+  const y = 12 * devicePixelRatio;
+  const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
+  ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
+  ctx.fillRect(x, y, boxW, boxH);
+  ctx.strokeStyle = `rgba(255,255,255,${0.2 * boxAlpha})`;
+  ctx.lineWidth = Math.max(1, 1.2 * devicePixelRatio);
+  ctx.strokeRect(x, y, boxW, boxH);
+  ctx.fillStyle = `rgba(255,255,255,${0.95 * boxAlpha})`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  lines.forEach((line, idx)=> ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx));
   ctx.restore();
 }
 
@@ -2862,7 +2887,7 @@ function draw(){
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
   const k2Info = k2Analysis(activeNotes, drawRot, halfCenter, anchor);
   const compositionSummary = noteCompositionSummary(activeNotes, drawRot, halfCenter);
-  const chordSummary = buildChordDisplaySummary(activeNotes, drawRot, halfCenter);
+  const chordSummary = buildChordDisplaySummary(compositionSummary);
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
@@ -2996,7 +3021,8 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawCompositionOverlay(compositionSummary, chordSummary);
+  drawCompositionOverlay(compositionSummary);
+  drawChordOverlay(chordSummary);
 
   drawKeyboard(
     displayMinFreq,
