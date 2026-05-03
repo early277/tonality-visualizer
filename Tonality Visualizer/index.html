@@ -2800,9 +2800,12 @@ function drawChordOverlay(chordSummary){
   const pad = 12 * devicePixelRatio;
   const lineGap = 5 * devicePixelRatio;
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
+  const candidateLine = chordSummary.candidates.length
+    ? chordSummary.candidates.map((c)=>c.name).join(' / ')
+    : '–';
   const lines = [
-    `正式コード: ${chordSummary.formalCode}`,
-    ...chordSummary.candidates.map((c,idx)=>`${idx+1}. ${c.name}  使用候補音:${c.picked.map((pc)=>PITCH_CLASS_LABELS[pc]).join(', ')}`)
+    `Chord: ${chordSummary.formalCode}`,
+    `候補: ${candidateLine}`
   ];
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
