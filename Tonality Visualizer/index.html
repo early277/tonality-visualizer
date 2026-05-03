@@ -2679,20 +2679,29 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const deltaText = k2
     ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}° (${k2.anchorCorrected ? 'Anchor ON' : 'Anchor OFF'})`
     : 'Δ: –';
+  const summaryFallbackHighlightPcsFromMidis = [
+    ...(aroundRoot?.cw ? [degreeToMidi.get(aroundRoot.cw.degree)] : []),
+    ...(aroundRoot?.ccw ? [degreeToMidi.get(aroundRoot.ccw.degree)] : [])
+  ].filter((midi)=>midi!=null).map((midi)=>((midi%12)+12)%12);
   const highlightCwPcs = [];
   const highlightCcwPcs = [];
-  if(Number.isFinite(rootAngleInK1) && Number.isFinite(aroundRoot?.cw?.delta) && Number.isFinite(aroundRoot?.ccw?.delta)){
+  if(Number.isFinite(rootAngleInK1)){
     for(let pc=0; pc<12; pc++){
       const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
-      if(normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
+      if(Number.isFinite(aroundRoot?.cw?.delta) && normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
         highlightCwPcs.push(pc);
       }
-      if(normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
+      if(Number.isFinite(aroundRoot?.ccw?.delta) && normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
         highlightCcwPcs.push(pc);
       }
     }
   }
-  const highlightPcs = uniqueSorted([...highlightCwPcs, ...highlightCcwPcs]);
+  let highlightPcs = uniqueSorted([...highlightCwPcs, ...highlightCcwPcs]);
+  if(!highlightPcs.length){
+    highlightPcs = uniqueSorted([
+      ...(summaryFallbackHighlightPcsFromMidis ? summaryFallbackHighlightPcsFromMidis : [])
+    ]);
+  }
   const optionalPcs = highlightPcs.filter((pc)=> pc !== rootPc && !uniquePcs.includes(pc));
   const optionalLine = `Optional: ${optionalPcs.length ? optionalPcs.map((pc)=>PITCH_CLASS_LABELS[pc]).join(' ') : '–'}`;
   return {
