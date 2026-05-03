@@ -2386,7 +2386,7 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
 
 
 const CHORD_INTERVAL_LABELS = ['1','♭9','9','♭3','3','11','tritone','5','alt5','6/13','♭7','7'];
-const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','omit3','omit5'];
+const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','#13','omit3','omit5'];
 function uniqueSorted(arr){ return Array.from(new Set(arr)).sort((a,b)=>a-b); }
 function subsetMasks(count){ const out=[]; for(let mask=1; mask < (1<<count); mask++) out.push(mask); return out; }
 function parseChordFeatures(name){
@@ -2397,7 +2397,7 @@ function parseChordFeatures(name){
   if(m){
     const items = m[1].split(',').map(v=>v.trim()).filter(Boolean);
     f.parenCount = items.length;
-    for(const t of items){ if(['♭9','#9','#11','♭13','♭5','#5'].includes(t)) f.alteredCount++; }
+    for(const t of items){ if(['♭9','#9','#11','♭13','#13','♭5','#5'].includes(t)) f.alteredCount++; }
   }
   return f;
 }
@@ -2429,6 +2429,8 @@ function generateChordName(rootPc, notesPcs){
   const hasb3=intervals.includes(3), has3=intervals.includes(4);
   const has5=intervals.includes(7), hasb5=intervals.includes(6), hasS5=intervals.includes(8);
   const has2=intervals.includes(2), has4=intervals.includes(5), hasb7=intervals.includes(10), has7=intervals.includes(11), has6=intervals.includes(9);
+  const hasBoth3 = has3 && hasb3;
+  const hasBoth7 = has7 && hasb7;
   const root=PITCH_CLASS_LABELS[rootPc];
   let base=root;
   if(!has3 && !hasb3){
@@ -2441,10 +2443,11 @@ function generateChordName(rootPc, notesPcs){
     base += 'dim';
   } else if(has3 && hasS5 && !has5){
     base += 'aug';
-  } else if(hasb3){
+  } else if(hasb3 && !has3){
     base += 'm';
   }
-  if(hasb7){ base += '7'; }
+  if(hasBoth7){ base += 'M7'; }
+  else if(hasb7){ base += '7'; }
   else if(has7){ base += 'M7'; }
   else if(has6 && has3 && has5 && !hasb3){ base += '6'; }
   else if(has6 && hasb3 && has5){ base += '6'; }
@@ -2457,9 +2460,11 @@ function generateChordName(rootPc, notesPcs){
   if(hasS5 && has5) add('♭13');
   else if(hasS5 && !(base.includes('aug'))) add('#5');
   if(intervals.includes(1)) add('♭9');
+  if(hasBoth3) add('#9');
   if(has2 && !base.includes('sus2')) add('9');
   if(intervals.includes(5) && !base.includes('sus4')) add('11');
-  if(has6 && (hasb7||has7)) add('13');
+  if(hasBoth7) add('#13');
+  else if(has6 && (hasb7||has7)) add('13');
   if(!hasAny3 && !base.endsWith('sus2') && !base.endsWith('sus4') && !base.endsWith('5')) add('omit3');
   if(!hasAny5) add('omit5');
   mods.sort((a,b)=>CHORD_PAREN_ORDER.indexOf(a)-CHORD_PAREN_ORDER.indexOf(b));
