@@ -2188,6 +2188,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawOuterRoleHighlightsOnKeyboard = ()=>{
     if(!compositionSummary) return;
     const rootMidi = compositionSummary.highlightRootMidi;
+    const rootPc = compositionSummary.rootPc;
     const cwPcs = new Set(compositionSummary.keyboardHighlightCwPcs || compositionSummary.highlightCwPcs || []);
     const ccwPcs = new Set(compositionSummary.keyboardHighlightCcwPcs || compositionSummary.highlightCcwPcs || []);
     const activePcs = new Set(compositionSummary.activePcs || []);
@@ -2204,8 +2205,11 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       ctx.fill();
     };
 
+    const rootCandidates = keys.filter((key)=> rootPc != null && key.pc === rootPc);
+    const rootKeyMidi = rootCandidates.length ? Math.min(...rootCandidates.map((key)=>key.midi)) : rootMidi;
+
     for(const key of keys){
-      const isRoot = (rootMidi != null && key.midi === rootMidi);
+      const isRoot = (rootPc != null) ? (key.midi === rootKeyMidi) : (rootMidi != null && key.midi === rootMidi);
       const outsideK1 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(key.pc, drawRot, halfCenter));
       const cw = !isRoot && cwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
       const ccw = !isRoot && ccwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
@@ -2862,7 +2866,8 @@ function drawCompositionOverlay(summary){
   if(keyboard.active){
     if(keyboard.mode === 'side'){
       const panelX = cv.width - keyboard.panelWidth;
-      x = panelX + Math.max(8 * devicePixelRatio, keyboard.panelWidth * 0.5 - boxW - 6 * devicePixelRatio);
+      const halfW = keyboard.panelWidth * 0.5;
+      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
       y = 12 * devicePixelRatio;
     }else{
       x = cv.width - boxW - 12 * devicePixelRatio;
@@ -2936,7 +2941,8 @@ function drawChordOverlay(chordSummary){
     const km2 = keyboardMetrics();
     if(km2.mode === 'side'){
       const panelX = cv.width - km2.panelWidth;
-      x = panelX + 10 * devicePixelRatio;
+      const halfW = km2.panelWidth * 0.5;
+      x = panelX + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
     }
   }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
