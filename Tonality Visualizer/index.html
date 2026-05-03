@@ -2426,7 +2426,7 @@ function scoreCandidateChord(name, optionalIntervals){
   const rootMatch = name.match(/^([A-G](?:#|♭)?)(.*)$/);
   const suffix = rootMatch ? rootMatch[2] : '';
   const impliesMajor3 = !(suffix.startsWith('m') || suffix.startsWith('dim') || suffix.startsWith('sus2') || suffix.startsWith('sus4') || suffix.startsWith('5'));
-  if(has11InParen && impliesMajor3) score -= 40;
+  if(has11InParen && impliesMajor3) score -= 80;
   return score;
 }
 function generateChordName(rootPc, notesPcs){
