@@ -982,19 +982,6 @@ function keyboardMetrics(){
   if(!keyboardEnabled) return {active:false, mode:'none', height:0, padding:0, reservedBottom:0, reservedRight:0, panelWidth:0, panelGap:0};
   const padding = 16 * devicePixelRatio;
   const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
-  const landscape = cv.width > cv.height * 1.25;
-  if(landscape){
-    const panelGap = 12 * devicePixelRatio;
-    const targetDiskAreaWidth = cv.height * 1.02;
-    const panelFromTarget = cv.width - targetDiskAreaWidth - panelGap;
-    const desiredPanelWidth = Math.max(cv.width * 0.30, panelFromTarget);
-    const minDiskAreaWidth = cv.height * 0.82;
-    const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
-    const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
-    if(panelWidth >= 180 * devicePixelRatio){
-      return {active:true, mode:'side', height, padding, reservedBottom:0, reservedRight:panelWidth + panelGap, panelWidth, panelGap};
-    }
-  }
   return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2, reservedRight:0, panelWidth:0, panelGap:0};
 }
 function canvasCenter(){
@@ -2190,6 +2177,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const rootMidi = compositionSummary.highlightRootMidi;
     const cwPcs = new Set(compositionSummary.keyboardHighlightCwPcs || compositionSummary.highlightCwPcs || []);
     const ccwPcs = new Set(compositionSummary.keyboardHighlightCcwPcs || compositionSummary.highlightCcwPcs || []);
+    const activePcs = new Set(compositionSummary.activePcs || []);
     const alpha = Math.max(0.25, Math.min(0.85, outerHighlightAlpha));
     const radiusWhite = Math.max(blackWidth * 0.34, 8 * devicePixelRatio);
     const radiusBlack = Math.max(blackWidth * 0.3, 7 * devicePixelRatio);
@@ -2205,8 +2193,9 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
     for(const key of keys){
       const isRoot = (rootMidi != null && key.midi === rootMidi);
-      const cw = cwPcs.has(key.pc);
-      const ccw = ccwPcs.has(key.pc);
+      const outsideK1 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(key.pc, drawRot, halfCenter));
+      const cw = !isRoot && cwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
+      const ccw = !isRoot && ccwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
       if(!isRoot && !cw && !ccw) continue;
       const centerX = key.isBlack ? (key.x + key.width / 2) : movableLabelXForWhiteKey(key);
       const centerY = key.isBlack ? movableYBlack : movableYWhite;
@@ -2858,14 +2847,8 @@ function drawCompositionOverlay(summary){
   let x = cv.width - boxW - 12 * devicePixelRatio;
   let y = 12 * devicePixelRatio;
   if(keyboard.active){
-    if(keyboard.mode === 'side'){
-      x = cv.width - keyboard.panelWidth + 12 * devicePixelRatio;
-      y = 12 * devicePixelRatio;
-    }else{
-      const keyTop = cv.height - keyboard.height - keyboard.padding;
-      y = Math.max(12 * devicePixelRatio, keyTop - boxH - 10 * devicePixelRatio);
-      x = (cv.width - boxW) / 2;
-    }
+    x = cv.width - boxW - 12 * devicePixelRatio;
+    y = 12 * devicePixelRatio;
   }else{
     const {cx, cy} = canvasCenter();
     const {rMax} = ringParams();
@@ -2908,7 +2891,8 @@ function drawChordOverlay(chordSummary){
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
 
-  const maxH = cv.height - 24 * devicePixelRatio;
+  const keyReserved = keyboardEnabled ? (keyboardMetrics().height + keyboardMetrics().padding * 2) : 0;
+  const maxH = cv.height - 24 * devicePixelRatio - keyReserved;
   const rowH = textSize + lineGap;
   const headerHeight = rowH * headerLines.length;
   const availableForCandidates = Math.max(rowH, maxH - (pad * 2 + headerHeight));
@@ -3125,6 +3109,9 @@ function draw(){
     ctx.fillStyle = `rgba(${r},${g},${b},${labelBgAlpha})`;
     ctx.fillRect(tx2 - wbg/2, ty2 - hbg/2, wbg, hbg);
     if(labelTextAlpha>0){
+      ctx.lineWidth = Math.max(1, 2 * devicePixelRatio);
+      ctx.strokeStyle='rgba(0,0,0,0.9)';
+      ctx.strokeText(text, tx2, ty2);
       ctx.fillStyle=`rgba(255,255,255,${labelTextAlpha})`;
       ctx.fillText(text, tx2, ty2);
     }
