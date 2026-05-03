@@ -1034,6 +1034,15 @@ function canvasCenterCss(){
   const reservedRightCss = keyboard.reservedRight / devicePixelRatio;
   const availableWidthCss = Math.max(1, rect.width - reservedRightCss);
   const availableHeightCss = Math.max(1, rect.height - reservedBottomCss);
+  const landscape = cv.width > cv.height * 1.25;
+  if(!landscape){
+    const diskTopInsetCss = 84;
+    const half = Math.max(1, Math.min(availableWidthCss / 2, Math.max(1, (availableHeightCss - diskTopInsetCss) / 2)));
+    return {
+      cx: rect.left + availableWidthCss / 2,
+      cy: rect.top + diskTopInsetCss + half
+    };
+  }
   return {
     cx: rect.left + availableWidthCss / 2,
     cy: rect.top + availableHeightCss / 2
