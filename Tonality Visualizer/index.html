@@ -2384,6 +2384,127 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
   ctx.font=pf; ctx.globalAlpha=pa; ctx.fillStyle=ps; ctx.textAlign=pal; ctx.textBaseline=pb;
 }
 
+
+const CHORD_INTERVAL_LABELS = ['1','♭9','9','♭3','3','11','tritone','5','alt5','6/13','♭7','7'];
+const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','#13','omit3','omit5'];
+function uniqueSorted(arr){ return Array.from(new Set(arr)).sort((a,b)=>a-b); }
+function subsetMasks(count){ const out=[]; for(let mask=1; mask < (1<<count); mask++) out.push(mask); return out; }
+function parseChordFeatures(name){
+  const f={omit3:false, omit5:false, alteredCount:0, parenCount:0, length:name.length, parenItems:[]};
+  if(name.includes('omit3')) f.omit3=true;
+  if(name.includes('omit5')) f.omit5=true;
+  const m = name.match(/\(([^)]*)\)/);
+  if(m){
+    const items = m[1].split(',').map(v=>v.trim()).filter(Boolean);
+    f.parenItems = items;
+    f.parenCount = items.length;
+    for(const t of items){ if(['♭9','#9','#11','♭13','#13','♭5','#5'].includes(t)) f.alteredCount++; }
+  }
+  return f;
+}
+function scoreCandidateChord(name, optionalIntervals){
+  let score = 0;
+  const f=parseChordFeatures(name);
+  if(!f.omit3) score += 60;
+  if(!f.omit5) score += 60;
+  if(/^(?:[A-G](?:#|♭)?)(?:m|dim|aug|sus2|sus4|5|6|m6|7|M7|m7|mM7|dim7)?(?:\([^)]*\))?$/.test(name)) score += 100;
+  score += optionalIntervals.length * 15;
+  for(const i of optionalIntervals){
+    if([9,10,11].includes(i)) score += 20;
+    if([2,5].includes(i)) score += 15;
+  }
+  if(/(?:6|7|M7|m7)/.test(name)) score += 30;
+  if(f.omit3) score -= 60;
+  if(f.omit5) score -= 40;
+  score -= f.parenCount * 8;
+  score -= f.alteredCount * 10;
+  if(f.parenCount >= 4) score -= 20;
+  if(name.length > 14) score -= 30;
+
+  // 11 を含む括弧表記（例: C7(11), C7(9,11), C7(9,11,13) など）を対象にする
+  const has11InParen = f.parenItems.some((item)=>item==='11');
+  const rootMatch = name.match(/^([A-G](?:#|♭)?)(.*)$/);
+  const suffix = rootMatch ? rootMatch[2] : '';
+  const impliesMajor3 = !(suffix.startsWith('m') || suffix.startsWith('dim') || suffix.startsWith('sus2') || suffix.startsWith('sus4') || suffix.startsWith('5'));
+  if(has11InParen && impliesMajor3) score -= 80;
+  return score;
+}
+function generateChordName(rootPc, notesPcs){
+  const set = new Set(notesPcs);
+  const has = (n)=> set.has(n);
+  const iv = (pc)=> ((pc-rootPc)%12+12)%12;
+  const intervals = uniqueSorted(Array.from(set).map(iv));
+  const hasb3=intervals.includes(3), has3=intervals.includes(4);
+  const has5=intervals.includes(7), hasb5=intervals.includes(6), hasS5=intervals.includes(8);
+  const has2=intervals.includes(2), has4=intervals.includes(5), hasb7=intervals.includes(10), has7=intervals.includes(11), has6=intervals.includes(9);
+  const hasBoth3 = has3 && hasb3;
+  const hasBoth7 = has7 && hasb7;
+  const root=PITCH_CLASS_LABELS[rootPc];
+  let base=root;
+  if(!has3 && !hasb3){
+    if(has5 && has4 && !has2) base += 'sus4';
+    else if(has5 && has2 && !has4) base += 'sus2';
+    else if(has5 && intervals.length===2) base += '5';
+  } else if(hasb3 && hasb5 && has6 && !has5 && !hasb7 && !has7){
+    base += 'dim7';
+  } else if(hasb3 && hasb5){
+    base += 'dim';
+  } else if(has3 && hasS5 && !has5){
+    base += 'aug';
+  } else if(hasb3 && !has3){
+    base += 'm';
+  }
+  if(hasBoth7){ base += 'M7'; }
+  else if(hasb7){ base += '7'; }
+  else if(has7){ base += 'M7'; }
+  else if(has6 && has3 && has5 && !hasb3){ base += '6'; }
+  else if(has6 && hasb3 && has5){ base += '6'; }
+  const mods=[];
+  const add=(m)=>{ if(!mods.includes(m)) mods.push(m); };
+  const hasAny3 = has3 || hasb3;
+  const hasAny5 = has5 || hasb5 || hasS5;
+  if(hasb5 && has5) add('#11');
+  else if(hasb5 && !(base.includes('dim'))) add('♭5');
+  if(hasS5 && has5) add('♭13');
+  else if(hasS5 && !(base.includes('aug'))) add('#5');
+  if(intervals.includes(1)) add('♭9');
+  if(hasBoth3) add('#9');
+  if(has2 && !base.includes('sus2')) add('9');
+  if(intervals.includes(5) && !base.includes('sus4')) add('11');
+  if(hasBoth7) add('#13');
+  else if(has6 && (hasb7||has7)) add('13');
+  if(!hasAny3 && !base.endsWith('sus2') && !base.endsWith('sus4') && !base.endsWith('5')) add('omit3');
+  if(!hasAny5) add('omit5');
+  mods.sort((a,b)=>CHORD_PAREN_ORDER.indexOf(a)-CHORD_PAREN_ORDER.indexOf(b));
+  return mods.length ? `${base}(${mods.join(',')})` : base;
+}
+function buildChordDisplaySummary(compositionSummary){
+  if(!compositionSummary) return null;
+  const rootPc = compositionSummary.rootPc;
+  const formalPcs = uniqueSorted(compositionSummary.activePcs || []);
+  if(rootPc == null || !formalPcs.length) return null;
+  const highlighted = new Set([...(compositionSummary.highlightCwPcs || []), ...(compositionSummary.highlightCcwPcs || [])]);
+  const optionalPcs = uniqueSorted(Array.from(highlighted).filter((pc)=> pc!==rootPc && !formalPcs.includes(pc)));
+
+  const formalCode = generateChordName(rootPc, formalPcs);
+  const candidates = [];
+  for(const mask of subsetMasks(optionalPcs.length)){
+    const picked=[];
+    for(let i=0;i<optionalPcs.length;i++) if(mask & (1<<i)) picked.push(optionalPcs[i]);
+    const name = generateChordName(rootPc, [...formalPcs, ...picked]);
+    if(name===formalCode) continue;
+    const intervals = picked.map((pc)=>((pc-rootPc)%12+12)%12);
+    candidates.push({name, picked, score:scoreCandidateChord(name, intervals)});
+  }
+  const dedup = new Map();
+  for(const c of candidates){
+    const prev=dedup.get(c.name);
+    if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
+  }
+  const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length);
+  return {formalCode, candidates: out, rootPc, optionalPcs};
+}
+
 function degreeForPitchClass(pc, drawRot, halfCenter){
   const step = movableDoStepForMidi(pc, drawRot, halfCenter);
   return MOVABLE_DO_SEQUENCE[step];
@@ -2421,7 +2542,7 @@ function nearestOuterAnglesFromRoot(rootAngle, outers){
   }
   return {ccw, cw};
 }
-function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCenter){
+function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCenter, rootAngleInK2ForTie = rootAngle){
   if(!Number.isFinite(rootAngle) || !compositionAngles || !compositionAngles.length){
     return {cw:null, ccw:null};
   }
@@ -2440,13 +2561,17 @@ function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCent
     const cwCount = cwPool.length;
     const ccwCount = ccwPool.length;
     const darkPriorityAngles = new Set([0,30,60,90,300,330]);
-    const rootRounded = normalizeAngleDeg(Math.round(rootAngle));
-    // dark=ccw / bright=cw の対応で優先側を決める
-    const keepCw = (cwCount !== ccwCount)
+    const rootRounded = normalizeAngleDeg(Math.round(rootAngleInK2ForTie));
+    const keepCw180 = (cwCount !== ccwCount)
       ? (cwCount > ccwCount)
       : !darkPriorityAngles.has(rootRounded);
-    if(keepCw) ccw = null;
-    else cw = null;
+    if(keepCw180){
+      const ccwPoolNo180 = ccwPool.filter((e)=>Math.abs(e.ccwDelta - 180) > 1e-6);
+      ccw = ccwPoolNo180.length ? ccwPoolNo180.reduce((a,b)=> (b.ccwDelta > a.ccwDelta ? b : a)) : null;
+    }else{
+      const cwPoolNo180 = cwPool.filter((e)=>Math.abs(e.cwDelta - 180) > 1e-6);
+      cw = cwPoolNo180.length ? cwPoolNo180.reduce((a,b)=> (b.cwDelta > a.cwDelta ? b : a)) : null;
+    }
   }
   return {
     cw: cw ? {angle: cw.angle, delta: cw.cwDelta, degree: cw.degree} : null,
@@ -2534,7 +2659,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     rootAngleInK1,
     compositionAngles.filter((entry)=>entry.pc !== rootPc),
     drawRot,
-    halfCenter
+    halfCenter,
+    rootAngleInK2
   );
   const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
@@ -2571,6 +2697,34 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const deltaText = k2
     ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}° (${k2.anchorCorrected ? 'Anchor ON' : 'Anchor OFF'})`
     : 'Δ: –';
+  const summaryFallbackHighlightPcsFromMidis = [
+    ...(aroundRoot?.cw ? [degreeToMidi.get(aroundRoot.cw.degree)] : []),
+    ...(aroundRoot?.ccw ? [degreeToMidi.get(aroundRoot.ccw.degree)] : [])
+  ].filter((midi)=>midi!=null).map((midi)=>((midi%12)+12)%12);
+  const highlightCwPcs = [];
+  const highlightCcwPcs = [];
+  if(Number.isFinite(rootAngleInK1)){
+    for(let pc=0; pc<12; pc++){
+      const degree = degreeForPitchClass(pc, drawRot, halfCenter);
+      const inK1 = !K2_OUTSIDE_BITS.includes(degree);
+      if(!inK1) continue;
+      const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
+      if(Number.isFinite(aroundRoot?.cw?.delta) && normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
+        highlightCwPcs.push(pc);
+      }
+      if(Number.isFinite(aroundRoot?.ccw?.delta) && normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
+        highlightCcwPcs.push(pc);
+      }
+    }
+  }
+  let highlightPcs = uniqueSorted([...highlightCwPcs, ...highlightCcwPcs]);
+  if(!highlightPcs.length){
+    highlightPcs = uniqueSorted([
+      ...(summaryFallbackHighlightPcsFromMidis ? summaryFallbackHighlightPcsFromMidis : [])
+    ]);
+  }
+  const optionalPcs = highlightPcs.filter((pc)=> pc !== rootPc && !uniquePcs.includes(pc));
+  const optionalLine = `Optional: ${optionalPcs.length ? optionalPcs.map((pc)=>PITCH_CLASS_LABELS[pc]).join(' ') : '–'}`;
   return {
     absoluteLine: absolute.join(' '),
     relativeLine: [rootRoman, ...relative.slice(1)].join(' '),
@@ -2581,14 +2735,18 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line4: outerFromRootLine1,
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
+    k2Line7: optionalLine,
     rootAngleInK1,
     rootAngleInK2,
     darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
     brightAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK1),
     activePcs: uniquePcs,
+    rootPc,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
-    highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null)
+    highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
+    highlightCwPcs,
+    highlightCcwPcs
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
@@ -2644,7 +2802,8 @@ function drawCompositionOverlay(summary){
     summary.k2Line3 || '',
     summary.k2Line4 || '',
     summary.k2Line5 || '',
-    summary.k2Line6 || ''
+    summary.k2Line6 || '',
+    summary.k2Line7 || ''
   ];
   const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
   const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
@@ -2680,6 +2839,69 @@ function drawCompositionOverlay(summary){
   lines.forEach((line, idx)=>{
     ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx);
   });
+  ctx.restore();
+}
+
+
+function drawChordOverlay(chordSummary){
+  if(!chordSummary) return;
+  const pad = 12 * devicePixelRatio;
+  const lineGap = 5 * devicePixelRatio;
+  const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
+  const headerLines = [
+    `Chord: ${chordSummary.formalCode}`,
+    `Candidates:`
+  ];
+  const candidateLines = chordSummary.candidates.length
+    ? chordSummary.candidates.map((c)=>c.name)
+    : ['–'];
+
+  ctx.save();
+  ctx.font = `${textSize}px system-ui`;
+
+  const maxH = cv.height - 24 * devicePixelRatio;
+  const rowH = textSize + lineGap;
+  const headerHeight = rowH * headerLines.length;
+  const availableForCandidates = Math.max(rowH, maxH - (pad * 2 + headerHeight));
+  const rowsPerColumn = Math.max(1, Math.floor(availableForCandidates / rowH));
+  const columns = [];
+  for(let i=0;i<candidateLines.length;i+=rowsPerColumn){
+    columns.push(candidateLines.slice(i, i + rowsPerColumn));
+  }
+
+  const colWidths = columns.map((col)=> Math.max(...col.map((line)=>ctx.measureText(line).width), 0));
+  const gapX = 18 * devicePixelRatio;
+  const bodyWidth = colWidths.reduce((a,b)=>a+b,0) + Math.max(0, (columns.length-1)*gapX);
+  const headerWidth = Math.max(...headerLines.map((line)=>ctx.measureText(line).width));
+  const boxW = Math.max(headerWidth, bodyWidth) + pad * 2;
+  const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
+  const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
+
+  const x = 12 * devicePixelRatio;
+  const y = 12 * devicePixelRatio;
+  const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
+  ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
+  ctx.fillRect(x, y, boxW, boxH);
+  ctx.strokeStyle = `rgba(255,255,255,${0.2 * boxAlpha})`;
+  ctx.lineWidth = Math.max(1, 1.2 * devicePixelRatio);
+  ctx.strokeRect(x, y, boxW, boxH);
+  ctx.fillStyle = `rgba(255,255,255,${0.95 * boxAlpha})`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+
+  headerLines.forEach((line, idx)=>{
+    ctx.fillText(line, x + pad, y + pad + idx * rowH);
+  });
+
+  let colX = x + pad;
+  const startY = y + pad + headerHeight;
+  columns.forEach((col, colIdx)=>{
+    col.forEach((line, rowIdx)=>{
+      ctx.fillText(line, colX, startY + rowIdx * rowH);
+    });
+    colX += colWidths[colIdx] + gapX;
+  });
+
   ctx.restore();
 }
 
@@ -2747,6 +2969,7 @@ function draw(){
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
   const k2Info = k2Analysis(activeNotes, drawRot, halfCenter, anchor);
   const compositionSummary = noteCompositionSummary(activeNotes, drawRot, halfCenter);
+  const chordSummary = buildChordDisplaySummary(compositionSummary);
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
@@ -2881,6 +3104,7 @@ function draw(){
   }
 
   drawCompositionOverlay(compositionSummary);
+  drawChordOverlay(chordSummary);
 
   drawKeyboard(
     displayMinFreq,
