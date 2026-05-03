@@ -2832,17 +2832,35 @@ function drawChordOverlay(chordSummary){
   const pad = 12 * devicePixelRatio;
   const lineGap = 5 * devicePixelRatio;
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
-  const candidateLine = chordSummary.candidates.length
-    ? chordSummary.candidates.map((c)=>c.name).join(' / ')
-    : '–';
-  const lines = [
+  const headerLines = [
     `Chord: ${chordSummary.formalCode}`,
-    `候補: ${candidateLine}`
+    `Candidates:`
   ];
+  const candidateLines = chordSummary.candidates.length
+    ? chordSummary.candidates.map((c)=>c.name)
+    : ['–'];
+
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
-  const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
-  const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
+
+  const maxH = cv.height - 24 * devicePixelRatio;
+  const rowH = textSize + lineGap;
+  const headerHeight = rowH * headerLines.length;
+  const availableForCandidates = Math.max(rowH, maxH - (pad * 2 + headerHeight));
+  const rowsPerColumn = Math.max(1, Math.floor(availableForCandidates / rowH));
+  const columns = [];
+  for(let i=0;i<candidateLines.length;i+=rowsPerColumn){
+    columns.push(candidateLines.slice(i, i + rowsPerColumn));
+  }
+
+  const colWidths = columns.map((col)=> Math.max(...col.map((line)=>ctx.measureText(line).width), 0));
+  const gapX = 18 * devicePixelRatio;
+  const bodyWidth = colWidths.reduce((a,b)=>a+b,0) + Math.max(0, (columns.length-1)*gapX);
+  const headerWidth = Math.max(...headerLines.map((line)=>ctx.measureText(line).width));
+  const boxW = Math.max(headerWidth, bodyWidth) + pad * 2;
+  const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
+  const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
+
   const x = 12 * devicePixelRatio;
   const y = 12 * devicePixelRatio;
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
@@ -2854,7 +2872,20 @@ function drawChordOverlay(chordSummary){
   ctx.fillStyle = `rgba(255,255,255,${0.95 * boxAlpha})`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  lines.forEach((line, idx)=> ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx));
+
+  headerLines.forEach((line, idx)=>{
+    ctx.fillText(line, x + pad, y + pad + idx * rowH);
+  });
+
+  let colX = x + pad;
+  const startY = y + pad + headerHeight;
+  columns.forEach((col, colIdx)=>{
+    col.forEach((line, rowIdx)=>{
+      ctx.fillText(line, colX, startY + rowIdx * rowH);
+    });
+    colX += colWidths[colIdx] + gapX;
+  });
+
   ctx.restore();
 }
 
