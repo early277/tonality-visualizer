@@ -2486,7 +2486,15 @@ function buildChordDisplaySummary(compositionSummary){
   const highlighted = new Set([...(compositionSummary.highlightCwPcs || []), ...(compositionSummary.highlightCcwPcs || [])]);
   const optionalPcs = uniqueSorted(Array.from(highlighted).filter((pc)=> pc!==rootPc && !formalPcs.includes(pc)));
 
+  const rootLabel = PITCH_CLASS_LABELS[rootPc] || '';
+  const rootRoman = compositionSummary.rootRoman || 'I';
+  const degreeCodeFromChordName = (name)=>{
+    if(!rootLabel || typeof name !== 'string') return name;
+    return name.startsWith(rootLabel) ? `${rootRoman}${name.slice(rootLabel.length)}` : `${rootRoman}(${name})`;
+  };
+
   const formalCode = generateChordName(rootPc, formalPcs);
+  const formalDegreeCode = degreeCodeFromChordName(formalCode);
   const candidates = [];
   for(const mask of subsetMasks(optionalPcs.length)){
     const picked=[];
@@ -2494,7 +2502,7 @@ function buildChordDisplaySummary(compositionSummary){
     const name = generateChordName(rootPc, [...formalPcs, ...picked]);
     if(name===formalCode) continue;
     const intervals = picked.map((pc)=>((pc-rootPc)%12+12)%12);
-    candidates.push({name, picked, score:scoreCandidateChord(name, intervals)});
+    candidates.push({name, degreeName: degreeCodeFromChordName(name), picked, score:scoreCandidateChord(name, intervals)});
   }
   const dedup = new Map();
   for(const c of candidates){
@@ -2502,7 +2510,7 @@ function buildChordDisplaySummary(compositionSummary){
     if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
   }
   const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length);
-  return {formalCode, candidates: out, rootPc, optionalPcs};
+  return {formalCode, formalDegreeCode, candidates: out, rootPc, optionalPcs};
 }
 
 function degreeForPitchClass(pc, drawRot, halfCenter){
@@ -2728,6 +2736,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   return {
     absoluteLine: absolute.join(' '),
     relativeLine: [rootRoman, ...relative.slice(1)].join(' '),
+    rootRoman,
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
@@ -2850,10 +2859,11 @@ function drawChordOverlay(chordSummary){
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
   const headerLines = [
     `Chord: ${chordSummary.formalCode}`,
+    `Degree: ${chordSummary.formalDegreeCode || '–'}`,
     `Candidates:`
   ];
   const candidateLines = chordSummary.candidates.length
-    ? chordSummary.candidates.map((c)=>c.name)
+    ? chordSummary.candidates.map((c)=>`${c.name} | ${c.degreeName || '–'}`)
     : ['–'];
 
   ctx.save();
