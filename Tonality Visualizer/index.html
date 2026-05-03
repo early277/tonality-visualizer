@@ -2421,7 +2421,8 @@ function scoreCandidateChord(name, optionalIntervals){
   if(f.parenCount >= 4) score -= 20;
   if(name.length > 14) score -= 30;
 
-  const has11InParen = f.parenItems.includes('11');
+  // 11 を含む括弧表記（例: C7(11), C7(9,11), C7(9,11,13) など）を対象にする
+  const has11InParen = f.parenItems.some((item)=>item==='11');
   const rootMatch = name.match(/^([A-G](?:#|♭)?)(.*)$/);
   const suffix = rootMatch ? rootMatch[2] : '';
   const impliesMajor3 = !(suffix.startsWith('m') || suffix.startsWith('dim') || suffix.startsWith('sus2') || suffix.startsWith('sus4') || suffix.startsWith('5'));
