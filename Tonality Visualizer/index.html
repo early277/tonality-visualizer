@@ -982,6 +982,19 @@ function keyboardMetrics(){
   if(!keyboardEnabled) return {active:false, mode:'none', height:0, padding:0, reservedBottom:0, reservedRight:0, panelWidth:0, panelGap:0};
   const padding = 16 * devicePixelRatio;
   const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const landscape = cv.width > cv.height * 1.25;
+  if(landscape){
+    const panelGap = 12 * devicePixelRatio;
+    const targetDiskAreaWidth = cv.height * 1.02;
+    const panelFromTarget = cv.width - targetDiskAreaWidth - panelGap;
+    const desiredPanelWidth = Math.max(cv.width * 0.30, panelFromTarget);
+    const minDiskAreaWidth = cv.height * 0.82;
+    const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
+    const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
+    if(panelWidth >= 180 * devicePixelRatio){
+      return {active:true, mode:'side', height, padding, reservedBottom:0, reservedRight:panelWidth + panelGap, panelWidth, panelGap};
+    }
+  }
   return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2, reservedRight:0, panelWidth:0, panelGap:0};
 }
 function canvasCenter(){
@@ -1853,7 +1866,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ? (cv.width - keyboard.panelWidth) + (keyboard.panelWidth - width) / 2
     : cx - width / 2;
   const y = (keyboard.mode === 'side')
-    ? (cv.height - keyboardHeight) / 2
+    ? (cv.height - keyboardHeight - padding)
     : cv.height - keyboardHeight - padding;
 
   const whiteWidth = width / whiteKeys.length;
@@ -2847,8 +2860,14 @@ function drawCompositionOverlay(summary){
   let x = cv.width - boxW - 12 * devicePixelRatio;
   let y = 12 * devicePixelRatio;
   if(keyboard.active){
-    x = cv.width - boxW - 12 * devicePixelRatio;
-    y = 12 * devicePixelRatio;
+    if(keyboard.mode === 'side'){
+      const panelX = cv.width - keyboard.panelWidth;
+      x = panelX + Math.max(8 * devicePixelRatio, keyboard.panelWidth * 0.5 - boxW - 6 * devicePixelRatio);
+      y = 12 * devicePixelRatio;
+    }else{
+      x = cv.width - boxW - 12 * devicePixelRatio;
+      y = 12 * devicePixelRatio;
+    }
   }else{
     const {cx, cy} = canvasCenter();
     const {rMax} = ringParams();
@@ -2891,7 +2910,8 @@ function drawChordOverlay(chordSummary){
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
 
-  const keyReserved = keyboardEnabled ? (keyboardMetrics().height + keyboardMetrics().padding * 2) : 0;
+  const km = keyboardMetrics();
+  const keyReserved = (keyboardEnabled && km.mode !== 'side') ? (km.height + km.padding * 2) : 0;
   const maxH = cv.height - 24 * devicePixelRatio - keyReserved;
   const rowH = textSize + lineGap;
   const headerHeight = rowH * headerLines.length;
@@ -2910,8 +2930,15 @@ function drawChordOverlay(chordSummary){
   const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
   const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
 
-  const x = 12 * devicePixelRatio;
+  let x = 12 * devicePixelRatio;
   const y = 12 * devicePixelRatio;
+  if(keyboardEnabled){
+    const km2 = keyboardMetrics();
+    if(km2.mode === 'side'){
+      const panelX = cv.width - km2.panelWidth;
+      x = panelX + 10 * devicePixelRatio;
+    }
+  }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
   ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
   ctx.fillRect(x, y, boxW, boxH);
