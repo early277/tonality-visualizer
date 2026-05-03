@@ -2529,7 +2529,7 @@ function nearestOuterAnglesFromRoot(rootAngle, outers){
   }
   return {ccw, cw};
 }
-function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCenter){
+function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCenter, rootAngleInK2ForTie = rootAngle){
   if(!Number.isFinite(rootAngle) || !compositionAngles || !compositionAngles.length){
     return {cw:null, ccw:null};
   }
@@ -2548,13 +2548,17 @@ function pickCwCcwWithinHalfTurn(rootAngle, compositionAngles, drawRot, halfCent
     const cwCount = cwPool.length;
     const ccwCount = ccwPool.length;
     const darkPriorityAngles = new Set([0,30,60,90,300,330]);
-    const rootRounded = normalizeAngleDeg(Math.round(rootAngle));
-    // dark=ccw / bright=cw の対応で優先側を決める
-    const keepCw = (cwCount !== ccwCount)
+    const rootRounded = normalizeAngleDeg(Math.round(rootAngleInK2ForTie));
+    const keepCw180 = (cwCount !== ccwCount)
       ? (cwCount > ccwCount)
       : !darkPriorityAngles.has(rootRounded);
-    if(keepCw) ccw = null;
-    else cw = null;
+    if(keepCw180){
+      const ccwPoolNo180 = ccwPool.filter((e)=>Math.abs(e.ccwDelta - 180) > 1e-6);
+      ccw = ccwPoolNo180.length ? ccwPoolNo180.reduce((a,b)=> (b.ccwDelta > a.ccwDelta ? b : a)) : null;
+    }else{
+      const cwPoolNo180 = cwPool.filter((e)=>Math.abs(e.cwDelta - 180) > 1e-6);
+      cw = cwPoolNo180.length ? cwPoolNo180.reduce((a,b)=> (b.cwDelta > a.cwDelta ? b : a)) : null;
+    }
   }
   return {
     cw: cw ? {angle: cw.angle, delta: cw.cwDelta, degree: cw.degree} : null,
@@ -2642,7 +2646,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     rootAngleInK1,
     compositionAngles.filter((entry)=>entry.pc !== rootPc),
     drawRot,
-    halfCenter
+    halfCenter,
+    rootAngleInK2
   );
   const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
