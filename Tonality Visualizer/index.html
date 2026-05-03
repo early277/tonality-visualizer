@@ -203,6 +203,11 @@
     <span id="outerHighlightAlphaVal">45%</span>
   </label>
 
+  <label id="compositionInfoAWrap" data-lbl="compositionInfoAlpha">
+    <input id="compositionInfoA" type="range" min="0" max="100" step="1" value="75">
+    <span id="compositionInfoAVal">75%</span>
+  </label>
+
   <label id="keyboardWrap" data-lbl="keyboard">
     <input id="keyboardToggle" type="checkbox" checked>
   </label>
@@ -327,6 +332,7 @@ const labelSizeSlider = document.getElementById('labelSize'); const labelSizeVal
 const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = document.getElementById('labelBGVal');
 const labelAlphaSlider = document.getElementById('labelAlpha'); const labelAlphaVal = document.getElementById('labelAlphaVal');
 const outerHighlightAlphaSlider = document.getElementById('outerHighlightAlpha'); const outerHighlightAlphaVal = document.getElementById('outerHighlightAlphaVal');
+const compositionInfoASlider = document.getElementById('compositionInfoA'); const compositionInfoAVal = document.getElementById('compositionInfoAVal');
 const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
 const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
 const noteDotSizeSlider = document.getElementById('noteDotSize'); const noteDotSizeVal = document.getElementById('noteDotSizeVal');
@@ -408,7 +414,7 @@ const I18N = {
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", k2WaterAlpha:"K2 water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size", noteDotSize:"note dot size",
-    labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α", outerHighlightAlpha:"outer highlight α",
+    labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α", outerHighlightAlpha:"outer highlight α", compositionInfoAlpha:"composition info α",
     keyboard:"keyboard", keyboardMovableDo:"movable-do numbers", keyboardDistance:"distance from lowest (octave)", keyboardFifthAngle:"circle-of-fifths steps",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
@@ -492,7 +498,7 @@ const I18N = {
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", k2WaterAlpha:"K2水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ", noteDotSize:"ノート円サイズ",
-    labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度", outerHighlightAlpha:"外周ハイライト不透明度",
+    labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度", outerHighlightAlpha:"外周ハイライト不透明度", compositionInfoAlpha:"構成情報の不透明度",
     keyboard:"鍵盤表示", keyboardMovableDo:"移動ド数字", keyboardDistance:"最低音からの距離(オクターブ)", keyboardFifthAngle:"五度円ステップ",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
@@ -676,7 +682,7 @@ function collectSettingsFromUI(){
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     noteDotSize: noteDotSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
-    labelAlpha: labelAlphaSlider.value, outerHighlightAlpha: outerHighlightAlphaSlider.value,
+    labelAlpha: labelAlphaSlider.value, outerHighlightAlpha: outerHighlightAlphaSlider.value, compositionInfoA: compositionInfoASlider.value,
     keyboard: collectKeyboardSettings(),
     keyboardEnabled: keyboardToggle.checked,
     keyboardMovableDo: keyboardMovableToggle.checked,
@@ -788,6 +794,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('outerHighlightAlpha')){
     outerHighlightAlphaSlider.value = s.outerHighlightAlpha;
     outerHighlightAlphaSlider.oninput();
+  }
+  if(has('compositionInfoA')){
+    compositionInfoASlider.value = s.compositionInfoA;
+    compositionInfoASlider.oninput();
   }
   const keyboardPreset = (s.keyboard && typeof s.keyboard === 'object') ? s.keyboard : null;
   if(keyboardPreset){
@@ -1129,6 +1139,13 @@ let outerHighlightAlpha = parseInt(outerHighlightAlphaSlider.value,10)/100; oute
 outerHighlightAlphaSlider.oninput = ()=>{
   outerHighlightAlpha = parseInt(outerHighlightAlphaSlider.value,10)/100;
   outerHighlightAlphaVal.textContent = `${Math.round(outerHighlightAlpha*100)}%`;
+  saveSettings();
+};
+
+let compositionInfoAlpha = parseInt(compositionInfoASlider.value,10)/100; compositionInfoAVal.textContent=`${Math.round(compositionInfoAlpha*100)}%`;
+compositionInfoASlider.oninput = ()=>{
+  compositionInfoAlpha = parseInt(compositionInfoASlider.value,10)/100;
+  compositionInfoAVal.textContent = `${Math.round(compositionInfoAlpha*100)}%`;
   saveSettings();
 };
 
@@ -2506,30 +2523,31 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const rootDegree = degreeForPitchClass(rootPc, drawRot, halfCenter);
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
-  const rootAngleInK = kAngleInKForPitchClass(rootPc, drawRot, halfCenter);
+  const rootAngleInK1 = kAngleInKForPitchClass(rootPc, drawRot, halfCenter);
+  const rootAngleInK2 = normalizeAngleDeg(rootAngleInK1 - (k2?.appliedDeltaDeg || 0));
   const compositionAngles = uniquePcs.map((pc)=>{
     const angle = kAngleInKForPitchClass(pc, drawRot, halfCenter);
     const midi = degreeToMidi.get(degreeForPitchClass(pc, drawRot, halfCenter));
     return {pc, angle, midi};
   });
   const aroundRoot = pickCwCcwWithinHalfTurn(
-    rootAngleInK,
+    rootAngleInK1,
     compositionAngles.filter((entry)=>entry.pc !== rootPc),
     drawRot,
     halfCenter
   );
   const cwHighlightDegrees = (aroundRoot?.cw)
     ? outerAngles
-      .filter((entry)=> normalizeAngleDeg(rootAngleInK - entry.angle) <= aroundRoot.cw.delta + 1e-6)
+      .filter((entry)=> normalizeAngleDeg(rootAngleInK1 - entry.angle) <= aroundRoot.cw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
   const ccwHighlightDegrees = (aroundRoot?.ccw)
     ? outerAngles
-      .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK) <= aroundRoot.ccw.delta + 1e-6)
+      .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
   const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
-  const outerFromRootLine1 = `rootAngleInK: ${Math.round(rootAngleInK)}(${rootMovableDo})`;
+  const outerFromRootLine1 = `rootAngleInK1: ${Math.round(rootAngleInK1)}(${rootMovableDo}) | rootAngleInK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
   const singleCompositionTone = uniquePcs.length === 1;
   const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
@@ -2563,9 +2581,10 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line4: outerFromRootLine1,
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
-    rootAngleInK,
-    darkAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK),
-    brightAngleFromRoot: singleCompositionTone ? rootAngleInK : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK),
+    rootAngleInK1,
+    rootAngleInK2,
+    darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
+    brightAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.cw ? aroundRoot.cw.angle : rootAngleInK1),
     activePcs: uniquePcs,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
@@ -2577,7 +2596,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
   const {cx, cy} = canvasCenter();
   const radius = rMax + 18;
   const markerRadius = Math.max(18, 21 * devicePixelRatio);
-  const rootAngle = summary.rootAngleInK;
+  const rootAngle = summary.rootAngleInK1;
   const ccwLimit = summary.darkAngleFromRoot;
   const cwLimit = summary.brightAngleFromRoot;
   const activePcs = new Set(summary.activePcs || []);
@@ -2649,12 +2668,13 @@ function drawCompositionOverlay(summary){
       cy + rMax - boxH * 0.2
     );
   }
-  ctx.fillStyle = 'rgba(10,14,20,0.76)';
+  const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
+  ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
   ctx.fillRect(x, y, boxW, boxH);
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeStyle = `rgba(255,255,255,${0.2 * boxAlpha})`;
   ctx.lineWidth = Math.max(1, 1.2 * devicePixelRatio);
   ctx.strokeRect(x, y, boxW, boxH);
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillStyle = `rgba(255,255,255,${0.95 * boxAlpha})`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   lines.forEach((line, idx)=>{
