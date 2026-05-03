@@ -2692,6 +2692,9 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const highlightCcwPcs = [];
   if(Number.isFinite(rootAngleInK1)){
     for(let pc=0; pc<12; pc++){
+      const degree = degreeForPitchClass(pc, drawRot, halfCenter);
+      const inK1 = !K2_OUTSIDE_BITS.includes(degree);
+      if(!inK1) continue;
       const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
       if(Number.isFinite(aroundRoot?.cw?.delta) && normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
         highlightCwPcs.push(pc);
