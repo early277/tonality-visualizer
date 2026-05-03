@@ -2763,16 +2763,17 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
       .map((entry)=> entry.degree)
     : [];
   const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
-  const outerFromRootLine1 = `rootK1: ${Math.round(rootAngleInK1)}(${rootMovableDo}) | rootK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
+  const outerFromRootLine1 = `rootK1: ${Math.round(rootAngleInK1)}(${rootMovableDo})`;
   const singleCompositionTone = uniquePcs.length === 1;
   const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
-  const outerFromRootLine2 = singleCompositionTone
+  const outerFromRootLine2 = `rootK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
+  const outerFromRootLine3 = singleCompositionTone
     ? `DarkAngle: 0(1)`
     : (aroundRoot && aroundRoot.ccw)
       ? `DarkAngle: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
       : `DarkAngle: 0(1)`;
-  const outerFromRootLine3 = singleCompositionTone
+  const outerFromRootLine4 = singleCompositionTone
     ? `BrightAngle: 0(1)`
     : (aroundRoot && aroundRoot.cw)
       ? `BrightAngle: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
@@ -2825,11 +2826,13 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
-    k2Line3: `${maskText} | ${deltaText}`,
-    k2Line4: outerFromRootLine1,
-    k2Line5: outerFromRootLine2,
-    k2Line6: outerFromRootLine3,
-    k2Line7: optionalLine,
+    k2Line3: maskText,
+    k2Line4: deltaText,
+    k2Line5: outerFromRootLine1,
+    k2Line6: outerFromRootLine2,
+    k2Line7: outerFromRootLine3,
+    k2Line8: outerFromRootLine4,
+    k2Line9: optionalLine,
     rootAngleInK1,
     rootAngleInK2,
     darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
@@ -2900,7 +2903,9 @@ function drawCompositionOverlay(summary){
     summary.k2Line4 || '',
     summary.k2Line5 || '',
     summary.k2Line6 || '',
-    summary.k2Line7 || ''
+    summary.k2Line7 || '',
+    summary.k2Line8 || '',
+    summary.k2Line9 || ''
   ];
   const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
   const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
