@@ -2679,6 +2679,18 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const deltaText = k2
     ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}° (${k2.anchorCorrected ? 'Anchor ON' : 'Anchor OFF'})`
     : 'Δ: –';
+  const highlightPcs = uniqueSorted([
+    ...cwHighlightDegrees.map((deg)=>{
+      for(let pc=0; pc<12; pc++) if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
+      return null;
+    }).filter((pc)=>pc!=null),
+    ...ccwHighlightDegrees.map((deg)=>{
+      for(let pc=0; pc<12; pc++) if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
+      return null;
+    }).filter((pc)=>pc!=null)
+  ]);
+  const optionalPcs = highlightPcs.filter((pc)=> pc !== rootPc && !uniquePcs.includes(pc));
+  const optionalLine = `Optional: ${optionalPcs.length ? optionalPcs.map((pc)=>PITCH_CLASS_LABELS[pc]).join(' ') : '–'}`;
   return {
     absoluteLine: absolute.join(' '),
     relativeLine: [rootRoman, ...relative.slice(1)].join(' '),
@@ -2689,6 +2701,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2Line4: outerFromRootLine1,
     k2Line5: outerFromRootLine2,
     k2Line6: outerFromRootLine3,
+    k2Line7: optionalLine,
     rootAngleInK1,
     rootAngleInK2,
     darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
@@ -2698,18 +2711,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
-    highlightCwPcs: cwHighlightDegrees.map((deg)=>{
-      for(let pc=0; pc<12; pc++){
-        if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
-      }
-      return null;
-    }).filter((pc)=>pc!=null),
-    highlightCcwPcs: ccwHighlightDegrees.map((deg)=>{
-      for(let pc=0; pc<12; pc++){
-        if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
-      }
-      return null;
-    }).filter((pc)=>pc!=null)
+    highlightCwPcs: highlightPcs.filter((pc)=> cwHighlightDegrees.some((deg)=>degreeForPitchClass(pc, drawRot, halfCenter)===deg)),
+    highlightCcwPcs: highlightPcs.filter((pc)=> ccwHighlightDegrees.some((deg)=>degreeForPitchClass(pc, drawRot, halfCenter)===deg))
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
@@ -2765,7 +2768,8 @@ function drawCompositionOverlay(summary){
     summary.k2Line3 || '',
     summary.k2Line4 || '',
     summary.k2Line5 || '',
-    summary.k2Line6 || ''
+    summary.k2Line6 || '',
+    summary.k2Line7 || ''
   ];
   const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
   const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
