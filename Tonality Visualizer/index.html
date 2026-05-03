@@ -2385,6 +2385,7 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
 }
 
 
+const DEGREE_TO_PC_MAP = { '-7':11,'-6':4,'-3':9,'-2':2,'+4':7,'1':0,'2':5,'3':10,'4':3,'5':8,'6':1,'7':6 };
 const CHORD_INTERVAL_LABELS = ['1','♭9','9','♭3','3','11','tritone','5','alt5','6/13','♭7','7'];
 const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','omit3','omit5'];
 function uniqueSorted(arr){ return Array.from(new Set(arr)).sort((a,b)=>a-b); }
@@ -2470,9 +2471,7 @@ function buildChordDisplaySummary(compositionSummary){
   const rootPc = compositionSummary.rootPc;
   const formalPcs = uniqueSorted(compositionSummary.activePcs || []);
   if(rootPc == null || !formalPcs.length) return null;
-  const highlighted = new Set();
-  for(const midi of (compositionSummary.highlightCwMidis || [])) highlighted.add(((midi%12)+12)%12);
-  for(const midi of (compositionSummary.highlightCcwMidis || [])) highlighted.add(((midi%12)+12)%12);
+  const highlighted = new Set([...(compositionSummary.highlightCwPcs || []), ...(compositionSummary.highlightCcwPcs || [])]);
   const optionalPcs = uniqueSorted(Array.from(highlighted).filter((pc)=> pc!==rootPc && !formalPcs.includes(pc)));
 
   const formalCode = generateChordName(rootPc, formalPcs);
@@ -2699,7 +2698,9 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     rootPc,
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
-    highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null)
+    highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
+    highlightCwPcs: cwHighlightDegrees.map((deg)=> DEGREE_TO_PC_MAP[deg]).filter((pc)=>pc!=null),
+    highlightCcwPcs: ccwHighlightDegrees.map((deg)=> DEGREE_TO_PC_MAP[deg]).filter((pc)=>pc!=null)
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
