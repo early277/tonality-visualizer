@@ -2919,7 +2919,7 @@ function drawCompositionOverlay(summary){
   }else if(!landscape){
     const {cx, cy} = canvasCenter();
     const {rMax} = ringParams();
-    x = Math.max(12 * devicePixelRatio, cx - boxW * 0.5);
+    x = Math.min(cv.width - boxW - 12 * devicePixelRatio, cx + rMax - boxW);
     y = Math.min(cv.height - boxH - 12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
   }else{
     const {cx, cy} = canvasCenter();
@@ -2983,14 +2983,21 @@ function drawChordOverlay(chordSummary){
   const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
   const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
 
+  const landscape = cv.width > cv.height * 1.25;
   let x = 12 * devicePixelRatio;
-  const y = 12 * devicePixelRatio;
+  let y = 12 * devicePixelRatio;
   if(keyboardEnabled){
     const km2 = keyboardMetrics();
     if(km2.mode === 'side'){
       const panelX = cv.width - km2.panelWidth;
       x = panelX + 8 * devicePixelRatio;
     }
+  }
+  if(!landscape){
+    const {cx, cy} = canvasCenter();
+    const {rMax} = ringParams();
+    x = Math.max(12 * devicePixelRatio, cx - rMax);
+    y = Math.min(cv.height - boxH - 12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
   }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
   ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
@@ -3092,7 +3099,7 @@ function draw(){
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
-  drawOuterAngleHighlights(compositionSummary, drawRot, halfCenter, rMax);
+  drawOuterAngleHighlights(compositionSummaryRaw, drawRot, halfCenter, rMax);
 
   // 放射線
   ctx.save(); ctx.translate(cx,cy);
@@ -3236,7 +3243,7 @@ function draw(){
     halfCenter,
     lowestMidi,
     highestMidi,
-    compositionSummary
+    compositionSummaryRaw
   );
 
   requestAnimationFrame(draw);
