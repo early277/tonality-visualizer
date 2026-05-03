@@ -2188,8 +2188,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const drawOuterRoleHighlightsOnKeyboard = ()=>{
     if(!compositionSummary) return;
     const rootMidi = compositionSummary.highlightRootMidi;
-    const cwPcs = new Set(compositionSummary.highlightCwPcs || []);
-    const ccwPcs = new Set(compositionSummary.highlightCcwPcs || []);
+    const cwPcs = new Set(compositionSummary.keyboardHighlightCwPcs || compositionSummary.highlightCwPcs || []);
+    const ccwPcs = new Set(compositionSummary.keyboardHighlightCcwPcs || compositionSummary.highlightCcwPcs || []);
     const alpha = Math.max(0.25, Math.min(0.85, outerHighlightAlpha));
     const radiusWhite = Math.max(blackWidth * 0.34, 8 * devicePixelRatio);
     const radiusBlack = Math.max(blackWidth * 0.3, 7 * devicePixelRatio);
@@ -2213,7 +2213,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       const radius = key.isBlack ? radiusBlack : radiusWhite;
       if(cw) drawCircle(centerX, centerY, radius, `rgba(90,255,120,${alpha})`);
       if(ccw) drawCircle(centerX, centerY, radius, `rgba(255,90,90,${alpha})`);
-      if(isRoot) drawCircle(centerX, centerY, radius * 0.72, `rgba(255,255,255,${Math.max(alpha, 0.5)})`);
+      if(isRoot) drawCircle(centerX, centerY, radius * 0.96, `rgba(255,255,255,${Math.max(alpha, 0.62)})`);
     }
   };
 
@@ -2745,17 +2745,20 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   ].filter((midi)=>midi!=null).map((midi)=>((midi%12)+12)%12);
   const highlightCwPcs = [];
   const highlightCcwPcs = [];
+  const keyboardHighlightCwPcs = [];
+  const keyboardHighlightCcwPcs = [];
   if(Number.isFinite(rootAngleInK1)){
     for(let pc=0; pc<12; pc++){
       const degree = degreeForPitchClass(pc, drawRot, halfCenter);
       const inK1 = !K2_OUTSIDE_BITS.includes(degree);
-      if(!inK1) continue;
       const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
       if(Number.isFinite(aroundRoot?.cw?.delta) && normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
-        highlightCwPcs.push(pc);
+        keyboardHighlightCwPcs.push(pc);
+        if(inK1) highlightCwPcs.push(pc);
       }
       if(Number.isFinite(aroundRoot?.ccw?.delta) && normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
-        highlightCcwPcs.push(pc);
+        keyboardHighlightCcwPcs.push(pc);
+        if(inK1) highlightCcwPcs.push(pc);
       }
     }
   }
@@ -2789,7 +2792,9 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCwPcs,
-    highlightCcwPcs
+    highlightCcwPcs,
+    keyboardHighlightCwPcs: uniqueSorted(keyboardHighlightCwPcs),
+    keyboardHighlightCcwPcs: uniqueSorted(keyboardHighlightCcwPcs)
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
