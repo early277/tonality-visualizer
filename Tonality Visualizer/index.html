@@ -2915,7 +2915,7 @@ function drawCompositionOverlay(summary){
     if(keyboard.mode === 'side'){
       const panelX = cv.width - keyboard.panelWidth;
       const halfW = keyboard.panelWidth * 0.5;
-      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
+      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5) - keyboard.panelWidth * 0.1;
       y = 12 * devicePixelRatio;
     }else{
       x = cv.width - boxW - 12 * devicePixelRatio;
