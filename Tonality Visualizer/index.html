@@ -2385,7 +2385,6 @@ function drawMovableDoNumbers(halfCenter, rMax, cx, cy){
 }
 
 
-const DEGREE_TO_PC_MAP = { '-7':11,'-6':4,'-3':9,'-2':2,'+4':7,'1':0,'2':5,'3':10,'4':3,'5':8,'6':1,'7':6 };
 const CHORD_INTERVAL_LABELS = ['1','♭9','9','♭3','3','11','tritone','5','alt5','6/13','♭7','7'];
 const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','omit3','omit5'];
 function uniqueSorted(arr){ return Array.from(new Set(arr)).sort((a,b)=>a-b); }
@@ -2699,8 +2698,18 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
-    highlightCwPcs: cwHighlightDegrees.map((deg)=> DEGREE_TO_PC_MAP[deg]).filter((pc)=>pc!=null),
-    highlightCcwPcs: ccwHighlightDegrees.map((deg)=> DEGREE_TO_PC_MAP[deg]).filter((pc)=>pc!=null)
+    highlightCwPcs: cwHighlightDegrees.map((deg)=>{
+      for(let pc=0; pc<12; pc++){
+        if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
+      }
+      return null;
+    }).filter((pc)=>pc!=null),
+    highlightCcwPcs: ccwHighlightDegrees.map((deg)=>{
+      for(let pc=0; pc<12; pc++){
+        if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
+      }
+      return null;
+    }).filter((pc)=>pc!=null)
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
