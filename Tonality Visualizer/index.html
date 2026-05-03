@@ -2390,12 +2390,13 @@ const CHORD_PAREN_ORDER = ['♭5','#5','♭9','9','#9','11','#11','♭13','13','
 function uniqueSorted(arr){ return Array.from(new Set(arr)).sort((a,b)=>a-b); }
 function subsetMasks(count){ const out=[]; for(let mask=1; mask < (1<<count); mask++) out.push(mask); return out; }
 function parseChordFeatures(name){
-  const f={omit3:false, omit5:false, alteredCount:0, parenCount:0, length:name.length};
+  const f={omit3:false, omit5:false, alteredCount:0, parenCount:0, length:name.length, parenItems:[]};
   if(name.includes('omit3')) f.omit3=true;
   if(name.includes('omit5')) f.omit5=true;
   const m = name.match(/\(([^)]*)\)/);
   if(m){
     const items = m[1].split(',').map(v=>v.trim()).filter(Boolean);
+    f.parenItems = items;
     f.parenCount = items.length;
     for(const t of items){ if(['♭9','#9','#11','♭13','#13','♭5','#5'].includes(t)) f.alteredCount++; }
   }
@@ -2419,6 +2420,12 @@ function scoreCandidateChord(name, optionalIntervals){
   score -= f.alteredCount * 10;
   if(f.parenCount >= 4) score -= 20;
   if(name.length > 14) score -= 30;
+
+  const has11InParen = f.parenItems.includes('11');
+  const rootMatch = name.match(/^([A-G](?:#|♭)?)(.*)$/);
+  const suffix = rootMatch ? rootMatch[2] : '';
+  const impliesMajor3 = !(suffix.startsWith('m') || suffix.startsWith('dim') || suffix.startsWith('sus2') || suffix.startsWith('sus4') || suffix.startsWith('5'));
+  if(has11InParen && impliesMajor3) score -= 20;
   return score;
 }
 function generateChordName(rootPc, notesPcs){
