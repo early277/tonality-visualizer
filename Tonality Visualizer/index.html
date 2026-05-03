@@ -2941,8 +2941,7 @@ function drawChordOverlay(chordSummary){
     const km2 = keyboardMetrics();
     if(km2.mode === 'side'){
       const panelX = cv.width - km2.panelWidth;
-      const halfW = km2.panelWidth * 0.5;
-      x = panelX + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
+      x = panelX + 8 * devicePixelRatio;
     }
   }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
