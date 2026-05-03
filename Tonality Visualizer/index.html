@@ -2679,16 +2679,20 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const deltaText = k2
     ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}° (${k2.anchorCorrected ? 'Anchor ON' : 'Anchor OFF'})`
     : 'Δ: –';
-  const highlightPcs = uniqueSorted([
-    ...cwHighlightDegrees.map((deg)=>{
-      for(let pc=0; pc<12; pc++) if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
-      return null;
-    }).filter((pc)=>pc!=null),
-    ...ccwHighlightDegrees.map((deg)=>{
-      for(let pc=0; pc<12; pc++) if(degreeForPitchClass(pc, drawRot, halfCenter) === deg) return pc;
-      return null;
-    }).filter((pc)=>pc!=null)
-  ]);
+  const highlightCwPcs = [];
+  const highlightCcwPcs = [];
+  if(Number.isFinite(rootAngleInK1) && Number.isFinite(aroundRoot?.cw?.delta) && Number.isFinite(aroundRoot?.ccw?.delta)){
+    for(let pc=0; pc<12; pc++){
+      const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
+      if(normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
+        highlightCwPcs.push(pc);
+      }
+      if(normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
+        highlightCcwPcs.push(pc);
+      }
+    }
+  }
+  const highlightPcs = uniqueSorted([...highlightCwPcs, ...highlightCcwPcs]);
   const optionalPcs = highlightPcs.filter((pc)=> pc !== rootPc && !uniquePcs.includes(pc));
   const optionalLine = `Optional: ${optionalPcs.length ? optionalPcs.map((pc)=>PITCH_CLASS_LABELS[pc]).join(' ') : '–'}`;
   return {
@@ -2711,8 +2715,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightRootMidi: degreeToMidi.get(rootDegree) ?? rootMidi,
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
-    highlightCwPcs: highlightPcs.filter((pc)=> cwHighlightDegrees.some((deg)=>degreeForPitchClass(pc, drawRot, halfCenter)===deg)),
-    highlightCcwPcs: highlightPcs.filter((pc)=> ccwHighlightDegrees.some((deg)=>degreeForPitchClass(pc, drawRot, halfCenter)===deg))
+    highlightCwPcs,
+    highlightCcwPcs
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
