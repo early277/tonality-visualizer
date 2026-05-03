@@ -1832,7 +1832,7 @@ function movableDoStepForMidi(midi, drawRot, halfCenter){
   return step;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, lowestMidi=null, highestMidi=null){
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, lowestMidi=null, highestMidi=null, compositionSummary=null){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
@@ -1866,7 +1866,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ? (cv.width - keyboard.panelWidth) + (keyboard.panelWidth - width) / 2
     : cx - width / 2;
   const y = (keyboard.mode === 'side')
-    ? (cv.height - keyboardHeight) / 2
+    ? (cv.height - keyboardHeight - padding)
     : cv.height - keyboardHeight - padding;
 
   const whiteWidth = width / whiteKeys.length;
@@ -2185,6 +2185,46 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.restore();
   };
 
+  const drawOuterRoleHighlightsOnKeyboard = ()=>{
+    if(!compositionSummary) return;
+    const rootMidi = compositionSummary.highlightRootMidi;
+    const rootPc = compositionSummary.rootPc;
+    const cwPcs = new Set(compositionSummary.keyboardHighlightCwPcs || compositionSummary.highlightCwPcs || []);
+    const ccwPcs = new Set(compositionSummary.keyboardHighlightCcwPcs || compositionSummary.highlightCcwPcs || []);
+    const activePcs = new Set(compositionSummary.activePcs || []);
+    const alpha = Math.max(0.25, Math.min(0.85, outerHighlightAlpha));
+    const radiusWhite = Math.max(blackWidth * 0.34, 8 * devicePixelRatio);
+    const radiusBlack = Math.max(blackWidth * 0.3, 7 * devicePixelRatio);
+    const movableYWhite = y + keyboardHeight - Math.max(10 * devicePixelRatio, blackWidth * 0.62);
+    const movableYBlack = y + blackHeight - Math.max(10 * devicePixelRatio, blackWidth * 0.52);
+
+    const drawCircle = (cx, cy, radius, color)=>{
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+      ctx.fill();
+    };
+
+    const rootCandidates = keys.filter((key)=> rootPc != null && key.pc === rootPc);
+    const rootKeyMidi = rootCandidates.length ? Math.min(...rootCandidates.map((key)=>key.midi)) : rootMidi;
+
+    for(const key of keys){
+      const isRoot = (rootPc != null) ? (key.midi === rootKeyMidi) : (rootMidi != null && key.midi === rootMidi);
+      const outsideK1 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(key.pc, drawRot, halfCenter));
+      const cw = !isRoot && cwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
+      const ccw = !isRoot && ccwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
+      if(!isRoot && !cw && !ccw) continue;
+      const centerX = key.isBlack ? (key.x + key.width / 2) : movableLabelXForWhiteKey(key);
+      const centerY = key.isBlack ? movableYBlack : movableYWhite;
+      const radius = key.isBlack ? radiusBlack : radiusWhite;
+      if(cw) drawCircle(centerX, centerY, radius, `rgba(90,255,120,${alpha})`);
+      if(ccw) drawCircle(centerX, centerY, radius, `rgba(255,90,90,${alpha})`);
+      if(isRoot) drawCircle(centerX, centerY, radius * 0.96, `rgba(255,255,255,${Math.max(alpha, 0.62)})`);
+    }
+  };
+
+  drawOuterRoleHighlightsOnKeyboard();
+
   const lowestHighlightKeys = highlightKeysForMidi(lowestMidi, {role:'lowest'});
   const lowestHighlightedMidi = lowestHighlightKeys.length
     ? Math.max(...lowestHighlightKeys.map((key)=> key.midi))
@@ -2486,7 +2526,15 @@ function buildChordDisplaySummary(compositionSummary){
   const highlighted = new Set([...(compositionSummary.highlightCwPcs || []), ...(compositionSummary.highlightCcwPcs || [])]);
   const optionalPcs = uniqueSorted(Array.from(highlighted).filter((pc)=> pc!==rootPc && !formalPcs.includes(pc)));
 
+  const rootLabel = PITCH_CLASS_LABELS[rootPc] || '';
+  const rootRoman = compositionSummary.rootRoman || 'I';
+  const degreeCodeFromChordName = (name)=>{
+    if(!rootLabel || typeof name !== 'string') return name;
+    return name.startsWith(rootLabel) ? `${rootRoman}${name.slice(rootLabel.length)}` : `${rootRoman}(${name})`;
+  };
+
   const formalCode = generateChordName(rootPc, formalPcs);
+  const formalDegreeCode = degreeCodeFromChordName(formalCode);
   const candidates = [];
   for(const mask of subsetMasks(optionalPcs.length)){
     const picked=[];
@@ -2494,7 +2542,7 @@ function buildChordDisplaySummary(compositionSummary){
     const name = generateChordName(rootPc, [...formalPcs, ...picked]);
     if(name===formalCode) continue;
     const intervals = picked.map((pc)=>((pc-rootPc)%12+12)%12);
-    candidates.push({name, picked, score:scoreCandidateChord(name, intervals)});
+    candidates.push({name, degreeName: degreeCodeFromChordName(name), picked, score:scoreCandidateChord(name, intervals)});
   }
   const dedup = new Map();
   for(const c of candidates){
@@ -2502,7 +2550,7 @@ function buildChordDisplaySummary(compositionSummary){
     if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
   }
   const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length);
-  return {formalCode, candidates: out, rootPc, optionalPcs};
+  return {formalCode, formalDegreeCode, candidates: out, rootPc, optionalPcs};
 }
 
 function degreeForPitchClass(pc, drawRot, halfCenter){
@@ -2703,17 +2751,20 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   ].filter((midi)=>midi!=null).map((midi)=>((midi%12)+12)%12);
   const highlightCwPcs = [];
   const highlightCcwPcs = [];
+  const keyboardHighlightCwPcs = [];
+  const keyboardHighlightCcwPcs = [];
   if(Number.isFinite(rootAngleInK1)){
     for(let pc=0; pc<12; pc++){
       const degree = degreeForPitchClass(pc, drawRot, halfCenter);
       const inK1 = !K2_OUTSIDE_BITS.includes(degree);
-      if(!inK1) continue;
       const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
       if(Number.isFinite(aroundRoot?.cw?.delta) && normalizeAngleDeg(rootAngleInK1 - angleInK) <= aroundRoot.cw.delta + 1e-6){
-        highlightCwPcs.push(pc);
+        keyboardHighlightCwPcs.push(pc);
+        if(inK1) highlightCwPcs.push(pc);
       }
       if(Number.isFinite(aroundRoot?.ccw?.delta) && normalizeAngleDeg(angleInK - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6){
-        highlightCcwPcs.push(pc);
+        keyboardHighlightCcwPcs.push(pc);
+        if(inK1) highlightCcwPcs.push(pc);
       }
     }
   }
@@ -2728,6 +2779,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   return {
     absoluteLine: absolute.join(' '),
     relativeLine: [rootRoman, ...relative.slice(1)].join(' '),
+    rootRoman,
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
@@ -2746,7 +2798,9 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightCwMidis: cwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCcwMidis: ccwHighlightDegrees.map((deg)=>degreeToMidi.get(deg)).filter((midi)=>midi!=null),
     highlightCwPcs,
-    highlightCcwPcs
+    highlightCcwPcs,
+    keyboardHighlightCwPcs: uniqueSorted(keyboardHighlightCwPcs),
+    keyboardHighlightCcwPcs: uniqueSorted(keyboardHighlightCcwPcs)
   };
 }
 function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
@@ -2811,12 +2865,13 @@ function drawCompositionOverlay(summary){
   let y = 12 * devicePixelRatio;
   if(keyboard.active){
     if(keyboard.mode === 'side'){
-      x = cv.width - keyboard.panelWidth + 12 * devicePixelRatio;
+      const panelX = cv.width - keyboard.panelWidth;
+      const halfW = keyboard.panelWidth * 0.5;
+      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
       y = 12 * devicePixelRatio;
     }else{
-      const keyTop = cv.height - keyboard.height - keyboard.padding;
-      y = Math.max(12 * devicePixelRatio, keyTop - boxH - 10 * devicePixelRatio);
-      x = (cv.width - boxW) / 2;
+      x = cv.width - boxW - 12 * devicePixelRatio;
+      y = 12 * devicePixelRatio;
     }
   }else{
     const {cx, cy} = canvasCenter();
@@ -2850,16 +2905,19 @@ function drawChordOverlay(chordSummary){
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
   const headerLines = [
     `Chord: ${chordSummary.formalCode}`,
+    `Degree: ${chordSummary.formalDegreeCode || '–'}`,
     `Candidates:`
   ];
   const candidateLines = chordSummary.candidates.length
-    ? chordSummary.candidates.map((c)=>c.name)
+    ? chordSummary.candidates.map((c)=>`${c.name} | ${c.degreeName || '–'}`)
     : ['–'];
 
   ctx.save();
   ctx.font = `${textSize}px system-ui`;
 
-  const maxH = cv.height - 24 * devicePixelRatio;
+  const km = keyboardMetrics();
+  const keyReserved = (keyboardEnabled && km.mode !== 'side') ? (km.height + km.padding * 2) : 0;
+  const maxH = cv.height - 24 * devicePixelRatio - keyReserved;
   const rowH = textSize + lineGap;
   const headerHeight = rowH * headerLines.length;
   const availableForCandidates = Math.max(rowH, maxH - (pad * 2 + headerHeight));
@@ -2877,8 +2935,15 @@ function drawChordOverlay(chordSummary){
   const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
   const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
 
-  const x = 12 * devicePixelRatio;
+  let x = 12 * devicePixelRatio;
   const y = 12 * devicePixelRatio;
+  if(keyboardEnabled){
+    const km2 = keyboardMetrics();
+    if(km2.mode === 'side'){
+      const panelX = cv.width - km2.panelWidth;
+      x = panelX + 8 * devicePixelRatio;
+    }
+  }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
   ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
   ctx.fillRect(x, y, boxW, boxH);
@@ -3076,6 +3141,9 @@ function draw(){
     ctx.fillStyle = `rgba(${r},${g},${b},${labelBgAlpha})`;
     ctx.fillRect(tx2 - wbg/2, ty2 - hbg/2, wbg, hbg);
     if(labelTextAlpha>0){
+      ctx.lineWidth = Math.max(1, 2 * devicePixelRatio);
+      ctx.strokeStyle='rgba(0,0,0,0.9)';
+      ctx.strokeText(text, tx2, ty2);
       ctx.fillStyle=`rgba(255,255,255,${labelTextAlpha})`;
       ctx.fillText(text, tx2, ty2);
     }
@@ -3113,7 +3181,8 @@ function draw(){
     drawRot,
     halfCenter,
     lowestMidi,
-    highestMidi
+    highestMidi,
+    compositionSummary
   );
 
   requestAnimationFrame(draw);
