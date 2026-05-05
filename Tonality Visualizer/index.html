@@ -207,6 +207,9 @@
     <input id="compositionInfoA" type="range" min="0" max="100" step="1" value="75">
     <span id="compositionInfoAVal">75%</span>
   </label>
+  <label id="chordCandidateCountWrap" data-lbl="chordCandidateCount">
+    <input id="chordCandidateCount" type="number" min="1" max="64" step="1" value="10" style="width:64px">
+  </label>
 
   <label id="keyboardWrap" data-lbl="keyboard">
     <input id="keyboardToggle" type="checkbox" checked>
@@ -333,6 +336,7 @@ const labelBGSlider = document.getElementById('labelBG'); const labelBGVal = doc
 const labelAlphaSlider = document.getElementById('labelAlpha'); const labelAlphaVal = document.getElementById('labelAlphaVal');
 const outerHighlightAlphaSlider = document.getElementById('outerHighlightAlpha'); const outerHighlightAlphaVal = document.getElementById('outerHighlightAlphaVal');
 const compositionInfoASlider = document.getElementById('compositionInfoA'); const compositionInfoAVal = document.getElementById('compositionInfoAVal');
+const chordCandidateCountInput = document.getElementById('chordCandidateCount');
 const movNumASlider = document.getElementById('movNumA'); const movNumAVal = document.getElementById('movNumAVal');
 const movNumSizeSlider = document.getElementById('movNumSize'); const movNumSizeVal = document.getElementById('movNumSizeVal');
 const noteDotSizeSlider = document.getElementById('noteDotSize'); const noteDotSizeVal = document.getElementById('noteDotSizeVal');
@@ -414,7 +418,7 @@ const I18N = {
     uiOpacity:"UI opacity", diskMass:"disk mass", damping:"damping",
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", k2WaterAlpha:"K2 water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size", noteDotSize:"note dot size",
-    labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α", outerHighlightAlpha:"outer highlight α", compositionInfoAlpha:"composition info α",
+    labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α", outerHighlightAlpha:"outer highlight α", compositionInfoAlpha:"composition info α", chordCandidateCount:"chord candidates",
     keyboard:"keyboard", keyboardMovableDo:"movable-do numbers", keyboardDistance:"distance from lowest (octave)", keyboardFifthAngle:"circle-of-fifths steps",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
@@ -498,7 +502,7 @@ const I18N = {
     uiOpacity:"UI不透明度", diskMass:"ディスク質量", damping:"ダンピング",
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", k2WaterAlpha:"K2水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ", noteDotSize:"ノート円サイズ",
-    labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度", outerHighlightAlpha:"外周ハイライト不透明度", compositionInfoAlpha:"構成情報の不透明度",
+    labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度", outerHighlightAlpha:"外周ハイライト不透明度", compositionInfoAlpha:"構成情報の不透明度", chordCandidateCount:"候補コード数",
     keyboard:"鍵盤表示", keyboardMovableDo:"移動ド数字", keyboardDistance:"最低音からの距離(オクターブ)", keyboardFifthAngle:"五度円ステップ",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
@@ -682,7 +686,7 @@ function collectSettingsFromUI(){
     movNumA: movNumASlider.value, movNumSize: movNumSizeSlider.value,
     noteDotSize: noteDotSizeSlider.value,
     labelSize: labelSizeSlider.value, labelBG: labelBGSlider.value,
-    labelAlpha: labelAlphaSlider.value, outerHighlightAlpha: outerHighlightAlphaSlider.value, compositionInfoA: compositionInfoASlider.value,
+    labelAlpha: labelAlphaSlider.value, outerHighlightAlpha: outerHighlightAlphaSlider.value, compositionInfoA: compositionInfoASlider.value, chordCandidateCount: chordCandidateCountInput.value,
     keyboard: collectKeyboardSettings(),
     keyboardEnabled: keyboardToggle.checked,
     keyboardMovableDo: keyboardMovableToggle.checked,
@@ -798,6 +802,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('compositionInfoA')){
     compositionInfoASlider.value = s.compositionInfoA;
     compositionInfoASlider.oninput();
+  }
+  if(has('chordCandidateCount')){
+    chordCandidateCountInput.value = s.chordCandidateCount;
+    chordCandidateCountInput.oninput();
   }
   const keyboardPreset = (s.keyboard && typeof s.keyboard === 'object') ? s.keyboard : null;
   if(keyboardPreset){
@@ -1001,6 +1009,17 @@ function canvasCenter(){
   const keyboard = keyboardMetrics();
   const availableWidth = Math.max(1, cv.width - keyboard.reservedRight);
   const availableHeight = Math.max(1, cv.height - keyboard.reservedBottom);
+  const landscape = cv.width > cv.height * 1.25;
+  if(!landscape){
+    const diskTopInset = 84 * devicePixelRatio;
+    const half = Math.max(1, Math.min(availableWidth / 2, Math.max(1, (availableHeight - diskTopInset) / 2)));
+    return {
+      cx: availableWidth / 2,
+      cy: diskTopInset + half,
+      reserved: keyboard.reservedBottom,
+      reservedRight: keyboard.reservedRight
+    };
+  }
   return {
     cx: availableWidth / 2,
     cy: availableHeight / 2,
@@ -1015,6 +1034,15 @@ function canvasCenterCss(){
   const reservedRightCss = keyboard.reservedRight / devicePixelRatio;
   const availableWidthCss = Math.max(1, rect.width - reservedRightCss);
   const availableHeightCss = Math.max(1, rect.height - reservedBottomCss);
+  const landscape = cv.width > cv.height * 1.25;
+  if(!landscape){
+    const diskTopInsetCss = 84;
+    const half = Math.max(1, Math.min(availableWidthCss / 2, Math.max(1, (availableHeightCss - diskTopInsetCss) / 2)));
+    return {
+      cx: rect.left + availableWidthCss / 2,
+      cy: rect.top + diskTopInsetCss + half
+    };
+  }
   return {
     cx: rect.left + availableWidthCss / 2,
     cy: rect.top + availableHeightCss / 2
@@ -1143,9 +1171,16 @@ outerHighlightAlphaSlider.oninput = ()=>{
 };
 
 let compositionInfoAlpha = parseInt(compositionInfoASlider.value,10)/100; compositionInfoAVal.textContent=`${Math.round(compositionInfoAlpha*100)}%`;
+let chordCandidateCount = Math.max(1, parseInt(chordCandidateCountInput.value, 10) || 10);
 compositionInfoASlider.oninput = ()=>{
   compositionInfoAlpha = parseInt(compositionInfoASlider.value,10)/100;
   compositionInfoAVal.textContent = `${Math.round(compositionInfoAlpha*100)}%`;
+  saveSettings();
+};
+chordCandidateCountInput.oninput = ()=>{
+  const n = Math.max(1, Math.min(64, parseInt(chordCandidateCountInput.value, 10) || 10));
+  chordCandidateCount = n;
+  chordCandidateCountInput.value = String(n);
   saveSettings();
 };
 
@@ -2549,8 +2584,15 @@ function buildChordDisplaySummary(compositionSummary){
     const prev=dedup.get(c.name);
     if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
   }
-  const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length);
+  const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length).slice(0, chordCandidateCount);
   return {formalCode, formalDegreeCode, candidates: out, rootPc, optionalPcs};
+}
+
+function formatChordNameForDisplay(name){
+  if(typeof name !== 'string') return name;
+  return name
+    .replace(/A#/g, 'A♯').replace(/C#/g, 'C♯').replace(/D#/g, 'D♯').replace(/F#/g, 'F♯').replace(/G#/g, 'G♯')
+    .replace(/Bb/g, 'B♭').replace(/Db/g, 'D♭').replace(/Eb/g, 'E♭').replace(/Gb/g, 'G♭').replace(/Ab/g, 'A♭');
 }
 
 function degreeForPitchClass(pc, drawRot, halfCenter){
@@ -2721,20 +2763,21 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
       .map((entry)=> entry.degree)
     : [];
   const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
-  const outerFromRootLine1 = `rootAngleInK1: ${Math.round(rootAngleInK1)}(${rootMovableDo}) | rootAngleInK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
+  const outerFromRootLine1 = `rootK1: ${Math.round(rootAngleInK1)}(${rootMovableDo})`;
   const singleCompositionTone = uniquePcs.length === 1;
   const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
-  const outerFromRootLine2 = singleCompositionTone
-    ? `DarkAngleFromRoot: 0(1)`
-    : (aroundRoot && aroundRoot.ccw)
-      ? `DarkAngleFromRoot: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
-      : `DarkAngleFromRoot: 0(1)`;
+  const outerFromRootLine2 = `rootK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
   const outerFromRootLine3 = singleCompositionTone
-    ? `BrightAngleFromRoot: 0(1)`
+    ? `DarkAngle: 0(1)`
+    : (aroundRoot && aroundRoot.ccw)
+      ? `DarkAngle: ${Math.round(aroundRoot.ccw.delta)}(${ccwDistance})`
+      : `DarkAngle: 0(1)`;
+  const outerFromRootLine4 = singleCompositionTone
+    ? `BrightAngle: 0(1)`
     : (aroundRoot && aroundRoot.cw)
-      ? `BrightAngleFromRoot: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
-      : `BrightAngleFromRoot: 0(1)`;
+      ? `BrightAngle: ${Math.round(aroundRoot.cw.delta)}(${cwDistance})`
+      : `BrightAngle: 0(1)`;
   const outsideText = (k2 && k2.outsideDegrees.length) ? k2.outsideDegrees.join(', ') : 'none';
   const k2RangeText = k2
     ? `K2: ${Math.round(k2.k2StartDeg)}°→${Math.round(k2.k2EndDeg)}°`
@@ -2743,7 +2786,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     ? `Mask: ${k2.maskBinary} (${k2.mask})`
     : 'Mask: –';
   const deltaText = k2
-    ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}° (${k2.anchorCorrected ? 'Anchor ON' : 'Anchor OFF'})`
+    ? `Δ: ${(k2.appliedDeltaDeg>=0?'+':'')}${Math.round(k2.appliedDeltaDeg)}°`
     : 'Δ: –';
   const summaryFallbackHighlightPcsFromMidis = [
     ...(aroundRoot?.cw ? [degreeToMidi.get(aroundRoot.cw.degree)] : []),
@@ -2783,11 +2826,13 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
-    k2Line3: `${maskText} | ${deltaText}`,
-    k2Line4: outerFromRootLine1,
-    k2Line5: outerFromRootLine2,
-    k2Line6: outerFromRootLine3,
-    k2Line7: optionalLine,
+    k2Line3: maskText,
+    k2Line4: deltaText,
+    k2Line5: outerFromRootLine1,
+    k2Line6: outerFromRootLine2,
+    k2Line7: outerFromRootLine3,
+    k2Line8: outerFromRootLine4,
+    k2Line9: optionalLine,
     rootAngleInK1,
     rootAngleInK2,
     darkAngleFromRoot: singleCompositionTone ? rootAngleInK1 : (aroundRoot?.ccw ? aroundRoot.ccw.angle : rootAngleInK1),
@@ -2843,6 +2888,7 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
 function drawCompositionOverlay(summary){
   if(!summary) return;
   const keyboard = keyboardMetrics();
+  const landscape = cv.width > cv.height * 1.25;
   const pad = 14 * devicePixelRatio;
   const lineGap = 6 * devicePixelRatio;
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
@@ -2857,22 +2903,29 @@ function drawCompositionOverlay(summary){
     summary.k2Line4 || '',
     summary.k2Line5 || '',
     summary.k2Line6 || '',
-    summary.k2Line7 || ''
+    summary.k2Line7 || '',
+    summary.k2Line8 || '',
+    summary.k2Line9 || ''
   ];
   const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
   const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
   let x = cv.width - boxW - 12 * devicePixelRatio;
   let y = 12 * devicePixelRatio;
-  if(keyboard.active){
+  if(landscape && keyboard.active){
     if(keyboard.mode === 'side'){
       const panelX = cv.width - keyboard.panelWidth;
       const halfW = keyboard.panelWidth * 0.5;
-      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5);
+      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5) - keyboard.panelWidth * 0.1;
       y = 12 * devicePixelRatio;
     }else{
       x = cv.width - boxW - 12 * devicePixelRatio;
       y = 12 * devicePixelRatio;
     }
+  }else if(!landscape){
+    const {cx, cy} = canvasCenter();
+    const {rMax} = ringParams();
+    x = Math.min(cv.width - boxW - 12 * devicePixelRatio, cx + rMax - boxW);
+    y = Math.min(cv.height - boxH - 12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
   }else{
     const {cx, cy} = canvasCenter();
     const {rMax} = ringParams();
@@ -2904,12 +2957,12 @@ function drawChordOverlay(chordSummary){
   const lineGap = 5 * devicePixelRatio;
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
   const headerLines = [
-    `Chord: ${chordSummary.formalCode}`,
-    `Degree: ${chordSummary.formalDegreeCode || '–'}`,
+    `Chord: ${formatChordNameForDisplay(chordSummary.formalCode)}`,
+    `Degree: ${formatChordNameForDisplay(chordSummary.formalDegreeCode || '–')}`,
     `Candidates:`
   ];
   const candidateLines = chordSummary.candidates.length
-    ? chordSummary.candidates.map((c)=>`${c.name} | ${c.degreeName || '–'}`)
+    ? chordSummary.candidates.map((c)=>`${formatChordNameForDisplay(c.name)} | ${formatChordNameForDisplay(c.degreeName || '–')}`)
     : ['–'];
 
   ctx.save();
@@ -2935,14 +2988,21 @@ function drawChordOverlay(chordSummary){
   const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
   const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
 
+  const landscape = cv.width > cv.height * 1.25;
   let x = 12 * devicePixelRatio;
-  const y = 12 * devicePixelRatio;
+  let y = 12 * devicePixelRatio;
   if(keyboardEnabled){
     const km2 = keyboardMetrics();
     if(km2.mode === 'side'){
       const panelX = cv.width - km2.panelWidth;
       x = panelX + 8 * devicePixelRatio;
     }
+  }
+  if(!landscape){
+    const {cx, cy} = canvasCenter();
+    const {rMax} = ringParams();
+    x = Math.max(12 * devicePixelRatio, cx - rMax);
+    y = Math.min(cv.height - boxH - 12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
   }
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
   ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
@@ -2972,6 +3032,8 @@ function drawChordOverlay(chordSummary){
 
 /* ===== Main draw loop ===== */
 let prevT=null;
+let lastCompositionSummary = null;
+let lastChordSummary = null;
 // draw はキャンバス全体のメイン描画ループ。
 // 物理演算の結果を反映しながら、水面・ノート・補助情報を毎フレーム再描画する。
 function draw(){
@@ -3033,12 +3095,16 @@ function draw(){
   const halfCenter = (anchor==='water') ? GRAV_ABS : (GRAV_ABS + diskAngle);
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
   const k2Info = k2Analysis(activeNotes, drawRot, halfCenter, anchor);
-  const compositionSummary = noteCompositionSummary(activeNotes, drawRot, halfCenter);
-  const chordSummary = buildChordDisplaySummary(compositionSummary);
+  const compositionSummaryRaw = noteCompositionSummary(activeNotes, drawRot, halfCenter);
+  if(compositionSummaryRaw) lastCompositionSummary = compositionSummaryRaw;
+  const compositionSummary = compositionSummaryRaw || lastCompositionSummary;
+  const chordSummaryRaw = buildChordDisplaySummary(compositionSummaryRaw);
+  if(chordSummaryRaw) lastChordSummary = chordSummaryRaw;
+  const chordSummary = chordSummaryRaw || lastChordSummary;
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
-  drawOuterAngleHighlights(compositionSummary, drawRot, halfCenter, rMax);
+  drawOuterAngleHighlights(compositionSummaryRaw, drawRot, halfCenter, rMax);
 
   // 放射線
   ctx.save(); ctx.translate(cx,cy);
@@ -3182,7 +3248,7 @@ function draw(){
     halfCenter,
     lowestMidi,
     highestMidi,
-    compositionSummary
+    compositionSummaryRaw
   );
 
   requestAnimationFrame(draw);
