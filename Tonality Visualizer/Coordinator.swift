@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 import ObjectiveC
 
 extension WebView {
-    final class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, UIDocumentPickerDelegate {
+    final class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, UIDocumentPickerDelegate, WKScriptMessageHandler {
         var webView: WKWebView?
         private var client = MIDIClientRef()
         private var inputPort = MIDIPortRef()
@@ -71,6 +71,30 @@ extension WebView {
             for src in connected.subtracting(seen) {
                 MIDIPortDisconnectSource(inputPort, src)
                 connected.remove(src)
+            }
+        }
+
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == "exportText",
+                  let body = message.body as? [String: Any],
+                  let text = body["text"] as? String else { return }
+            let rawName = (body["filename"] as? String) ?? "Chord_Capture.txt"
+            let safeName = rawName.replacingOccurrences(of: "/", with: "_")
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(safeName)
+            do {
+                try text.write(to: url, atomically: true, encoding: .utf8)
+                DispatchQueue.main.async { [weak self] in
+                    guard let presenter = self?.topController() else { return }
+                    let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                    if let popover = activity.popoverPresentationController {
+                        popover.sourceView = presenter.view
+                        popover.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.maxY - 40, width: 1, height: 1)
+                    }
+                    presenter.present(activity, animated: true)
+                }
+            } catch {
+                print("Text export failed: \(error)")
             }
         }
 

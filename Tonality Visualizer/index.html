@@ -13,14 +13,14 @@
   :root{ --ui-scale:1; }
   #ui{position:fixed;top:75px;left:8px;gap:12px;display:flex;flex-wrap:wrap;align-items:center;z-index:2;
        transform-origin:top left; transform:scale(var(--ui-scale));
-       max-height:calc(100vh - 110px); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 6px;}
+       max-height:calc(100vh - 170px - env(safe-area-inset-bottom)); overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 6px;}
   canvas{
     display:block;width:100vw;height:100vh;touch-action:none;
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
-  label{display:flex;gap:6px;align-items:center}
+  label{display:flex;gap:6px;align-items:center;touch-action:manipulation}
   input[type=range]{width:180px}
-  button,select{padding:6px 10px}
+  button,select{padding:6px 10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .sep{width:1px;height:22px;background:#444;margin:0 4px}
 
   /* UI show/hide トグル */
@@ -28,6 +28,110 @@
   #uiToggle:hover{opacity:1}
   #diskLock{position:fixed;top:84px;right:8px;z-index:3;opacity:0.8}
   #diskLock:hover{opacity:1}
+
+  /* UIを隠しても残る、MIDI再生・トレーナー用の小型操作部 */
+  #transportDock{
+    position:fixed;
+    left:50%;
+    bottom:max(8px, env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    z-index:4;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    box-sizing:border-box;
+    max-width:calc(100vw - 16px);
+    padding:7px 10px;
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:12px;
+    background:rgba(12,16,23,0.86);
+    box-shadow:0 4px 18px rgba(0,0,0,0.35);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  #transportDock button{min-width:42px;min-height:36px}
+  #transportDock label{white-space:nowrap}
+  #transportDock input[type=range]{width:min(42vw,260px)}
+  #transportDock select{min-height:36px}
+  #playBtns,#trainBtns{align-items:center;gap:6px}
+  #transportHideBtn{min-width:34px!important;padding:5px 7px!important;font-size:12px;line-height:1}
+  #transportRevealDock{
+    position:fixed;left:50%;bottom:max(8px, env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:4;display:none;align-items:center;gap:8px;
+  }
+  #transportReveal, #captureRevealBtn{
+    min-height:30px;padding:4px 10px;border-radius:999px;
+    border:1px solid rgba(255,255,255,0.20);background:rgba(12,16,23,0.90);color:#ddd;
+    box-shadow:0 3px 12px rgba(0,0,0,0.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  }
+  #captureRevealBtn{background:rgba(128,24,36,0.92);color:#fff;font-weight:700}
+  #captureNowBtn,#captureRevealBtn,.captureMarkerBtn{touch-action:manipulation}
+  .captureMarkerGroup{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}
+  .captureMarkerBtn{
+    min-width:30px!important;width:30px;height:34px;min-height:34px!important;padding:0!important;
+    border-radius:7px;font-weight:750;line-height:1;background:#2a303a;color:#f3f4f6;
+  }
+  #transportRevealDock .captureMarkerBtn{width:30px;height:30px;min-height:30px!important;border-radius:999px}
+  body.transport-hidden #transportDock{display:none!important}
+  body.transport-hidden #transportRevealDock{display:flex}
+  body.ui-hidden #transportDock{background:rgba(12,16,23,0.94)}
+  /* 横長画面では、操作部を一列にして高さを抑える。鍵盤の幅を優先する。 */
+  @media (min-width:960px) and (orientation:landscape){
+    #transportDock{
+      width:min(1080px,calc(100vw - 32px));
+      max-width:calc(100vw - 32px);
+      flex-wrap:nowrap;
+      justify-content:flex-start;
+      gap:6px;
+      padding:5px 8px;
+    }
+    #playBtns,#trainBtns{display:flex}
+    #transportDock button{min-height:34px;padding:5px 9px}
+    #transportDock select{min-height:34px}
+    #seekWrap{display:flex;flex:1 1 auto;min-width:0;gap:8px}
+    #seekWrap input[type=range]{width:auto;min-width:120px;flex:1 1 auto}
+    #seekTime{flex:0 0 auto}
+  }
+  @media (max-width:600px){
+    #transportDock{gap:5px;padding:5px 7px}
+    #transportDock button{min-width:38px;padding:5px 8px}
+    #transportDock input[type=range]{width:min(38vw,190px)}
+    .captureMarkerGroup{gap:2px}
+    .captureMarkerBtn{min-width:28px!important;width:28px;height:32px;min-height:32px!important}
+    #transportRevealDock{gap:5px}
+    #transportRevealDock .captureMarkerBtn{width:28px;height:28px;min-height:28px!important}
+  }
+
+  /* 手動コード記録 */
+  #captureToast{
+    position:fixed;left:50%;bottom:calc(max(8px, env(safe-area-inset-bottom)) + 120px);transform:translateX(-50%);
+    z-index:7;display:none;padding:7px 12px;border-radius:999px;background:rgba(0,0,0,.84);color:#fff;
+    pointer-events:none;white-space:nowrap;
+  }
+  #capturePanel{
+    position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(0,0,0,.58);box-sizing:border-box;
+  }
+  #capturePanel.open{display:flex}
+  #captureDialog{
+    width:min(760px,100%);max-height:100%;overflow:auto;box-sizing:border-box;
+    border:1px solid rgba(255,255,255,.22);border-radius:14px;background:#151a22;padding:14px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);-webkit-user-select:text;user-select:text;
+  }
+  #captureDialog h2{font-size:18px;margin:0 0 10px}
+  #captureToolbar,#captureExportSettings{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  #captureToolbar button,#captureExportSettings button,#captureExportSettings select{min-height:36px}
+  #captureFormatOptions{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 10px}
+  #captureFormatOptions label{white-space:nowrap}
+  #captureSummary{margin:8px 0 10px;color:#cbd5e1;font-size:14px}
+  #capturePreview{width:100%;min-height:260px;box-sizing:border-box;padding:10px;background:#0b0f15;color:#e6edf7;border:1px solid #465064;border-radius:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;-webkit-user-select:text;user-select:text}
+  @media(max-width:620px){
+    #captureDialog{padding:10px}
+  }
+
 </style>
 
 <button id="uiToggle" aria-pressed="false">UI隠す</button>
@@ -223,8 +327,12 @@
   <label id="keyboardFifthWrap" data-lbl="keyboardFifthAngle">
     <input id="keyboardFifth" type="checkbox" checked>
   </label>
+  <label id="keyboardSizeWrap" data-lbl="keyboardSize">
+    <input id="keyboardSize" type="range" min="70" max="170" step="5" value="100">
+    <span id="keyboardSizeVal">100%</span>
+  </label>
 
-  <!-- MIDI File controls（常時表示） -->
+  <!-- MIDIファイルとモードの設定。再生操作は下部の常設ドックに分離 -->
   <span class="sep"></span>
   <label id="fileWrap" data-lbl="midiFile">
     <input id="midiFile" type="file" accept=".mid,.midi,audio/midi,audio/x-midi">
@@ -239,26 +347,98 @@
       <option value="train" selected>トレーナー</option>
     </select>
   </label>
-  <span id="playBtns">
-    <button id="btnPlay">▶︎</button>
-    <button id="btnPause">⏸</button>
-    <button id="btnStop">⏹</button>
-  </span>
-  <label id="seekWrap" data-lbl="seek">
-    <input id="seek" type="range" min="0" max="1000" step="0.01" value="0" disabled>
-    <span id="seekTime">0:00 / 0:00</span>
-  </label>
-  <span id="trainBtns">
-    <button id="btnStartTrain">開始/リスタート</button>
-    <button id="btnPrev">◀︎</button>
-    <button id="btnNext">▶︎</button>
-  </span>
 
   <span id="info">idle</span>
   <span id="midiStat" style="min-width:280px">MIDI: 未初期化</span>
   <span id="midiLast">最後: –</span>
   <span id="fileInfo">file: –</span>
   <span id="trainerStat">step: –</span>
+</div>
+
+<div id="transportDock" aria-label="MIDI transport">
+  <span id="playBtns">
+    <button id="btnPlay" type="button" aria-label="Play">▶︎</button>
+    <button id="btnPause" type="button" aria-label="Pause">⏸</button>
+    <button id="btnStop" type="button" aria-label="Stop">⏹</button>
+  </span>
+  <span id="trainBtns">
+    <button id="btnStartTrain" type="button">開始/リスタート</button>
+    <button id="btnPrev" type="button" aria-label="Previous">◀︎</button>
+    <button id="btnNext" type="button" aria-label="Next">▶︎</button>
+  </span>
+  <label id="playbackRateWrap" data-lbl="playbackSpeed">
+    <select id="playbackRate">
+      <option value="0.25">0.25×</option>
+      <option value="0.5">0.5×</option>
+      <option value="0.75">0.75×</option>
+      <option value="1" selected>1.00×</option>
+      <option value="1.25">1.25×</option>
+      <option value="1.5">1.50×</option>
+      <option value="2">2.00×</option>
+    </select>
+  </label>
+  <label id="seekWrap" data-lbl="seek">
+    <input id="seek" type="range" min="0" max="1000" step="0.01" value="0" disabled>
+    <span id="seekTime">0:00 / 0:00</span>
+  </label>
+  <button id="captureListBtn" type="button">記録一覧</button>
+  <button id="captureNowBtn" type="button" disabled>＋ コード記録</button>
+  <span class="captureMarkerGroup" aria-label="区間マーカー">
+    <button class="captureMarkerBtn" type="button" data-marker="A" title="区間Aを記録" disabled>A</button>
+    <button class="captureMarkerBtn" type="button" data-marker="B" title="区間Bを記録" disabled>B</button>
+    <button class="captureMarkerBtn" type="button" data-marker="C" title="区間Cを記録" disabled>C</button>
+    <button class="captureMarkerBtn" type="button" data-marker="D" title="区間Dを記録" disabled>D</button>
+  </span>
+  <button id="transportHideBtn" type="button" aria-label="Hide playback controls" title="Hide playback controls">▼</button>
+</div>
+<div id="transportRevealDock">
+  <button id="transportReveal" type="button" aria-label="Show playback controls">▲ 再生</button>
+  <button id="captureRevealBtn" type="button" disabled>＋ 記録</button>
+  <span class="captureMarkerGroup" aria-label="区間マーカー">
+    <button class="captureMarkerBtn" type="button" data-marker="A" title="区間Aを記録" disabled>A</button>
+    <button class="captureMarkerBtn" type="button" data-marker="B" title="区間Bを記録" disabled>B</button>
+    <button class="captureMarkerBtn" type="button" data-marker="C" title="区間Cを記録" disabled>C</button>
+    <button class="captureMarkerBtn" type="button" data-marker="D" title="区間Dを記録" disabled>D</button>
+  </span>
+</div>
+
+<div id="captureToast" role="status" aria-live="polite"></div>
+<div id="capturePanel" aria-hidden="true">
+  <section id="captureDialog" role="dialog" aria-modal="true" aria-labelledby="captureTitle">
+    <h2 id="captureTitle">コード記録</h2>
+    <div id="captureToolbar">
+      <button id="captureClearBtn" type="button">すべて削除</button>
+      <button id="captureCloseBtn" type="button">閉じる</button>
+      <span id="captureCount">0件</span>
+    </div>
+    <div id="captureExportSettings">
+      <label>拍子
+        <select id="captureMeter">
+          <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option>
+          <option value="5/4">5/4</option><option value="6/8">6/8</option><option value="7/8">7/8</option>
+        </select>
+      </label>
+      <label>MIDI先頭の拍位置 <select id="captureStartBeat"></select></label>
+      <label>配置
+        <select id="captureLayout">
+          <option value="event">1コード1行</option>
+          <option value="measure">1小節1行</option>
+        </select>
+      </label>
+      <button id="captureShareBtn" type="button">テキストを書き出す</button>
+    </div>
+    <div id="captureFormatOptions">
+      <label><input id="captureShowBeat" type="checkbox" checked> 拍位置</label>
+      <label><input id="captureShowNotation" type="checkbox" checked> 独自コード表記</label>
+      <label><input id="captureShowChord" type="checkbox" checked> 一般的なコード名</label>
+      <label><input id="captureShowDegree" type="checkbox"> ディグリーネーム</label>
+      <label><input id="captureShowTime" type="checkbox"> 再生時間</label>
+      <label><input id="captureShowMarkers" type="checkbox" checked> 区間マーカー</label>
+      <label><input id="captureShowHeader" type="checkbox" checked> ファイル・拍子情報</label>
+    </div>
+    <div id="captureSummary"></div>
+    <textarea id="capturePreview" readonly spellcheck="false"></textarea>
+  </section>
 </div>
 
 <canvas id="cv"></canvas>
@@ -303,6 +483,11 @@ const NOTE_BG = {0:[191,28,28],1:[191,109,28],2:[191,191,28],3:[109,191,28],4:[2
 const uiPanel = document.getElementById('ui');
 const uiToggle = document.getElementById('uiToggle');
 const diskLockBtn = document.getElementById('diskLock');
+const transportDock = document.getElementById('transportDock');
+const transportHideBtn = document.getElementById('transportHideBtn');
+const transportRevealDock = document.getElementById('transportRevealDock');
+const transportReveal = document.getElementById('transportReveal');
+const captureListBtn = document.getElementById('captureListBtn');
 const anchorSel = document.getElementById('anchor');
 const devWrap = document.getElementById('devWrap');
 const midiDev = document.getElementById('midiDev');
@@ -344,6 +529,8 @@ const keyboardToggle = document.getElementById('keyboardToggle');
 const keyboardMovableToggle = document.getElementById('keyboardMovable');
 const keyboardDistanceToggle = document.getElementById('keyboardDistance');
 const keyboardFifthToggle = document.getElementById('keyboardFifth');
+const keyboardSizeSlider = document.getElementById('keyboardSize');
+const keyboardSizeVal = document.getElementById('keyboardSizeVal');
 
 const omegaMaxSlider = document.getElementById('omegaMax'); const omegaMaxVal = document.getElementById('omegaMaxVal');
 
@@ -361,6 +548,30 @@ const transposeSlider = document.getElementById('transpose');
 const transposeVal = document.getElementById('transposeVal');
 const seekSlider = document.getElementById('seek');
 const seekTime = document.getElementById('seekTime');
+const seekWrap = document.getElementById('seekWrap');
+const captureNowBtn = document.getElementById('captureNowBtn');
+const captureRevealBtn = document.getElementById('captureRevealBtn');
+const captureToast = document.getElementById('captureToast');
+const capturePanel = document.getElementById('capturePanel');
+const captureClearBtn = document.getElementById('captureClearBtn');
+const captureCloseBtn = document.getElementById('captureCloseBtn');
+const captureCount = document.getElementById('captureCount');
+const captureSummary = document.getElementById('captureSummary');
+const captureMeter = document.getElementById('captureMeter');
+const captureStartBeat = document.getElementById('captureStartBeat');
+const captureLayout = document.getElementById('captureLayout');
+const captureShowBeat = document.getElementById('captureShowBeat');
+const captureShowNotation = document.getElementById('captureShowNotation');
+const captureShowChord = document.getElementById('captureShowChord');
+const captureShowDegree = document.getElementById('captureShowDegree');
+const captureShowTime = document.getElementById('captureShowTime');
+const captureShowMarkers = document.getElementById('captureShowMarkers');
+const captureShowHeader = document.getElementById('captureShowHeader');
+const captureMarkerButtons = Array.from(document.querySelectorAll('.captureMarkerBtn'));
+const captureShareBtn = document.getElementById('captureShareBtn');
+const capturePreview = document.getElementById('capturePreview');
+const playbackRateWrap = document.getElementById('playbackRateWrap');
+const playbackRateSelect = document.getElementById('playbackRate');
 
 function reserveValueWidths(){
   const reserve = (el, samples)=>{
@@ -405,6 +616,7 @@ function reserveValueWidths(){
   reserve(movNumSizeVal, ['10px', '60px']);
   reserve(labelSizeVal, ['8px', '36px']);
   reserve(noteDotSizeVal, ['50%', '200%']);
+  reserve(keyboardSizeVal, ['70%', '170%']);
 }
 
 /* ===== i18n + persist ===== */
@@ -419,21 +631,21 @@ const I18N = {
     snapZeroAlpha:"zero ω when α=0",
     lineAlpha:"line α", straightLineAlpha:"straight lines α", noteGuideAlpha:"note guide α", arcGuideAlpha:"concentric arc guide α", noteGuideLabelAlpha:"note guide numbers α", waterAlpha:"water α", k2WaterAlpha:"K2 water α", movNumAlpha:"degree numbers α", movNumSize:"degree numbers size", noteDotSize:"note dot size",
     labelSize:"label size", labelBG:"label bg α", labelAlpha:"label text α", outerHighlightAlpha:"outer highlight α", compositionInfoAlpha:"composition info α", chordCandidateCount:"chord candidates",
-    keyboard:"keyboard", keyboardMovableDo:"movable-do numbers", keyboardDistance:"distance from lowest (octave)", keyboardFifthAngle:"circle-of-fifths steps",
+    keyboard:"keyboard", keyboardMovableDo:"movable-do numbers", keyboardDistance:"distance from lowest (octave)", keyboardFifthAngle:"circle-of-fifths steps", keyboardSize:"keyboard size",
     lowCut:"low cut (oct)", highCut:"high cut (oct)",
     omegaMax:"ω max",
     midiNotInit:"MIDI: not initialized", last:"last:", idle:"idle",
     midiNeedSecure:"need HTTPS/localhost", midiUnsupported:"unsupported",
     midiReady:"ready", midiInitFailed:"init failed", midiAllInputsStat:"all inputs",
     midiInputStatPrefix:"input:", midiNoDevice:"no device",
-    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer",
+    midiFile:"MIDI file", fileOp:"operation", play:"playback", train:"trainer", playbackSpeed:"speed",
     trainStart:"start / restart", transpose:"transpose",
     seek:"position",
     resetDefaults:"reset settings",
     presetSlot:"preset slot", presetSave:"save to slot", presetLoad:"load slot",
     presetSaved:"preset saved", presetLoaded:"preset loaded", presetEmpty:"slot is empty",
     presetSaveFailed:"save failed",
-    uiHide:"hide UI", uiShow:"show UI",
+    uiHide:"hide UI", uiShow:"show UI", transportHide:"hide playback", transportShow:"playback",
     octaveSuffix:"oct", transposeSuffix:"st",
     filePlayback:"file playback", trainerStepPrefix:"step:"
     , diskLock:"lock disk", diskUnlock:"unlock disk"
@@ -446,22 +658,22 @@ const I18N = {
     uiOpacity:"opacidade da UI", diskMass:"massa do disco", damping:"amortecimento",
     snapZeroAlpha:"zerar ω quando α=0",
     lineAlpha:"α das curvas", straightLineAlpha:"α das linhas retas", noteGuideAlpha:"α do guia de notas", arcGuideAlpha:"α dos arcos concêntricos", noteGuideLabelAlpha:"α dos números do guia", waterAlpha:"α da água", k2WaterAlpha:"α da água K2", movNumAlpha:"α dos números móveis de dó", movNumSize:"tamanho dos números móveis de dó", noteDotSize:"tamanho dos pontos",
-    labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota",
-    keyboard:"teclado", keyboardMovableDo:"números do dó móvel", keyboardDistance:"distância do grave (oitava)", keyboardFifthAngle:"passos no ciclo de quintas",
+    labelSize:"tamanho do rótulo", labelBG:"α do fundo do rótulo", labelAlpha:"α do nome da nota", outerHighlightAlpha:"α do destaque externo", compositionInfoAlpha:"α das informações da composição", chordCandidateCount:"candidatos de acordes",
+    keyboard:"teclado", keyboardMovableDo:"números do dó móvel", keyboardDistance:"distância do grave (oitava)", keyboardFifthAngle:"passos no ciclo de quintas", keyboardSize:"tamanho do teclado",
     lowCut:"corte de graves (oit)", highCut:"corte de agudos (oit)",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: não inicializado", last:"último:", idle:"ocioso",
     midiNeedSecure:"requer HTTPS/localhost", midiUnsupported:"não compatível",
     midiReady:"pronto", midiInitFailed:"falha na inicialização", midiAllInputsStat:"todas as entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"nenhum dispositivo",
-    midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador",
+    midiFile:"arquivo MIDI", fileOp:"operação", play:"reprodução", train:"treinador", playbackSpeed:"velocidade",
     trainStart:"iniciar/reiniciar", transpose:"transposição",
     seek:"posição de reprodução",
     resetDefaults:"restaurar padrões",
     presetSlot:"slot de preset", presetSave:"salvar no slot", presetLoad:"carregar slot",
     presetSaved:"preset salvo", presetLoaded:"preset carregado", presetEmpty:"slot vazio",
     presetSaveFailed:"falha ao salvar",
-    uiHide:"ocultar UI", uiShow:"mostrar UI",
+    uiHide:"ocultar UI", uiShow:"mostrar UI", transportHide:"ocultar reprodução", transportShow:"reprodução",
     octaveSuffix:"oit", transposeSuffix:"semitons",
     filePlayback:"reprodução de arquivo", trainerStepPrefix:"etapa:"
     , diskLock:"travar disco", diskUnlock:"destravar disco"
@@ -474,22 +686,22 @@ const I18N = {
     uiOpacity:"opacidad de la UI", diskMass:"masa del disco", damping:"amortiguación",
     snapZeroAlpha:"detener ω cuando α=0",
     lineAlpha:"opacidad de curvas", straightLineAlpha:"opacidad de líneas rectas", noteGuideAlpha:"opacidad de la guía de notas", arcGuideAlpha:"opacidad de arcos concéntricos", noteGuideLabelAlpha:"opacidad de números guía", waterAlpha:"opacidad del agua", k2WaterAlpha:"opacidad del agua K2", movNumAlpha:"opacidad de números móviles do", movNumSize:"tamaño de números móviles do", noteDotSize:"tamaño de puntos",
-    labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota",
-    keyboard:"teclado", keyboardMovableDo:"números de do móvil", keyboardDistance:"distancia desde la más grave (octava)", keyboardFifthAngle:"pasos en círculo de quintas",
+    labelSize:"tamaño de etiqueta", labelBG:"opacidad del fondo de la etiqueta", labelAlpha:"opacidad del nombre de nota", outerHighlightAlpha:"opacidad del resaltado exterior", compositionInfoAlpha:"opacidad de información de composición", chordCandidateCount:"candidatos de acordes",
+    keyboard:"teclado", keyboardMovableDo:"números de do móvil", keyboardDistance:"distancia desde la más grave (octava)", keyboardFifthAngle:"pasos en círculo de quintas", keyboardSize:"tamaño del teclado",
     lowCut:"corte de graves", highCut:"corte de agudos",
     omegaMax:"ω máx",
     midiNotInit:"MIDI: sin inicializar", last:"último:", idle:"en espera",
     midiNeedSecure:"requiere HTTPS/localhost", midiUnsupported:"no compatible",
     midiReady:"listo", midiInitFailed:"fallo de inicio", midiAllInputsStat:"todas las entradas",
     midiInputStatPrefix:"entrada:", midiNoDevice:"sin dispositivo",
-    midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador",
+    midiFile:"archivo MIDI", fileOp:"operación", play:"reproducción", train:"entrenador", playbackSpeed:"velocidad",
     trainStart:"iniciar/reiniciar", transpose:"transposición",
     seek:"posición de reproducción",
     resetDefaults:"restablecer ajustes",
     presetSlot:"ranura de preset", presetSave:"guardar en ranura", presetLoad:"cargar ranura",
     presetSaved:"preset guardado", presetLoaded:"preset cargado", presetEmpty:"ranura vacía",
     presetSaveFailed:"error al guardar",
-    uiHide:"ocultar UI", uiShow:"mostrar UI",
+    uiHide:"ocultar UI", uiShow:"mostrar UI", transportHide:"ocultar reproducción", transportShow:"reproducción",
     octaveSuffix:"oct.", transposeSuffix:"semitonos",
     filePlayback:"reproducción de archivo", trainerStepPrefix:"paso:",
     diskLock:"bloquear disco", diskUnlock:"desbloquear disco"
@@ -503,21 +715,21 @@ const I18N = {
     snapZeroAlpha:"α=0で角速度を停止",
     lineAlpha:"曲線の不透明度", straightLineAlpha:"直線の不透明度", noteGuideAlpha:"音ガイドの不透明度", arcGuideAlpha:"同心円弧ガイドの不透明度", noteGuideLabelAlpha:"音ガイド数字の不透明度", waterAlpha:"水面の不透明度", k2WaterAlpha:"K2水面の不透明度", movNumAlpha:"移動ド数字の不透明度", movNumSize:"移動ド数字サイズ", noteDotSize:"ノート円サイズ",
     labelSize:"ラベルサイズ", labelBG:"ラベル背景の不透明度", labelAlpha:"音名の不透明度", outerHighlightAlpha:"外周ハイライト不透明度", compositionInfoAlpha:"構成情報の不透明度", chordCandidateCount:"候補コード数",
-    keyboard:"鍵盤表示", keyboardMovableDo:"移動ド数字", keyboardDistance:"最低音からの距離(オクターブ)", keyboardFifthAngle:"五度円ステップ",
+    keyboard:"鍵盤表示", keyboardMovableDo:"移動ド数字", keyboardDistance:"最低音からの距離(オクターブ)", keyboardFifthAngle:"五度円ステップ", keyboardSize:"鍵盤サイズ",
     lowCut:"低音域カット", highCut:"高音域カット",
     omegaMax:"最大回転速度",
     midiNotInit:"MIDI: 未初期化", last:"最後:", idle:"待機",
     midiNeedSecure:"HTTPS/localhostが必要", midiUnsupported:"未対応",
     midiReady:"準備完了", midiInitFailed:"初期化失敗", midiAllInputsStat:"全入力",
     midiInputStatPrefix:"入力:", midiNoDevice:"デバイスなし",
-    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー",
+    midiFile:"MIDIファイル", fileOp:"操作", play:"再生", train:"トレーナー", playbackSpeed:"再生速度",
     trainStart:"開始/リスタート", transpose:"移調",
     seek:"再生位置",
     resetDefaults:"初期設定に戻す",
     presetSlot:"プリセット枠", presetSave:"枠に保存", presetLoad:"枠を読み込み",
     presetSaved:"プリセットを保存しました", presetLoaded:"プリセットを読み込みました", presetEmpty:"枠が空です",
     presetSaveFailed:"保存に失敗しました",
-    uiHide:"UI隠す", uiShow:"UI表示",
+    uiHide:"UI隠す", uiShow:"UI表示", transportHide:"再生操作を隠す", transportShow:"再生",
     octaveSuffix:"オクターブ", transposeSuffix:"半音",
     filePlayback:"ファイル再生", trainerStepPrefix:"ステップ:",
     diskLock:"円盤ロック", diskUnlock:"ロック解除"
@@ -530,22 +742,22 @@ const I18N = {
     uiOpacity:"UI 불투명도", diskMass:"디스크 질량", damping:"댐핑",
     snapZeroAlpha:"α=0에서 각속도 정지",
     lineAlpha:"곡선 불투명도", straightLineAlpha:"직선 불투명도", noteGuideAlpha:"음 가이드 불투명도", arcGuideAlpha:"동심원 호 가이드 불투명도", noteGuideLabelAlpha:"음 가이드 숫자 불투명도", waterAlpha:"수면 불투명도", k2WaterAlpha:"K2 수면 불투명도", movNumAlpha:"이동 도 숫자 불투명도", movNumSize:"이동 도 숫자 크기", noteDotSize:"노트 점 크기",
-    labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도",
-    keyboard:"키보드", keyboardMovableDo:"이동 도 숫자", keyboardDistance:"최저음 거리(옥타브)", keyboardFifthAngle:"5도 원 스텝",
+    labelSize:"라벨 크기", labelBG:"라벨 배경 불투명도", labelAlpha:"음 이름 불투명도", outerHighlightAlpha:"외곽 강조 불투명도", compositionInfoAlpha:"구성 정보 불투명도", chordCandidateCount:"코드 후보 수",
+    keyboard:"키보드", keyboardMovableDo:"이동 도 숫자", keyboardDistance:"최저음 거리(옥타브)", keyboardFifthAngle:"5도 원 스텝", keyboardSize:"키보드 크기",
     lowCut:"저음역 컷", highCut:"고음역 컷",
     omegaMax:"최대 회전 속도",
     midiNotInit:"MIDI: 초기화되지 않음", last:"마지막:", idle:"대기",
     midiNeedSecure:"HTTPS/localhost 필요", midiUnsupported:"미지원",
     midiReady:"준비 완료", midiInitFailed:"초기화 실패", midiAllInputsStat:"모든 입력",
     midiInputStatPrefix:"입력:", midiNoDevice:"장치 없음",
-    midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너",
+    midiFile:"MIDI 파일", fileOp:"동작", play:"재생", train:"트레이너", playbackSpeed:"재생 속도",
     trainStart:"시작/재시작", transpose:"이조",
     seek:"재생 위치",
     resetDefaults:"초기 설정으로",
     presetSlot:"프리셋 슬롯", presetSave:"슬롯에 저장", presetLoad:"슬롯 불러오기",
     presetSaved:"프리셋을 저장했습니다", presetLoaded:"프리셋을 불러왔습니다", presetEmpty:"슬롯이 비어 있습니다",
     presetSaveFailed:"저장에 실패했습니다",
-    uiHide:"UI 숨기기", uiShow:"UI 표시",
+    uiHide:"UI 숨기기", uiShow:"UI 표시", transportHide:"재생 조작 숨기기", transportShow:"재생",
     octaveSuffix:"옥타브", transposeSuffix:"반음",
     filePlayback:"파일 재생", trainerStepPrefix:"스텝:",
     diskLock:"디스크 잠금", diskUnlock:"잠금 해제"
@@ -558,22 +770,22 @@ const I18N = {
     uiOpacity:"界面不透明度", diskMass:"盘质量", damping:"阻尼",
     snapZeroAlpha:"α=0 时停止角速度",
     lineAlpha:"曲线不透明度", straightLineAlpha:"直线不透明度", noteGuideAlpha:"音符指引不透明度", arcGuideAlpha:"同心弧指引不透明度", noteGuideLabelAlpha:"音符指引数字不透明度", waterAlpha:"水面不透明度", k2WaterAlpha:"K2水面不透明度", movNumAlpha:"移动do数字不透明度", movNumSize:"移动do数字大小", noteDotSize:"音符点大小",
-    labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度",
-    keyboard:"键盘显示", keyboardMovableDo:"移动do数字", keyboardDistance:"最低音距离(八度)", keyboardFifthAngle:"五度圈步数",
+    labelSize:"标签大小", labelBG:"标签背景不透明度", labelAlpha:"音名不透明度", outerHighlightAlpha:"外圈高亮不透明度", compositionInfoAlpha:"构成信息不透明度", chordCandidateCount:"候选和弦数",
+    keyboard:"键盘显示", keyboardMovableDo:"移动do数字", keyboardDistance:"最低音距离(八度)", keyboardFifthAngle:"五度圈步数", keyboardSize:"键盘大小",
     lowCut:"低频削减", highCut:"高频削减",
     omegaMax:"最大角速度",
     midiNotInit:"MIDI：未初始化", last:"最后:", idle:"空闲",
     midiNeedSecure:"需要 HTTPS/localhost", midiUnsupported:"不支持",
     midiReady:"已准备", midiInitFailed:"初始化失败", midiAllInputsStat:"全部输入",
     midiInputStatPrefix:"输入:", midiNoDevice:"无设备",
-    midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器",
+    midiFile:"MIDI 文件", fileOp:"操作", play:"播放", train:"训练器", playbackSpeed:"播放速度",
     trainStart:"开始/重新开始", transpose:"移调",
     seek:"播放位置",
     resetDefaults:"恢复默认设置",
     presetSlot:"预设槽位", presetSave:"保存到槽位", presetLoad:"加载槽位",
     presetSaved:"预设已保存", presetLoaded:"预设已加载", presetEmpty:"槽位为空",
     presetSaveFailed:"保存失败",
-    uiHide:"隐藏界面", uiShow:"显示界面",
+    uiHide:"隐藏界面", uiShow:"显示界面", transportHide:"隐藏播放控件", transportShow:"播放",
     octaveSuffix:"八度", transposeSuffix:"半音",
     filePlayback:"文件播放", trainerStepPrefix:"步骤:",
     diskLock:"锁定圆盘", diskUnlock:"解除锁定"
@@ -593,7 +805,7 @@ const clampPresetSlot = value => {
 let DEFAULT_SETTINGS = null;
 
 // UIスケールと初期言語
-let uiScale = 0.95;
+let uiScale = isIPhone ? 0.75 : 0.95;
 const SUPPORTED_LANGS = ['en','pt-BR','es-MX','ja','ko','zh'];
 const navigatorLang = (navigator.language || 'en').toLowerCase();
 let lang = navigatorLang.startsWith('ja') ? 'ja'
@@ -603,6 +815,7 @@ let lang = navigatorLang.startsWith('ja') ? 'ja'
   : navigatorLang.startsWith('es') ? 'es-MX'
   : 'en';
 let midiTranspose = 0;
+let playbackRate = 1;
 function t(k){ return (I18N[lang]&&I18N[lang][k]) || I18N.en[k] || k; }
 // ラベル要素に翻訳済みテキストを設定
 function setLabelText(labelEl, key){
@@ -649,6 +862,7 @@ function applyI18N(){
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
   uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
+  updateTransportVisibility();
   updateDiskLockUI();
   updateCutDisplays();
   updateTransposeDisplay();
@@ -669,7 +883,8 @@ function collectKeyboardSettings(){
     enabled: keyboardToggle.checked,
     movableDo: keyboardMovableToggle.checked,
     distance: keyboardDistanceToggle.checked,
-    fifthAngle: keyboardFifthToggle.checked
+    fifthAngle: keyboardFifthToggle.checked,
+    sizePct: keyboardSizeSlider.value
   };
 }
 
@@ -692,15 +907,18 @@ function collectSettingsFromUI(){
     keyboardMovableDo: keyboardMovableToggle.checked,
     keyboardDistance: keyboardDistanceToggle.checked,
     keyboardFifthAngle: keyboardFifthToggle.checked,
+    keyboardSize: keyboardSizeSlider.value,
     exclude: excludeSel.value,
     lowCut: lowCutOct,
     highCut: highCutOct,
     omegaMaxExp: omegaMaxSlider.value,
     midiTranspose,
+    playbackRate,
     dampPct: dampSlider.value,
     snapZeroAlpha: snapAlphaCheckbox.checked,
     fileOp: fileOp.value,
     uiHidden: !uiVisible,
+    transportHidden: !transportVisible,
     diskLocked
   };
 }
@@ -721,7 +939,7 @@ function applySettings(settings, {force = false} = {}){
   // UIスケール関連の復元
   if(has('uiScale')){
     const parsed = parseFloat(s.uiScale);
-    if(!Number.isNaN(parsed)) uiScale = parsed;
+    if(!Number.isNaN(parsed)) uiScale = isIPhone ? 0.75 : parsed;
   }
   // ここから下は順番依存のため見通しを良くするため小分けにコメントを挿入
   // アンカーやMIDI関連の復元
@@ -813,6 +1031,10 @@ function applySettings(settings, {force = false} = {}){
     if('movableDo' in keyboardPreset) keyboardMovableToggle.checked = !!keyboardPreset.movableDo;
     if('distance' in keyboardPreset) keyboardDistanceToggle.checked = !!keyboardPreset.distance;
     if('fifthAngle' in keyboardPreset) keyboardFifthToggle.checked = !!keyboardPreset.fifthAngle;
+    if('sizePct' in keyboardPreset){
+      const value = Math.max(70, Math.min(170, parseInt(keyboardPreset.sizePct, 10) || 100));
+      keyboardSizeSlider.value = String(value);
+    }
   }
   if(has('keyboardEnabled')){
     keyboardToggle.checked = !!s.keyboardEnabled;
@@ -826,10 +1048,16 @@ function applySettings(settings, {force = false} = {}){
   if(has('keyboardFifthAngle')){
     keyboardFifthToggle.checked = !!s.keyboardFifthAngle;
   }
+  if(has('keyboardSize')){
+    const value = Math.max(70, Math.min(170, parseInt(s.keyboardSize, 10) || 100));
+    keyboardSizeSlider.value = String(value);
+  }
   keyboardEnabled = keyboardToggle.checked;
   keyboardShowMovable = keyboardMovableToggle.checked;
   keyboardShowDistance = keyboardDistanceToggle.checked;
   keyboardShowFifthAngle = keyboardFifthToggle.checked;
+  keyboardScalePct = Math.max(70, Math.min(170, parseInt(keyboardSizeSlider.value, 10) || 100));
+  keyboardSizeVal.textContent = `${keyboardScalePct}%`;
   if(has('exclude')){
     excludeSel.value = s.exclude;
   }
@@ -854,6 +1082,9 @@ function applySettings(settings, {force = false} = {}){
     transposeSlider.value = String(clamped);
     applyTransposeSetting({shouldSave:false, preservePlayback:false});
   }
+  if(has('playbackRate')){
+    applyPlaybackRateSetting(s.playbackRate, {shouldSave:false});
+  }
   if(has('dampPct')){
     dampSlider.value = s.dampPct;
   }else if(!force && s.dampExp!=null){
@@ -876,6 +1107,10 @@ function applySettings(settings, {force = false} = {}){
   if(has('uiHidden')){
     uiVisible = !s.uiHidden;
     updateUIVisibility();
+  }
+  if(has('transportHidden')){
+    transportVisible = !s.transportHidden;
+    updateTransportVisibility();
   }
 }
 function finalizeAppliedSettings({shouldConnectMIDI = false} = {}){
@@ -939,11 +1174,34 @@ if(loadPresetBtn){
   loadPresetBtn.onclick = ()=> loadPreset(selectedPresetSlot());
 }
 
+/* ===== Playback controls show/hide ===== */
+let transportVisible = true;
+function updateTransportVisibility(){
+  document.body.classList.toggle('transport-hidden', !transportVisible);
+  if(transportHideBtn){
+    transportHideBtn.setAttribute('aria-pressed', String(!transportVisible));
+    transportHideBtn.setAttribute('aria-label', t('transportHide'));
+    transportHideBtn.title = t('transportHide');
+  }
+  if(transportReveal){
+    transportReveal.setAttribute('aria-pressed', String(transportVisible));
+    transportReveal.setAttribute('aria-label', t('transportShow'));
+    transportReveal.textContent = `▲ ${t('transportShow')}`;
+  }
+}
+if(transportHideBtn){
+  transportHideBtn.onclick = ()=>{ transportVisible = false; updateTransportVisibility(); saveSettings(); };
+}
+if(transportReveal){
+  transportReveal.onclick = ()=>{ transportVisible = true; updateTransportVisibility(); saveSettings(); };
+}
+
 /* ===== UI show/hide ===== */
 let uiVisible = true;
 function updateUIVisibility(){
   // displayプロパティで丸ごとパネルを非表示にする
   uiPanel.style.display = uiVisible ? '' : 'none';
+  document.body.classList.toggle('ui-hidden', !uiVisible);
   uiToggle.setAttribute('aria-pressed', String(!uiVisible));
   uiToggle.textContent = uiVisible ? t('uiHide') : t('uiShow');
 }
@@ -973,6 +1231,8 @@ function updateFileOpUI(){
   // 再生モードでは再生ボタン群、トレーナーモードでは練習用ボタン群だけを見せる
   document.getElementById('playBtns').style.display  = isPlay ? '' : 'none';
   document.getElementById('trainBtns').style.display = isPlay ? 'none' : '';
+  if(seekWrap) seekWrap.style.display = isPlay ? '' : 'none';
+  if(playbackRateWrap) playbackRateWrap.style.display = isPlay ? '' : 'none';
   if(isPlay){
     // 再生モード時は最新の進行状況を再生ステータスで置き換える
     info.textContent = t('filePlayback');
@@ -986,24 +1246,37 @@ fileOp.addEventListener('change', ()=>{ updateFileOpUI(); saveSettings(); });
 /* ===== Helpers ===== */
 function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
 function hzToMidi(f){ return 12*Math.log2(f/440)+69; }
+function transportReservedBottom(){
+  const target = transportVisible ? transportDock : transportRevealDock;
+  if(!target) return 0;
+  const rect = target.getBoundingClientRect();
+  if(!Number.isFinite(rect.height) || rect.height <= 0) return 0;
+  return Math.ceil((rect.height + 12) * devicePixelRatio);
+}
 function keyboardMetrics(){
-  if(!keyboardEnabled) return {active:false, mode:'none', height:0, padding:0, reservedBottom:0, reservedRight:0, panelWidth:0, panelGap:0};
+  const transportBottom = transportReservedBottom();
+  if(!keyboardEnabled) return {active:false, mode:'none', height:0, padding:0, reservedBottom:transportBottom, reservedRight:0, panelWidth:0, panelGap:0, transportBottom};
+  const scale = Math.max(0.7, Math.min(1.7, keyboardScalePct / 100));
   const padding = 16 * devicePixelRatio;
-  const height = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const baseHeight = Math.min(140 * devicePixelRatio, cv.height * 0.25);
+  const height = Math.min(baseHeight * scale, cv.height * 0.42);
   const landscape = cv.width > cv.height * 1.25;
   if(landscape){
     const panelGap = 12 * devicePixelRatio;
-    const targetDiskAreaWidth = cv.height * 1.02;
+    // 鍵盤を大きくした分だけ右側の領域を広げ、円盤領域を縮小する。
+    const targetDiskRatio = Math.max(0.62, 1.02 - Math.max(0, scale - 1) * 0.42);
+    const targetDiskAreaWidth = cv.height * targetDiskRatio;
     const panelFromTarget = cv.width - targetDiskAreaWidth - panelGap;
-    const desiredPanelWidth = Math.max(cv.width * 0.30, panelFromTarget);
-    const minDiskAreaWidth = cv.height * 0.82;
+    const desiredPanelWidth = Math.max(cv.width * 0.30 * scale, panelFromTarget);
+    const minDiskRatio = Math.max(0.56, 0.82 - Math.max(0, scale - 1) * 0.28);
+    const minDiskAreaWidth = cv.height * minDiskRatio;
     const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
     const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
     if(panelWidth >= 180 * devicePixelRatio){
-      return {active:true, mode:'side', height, padding, reservedBottom:0, reservedRight:panelWidth + panelGap, panelWidth, panelGap};
+      return {active:true, mode:'side', height, padding, reservedBottom:transportBottom, reservedRight:panelWidth + panelGap, panelWidth, panelGap, transportBottom};
     }
   }
-  return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2, reservedRight:0, panelWidth:0, panelGap:0};
+  return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2 + transportBottom, reservedRight:0, panelWidth:0, panelGap:0, transportBottom};
 }
 function canvasCenter(){
   const keyboard = keyboardMetrics();
@@ -1188,10 +1461,18 @@ let keyboardEnabled = keyboardToggle.checked;
 let keyboardShowMovable = keyboardMovableToggle.checked;
 let keyboardShowDistance = keyboardDistanceToggle.checked;
 let keyboardShowFifthAngle = keyboardFifthToggle.checked;
+let keyboardScalePct = Math.max(70, Math.min(170, parseInt(keyboardSizeSlider.value, 10) || 100));
+keyboardSizeVal.textContent = `${keyboardScalePct}%`;
 keyboardToggle.onchange = ()=>{ keyboardEnabled = keyboardToggle.checked; saveSettings(); };
 keyboardMovableToggle.onchange = ()=>{ keyboardShowMovable = keyboardMovableToggle.checked; saveSettings(); };
 keyboardDistanceToggle.onchange = ()=>{ keyboardShowDistance = keyboardDistanceToggle.checked; saveSettings(); };
 keyboardFifthToggle.onchange = ()=>{ keyboardShowFifthAngle = keyboardFifthToggle.checked; saveSettings(); };
+keyboardSizeSlider.oninput = ()=>{
+  keyboardScalePct = Math.max(70, Math.min(170, parseInt(keyboardSizeSlider.value, 10) || 100));
+  keyboardSizeSlider.value = String(keyboardScalePct);
+  keyboardSizeVal.textContent = `${keyboardScalePct}%`;
+  saveSettings();
+};
 
 /* ===== Global state ===== */
 let worldRot = 0;          // 描画用回転（anchorにより決定）
@@ -1200,6 +1481,10 @@ let diskMass = Math.pow(10, parseFloat(massSlider.value));
 let excludeMode = excludeSel.value;
 let midiDataRaw = null; // 未移調のMIDIデータ
 let midiData = null;    // 現在の移調を反映したデータ {ppq, tempos:[...], notes:[...], lengthSec, onsets, onsetTicks}
+let currentMidiFileName = 'sample.mid';
+let chordCaptures = [];
+let sectionMarkers = [];
+let captureToastTimer = null;
 let trainer = null;
 let player = null;
 let seekMuting = false;
@@ -1208,7 +1493,8 @@ let diskLocked = false;
 let lastKeyboardBaseMidi = null;
 
 function applySeekMuteState(){
-  if(synth && typeof synth.setMuted === 'function') synth.setMuted(seekMuting);
+  if(liveSynth && typeof liveSynth.setMuted === 'function') liveSynth.setMuted(seekMuting);
+  if(fileSynth && typeof fileSynth.setMuted === 'function') fileSynth.setMuted(seekMuting);
   if(tapSynth && typeof tapSynth.setMuted === 'function') tapSynth.setMuted(seekMuting);
 }
 excludeSel.onchange = ()=>{ excludeMode = excludeSel.value; saveSettings(); };
@@ -1339,6 +1625,23 @@ function updateSeekUI(pos = 0, total = null){
   seekTime.textContent = `${formatTime(posSec)} / ${formatTime(totalSec)}`;
 }
 updateSeekUI();
+const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+function normalizePlaybackRate(value){
+  const parsed = parseFloat(value);
+  if(!Number.isFinite(parsed)) return 1;
+  return PLAYBACK_RATES.reduce((best, candidate)=>
+    Math.abs(candidate - parsed) < Math.abs(best - parsed) ? candidate : best
+  , 1);
+}
+function applyPlaybackRateSetting(value, {shouldSave = true} = {}){
+  playbackRate = normalizePlaybackRate(value);
+  playbackRateSelect.value = String(playbackRate);
+  if(player && typeof player.setRate === 'function') player.setRate(playbackRate);
+  if(shouldSave) saveSettings();
+}
+playbackRateSelect.addEventListener('change', ()=>{
+  applyPlaybackRateSetting(playbackRateSelect.value);
+});
 function applyTransposeSetting({shouldSave = true, preservePlayback = false} = {}){
   const raw = parseInt(transposeSlider.value, 10);
   const clamped = Math.max(-6, Math.min(6, Number.isNaN(raw) ? 0 : raw));
@@ -1830,6 +2133,8 @@ const MOVABLE_DO_SEQUENCE = ['7','+4','-2','-6','-3','-7','4','1','5','2','6','3
 const MOVABLE_DO_SOLFEGE = {'1':'Do','-2':'De','2':'Re','-3':'Ri','3':'Mi','4':'Fa','+4':'Fi','5':'Sol','-6':'Sa','6':'La','-7':'Ti','7':'Si'};
 const K2_OUTSIDE_BITS = ['-7','-3','-6','-2','+4'];
 const K2_OUTSIDE_ANGLE_DEG = {'-7':300,'-3':330,'-6':0,'-2':30,'+4':60};
+// K2の角度表は一般理論から導いたものではなく、作者の楽器経験に基づく経験則。
+// 再調整するときは「理論上の正解」への置換ではなく、聴感上の検証結果を基準にする。
 const K2_DELTA_BY_MASK = [
   0, 30, 0, 60, 0, 90, 90, 90,
   0, 30, 0, 120, -90, 120, 0, 120,
@@ -1867,7 +2172,7 @@ function movableDoStepForMidi(midi, drawRot, halfCenter){
   return step;
 }
 
-function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, lowestMidi=null, highestMidi=null, compositionSummary=null){
+function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCenter, lowestMidi=null, highestMidi=null, compositionSummary=null, theoryDrawRot=drawRot, theoryHalfCenter=halfCenter){
   if(!keyboardEnabled) return;
   const {minMidi, maxMidi} = midiRangeFromDisplay(displayMinFreq, displayMaxFreq);
   if(minMidi > maxMidi) return;
@@ -1900,9 +2205,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
   const x = (keyboard.mode === 'side')
     ? (cv.width - keyboard.panelWidth) + (keyboard.panelWidth - width) / 2
     : cx - width / 2;
-  const y = (keyboard.mode === 'side')
-    ? (cv.height - keyboardHeight - padding)
-    : cv.height - keyboardHeight - padding;
+  const y = cv.height - keyboard.transportBottom - keyboardHeight - padding;
 
   const whiteWidth = width / whiteKeys.length;
   const blackWidth = whiteWidth * 0.54;
@@ -1997,7 +2300,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   const bandColorsForKey = (midi)=>{
     const movable = keyboardShowMovable
-      ? colorForMovableStep(movableDoStepForMidi(midi, drawRot, halfCenter))
+      ? colorForMovableStep(movableDoStepForMidi(midi, theoryDrawRot, theoryHalfCenter))
       : null;
     const distance = keyboardShowDistance
       ? colorForDistanceStep(((midi - base) % 12 + 12) % 12)
@@ -2039,7 +2342,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     const labels = [];
     const dist = midi - base;
     if(keyboardShowMovable){
-      const step = movableDoStepForMidi(midi, drawRot, halfCenter);
+      const step = movableDoStepForMidi(midi, theoryDrawRot, theoryHalfCenter);
       const movColor = colorForMovableStep(step) || 'rgba(245,245,245,0.95)';
       const symbol = MOVABLE_DO_SEQUENCE[step];
       labels.push({kind:'movable', step, text: MOVABLE_DO_SOLFEGE[symbol] || symbol, color: movColor});
@@ -2169,6 +2472,22 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     ctx.strokeRect(key.x, key.y, key.width, key.height);
   }
 
+  // 色で塗りつぶした後でも白鍵の形を瞬時に判別できるよう、細い白い内枠を重ねる。
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+  ctx.lineWidth = Math.max(1, 1.25 * devicePixelRatio);
+  const whiteInset = ctx.lineWidth * 0.65;
+  for(const key of keys){
+    if(key.isBlack) continue;
+    ctx.strokeRect(
+      key.x + whiteInset,
+      key.y + whiteInset,
+      Math.max(0, key.width - whiteInset * 2),
+      Math.max(0, key.height - whiteInset * 2)
+    );
+  }
+  ctx.restore();
+
   const whiteMaskPad = Math.max(1, ctx.lineWidth);
   ctx.fillStyle = 'rgba(245,245,245,0.95)';
   for(const key of keys){
@@ -2245,7 +2564,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
     for(const key of keys){
       const isRoot = (rootPc != null) ? (key.midi === rootKeyMidi) : (rootMidi != null && key.midi === rootMidi);
-      const outsideK1 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(key.pc, drawRot, halfCenter));
+      const outsideK1 = K2_OUTSIDE_BITS.includes(degreeForPitchClass(key.pc, theoryDrawRot, theoryHalfCenter));
       const cw = !isRoot && cwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
       const ccw = !isRoot && ccwPcs.has(key.pc) && (!outsideK1 || activePcs.has(key.pc));
       if(!isRoot && !cw && !ccw) continue;
@@ -2482,7 +2801,7 @@ function scoreCandidateChord(name, optionalIntervals){
   const f=parseChordFeatures(name);
   if(!f.omit3) score += 60;
   if(!f.omit5) score += 60;
-  if(/^(?:[A-G](?:#|♭)?)(?:m|dim|aug|sus2|sus4|5|6|m6|7|M7|m7|mM7|dim7)?(?:\([^)]*\))?$/.test(name)) score += 100;
+  if(/^(?:[A-G](?:#|b|♭)?)(?:m|dim|aug|sus2|sus4|5|6|m6|7|M7|m7|mM7|dim7)?(?:\([^)]*\))?$/.test(name)) score += 100;
   score += optionalIntervals.length * 15;
   for(const i of optionalIntervals){
     if([9,10,11].includes(i)) score += 20;
@@ -2498,7 +2817,7 @@ function scoreCandidateChord(name, optionalIntervals){
 
   // 11 を含む括弧表記（例: C7(11), C7(9,11), C7(9,11,13) など）を対象にする
   const has11InParen = f.parenItems.some((item)=>item==='11');
-  const rootMatch = name.match(/^([A-G](?:#|♭)?)(.*)$/);
+  const rootMatch = name.match(/^([A-G](?:#|b|♭)?)(.*)$/);
   const suffix = rootMatch ? rootMatch[2] : '';
   const impliesMajor3 = !(suffix.startsWith('m') || suffix.startsWith('dim') || suffix.startsWith('sus2') || suffix.startsWith('sus4') || suffix.startsWith('5'));
   if(has11InParen && impliesMajor3) score -= 80;
@@ -2506,7 +2825,6 @@ function scoreCandidateChord(name, optionalIntervals){
 }
 function generateChordName(rootPc, notesPcs){
   const set = new Set(notesPcs);
-  const has = (n)=> set.has(n);
   const iv = (pc)=> ((pc-rootPc)%12+12)%12;
   const intervals = uniqueSorted(Array.from(set).map(iv));
   const hasb3=intervals.includes(3), has3=intervals.includes(4);
@@ -2514,14 +2832,22 @@ function generateChordName(rootPc, notesPcs){
   const has2=intervals.includes(2), has4=intervals.includes(5), hasb7=intervals.includes(10), has7=intervals.includes(11), has6=intervals.includes(9);
   const hasBoth3 = has3 && hasb3;
   const hasBoth7 = has7 && hasb7;
+  const isDiminished7 = hasb3 && !has3 && hasb5 && has6 && !has5 && !hasb7 && !has7;
+  const isHalfDiminished7 = hasb3 && !has3 && hasb5 && hasb7 && !has5 && !has7;
   const root=PITCH_CLASS_LABELS[rootPc];
   let base=root;
+  let seventhIncludedInBase = false;
   if(!has3 && !hasb3){
     if(has5 && has4 && !has2) base += 'sus4';
     else if(has5 && has2 && !has4) base += 'sus2';
     else if(has5 && intervals.length===2) base += '5';
-  } else if(hasb3 && hasb5 && has6 && !has5 && !hasb7 && !has7){
+  } else if(isDiminished7){
     base += 'dim7';
+    seventhIncludedInBase = true;
+  } else if(isHalfDiminished7){
+    // 1, ♭3, ♭5, ♭7 は減七ではなく半減七。
+    base += 'm7';
+    seventhIncludedInBase = true;
   } else if(hasb3 && hasb5){
     base += 'dim';
   } else if(has3 && hasS5 && !has5){
@@ -2529,11 +2855,13 @@ function generateChordName(rootPc, notesPcs){
   } else if(hasb3 && !has3){
     base += 'm';
   }
-  if(hasBoth7){ base += 'M7'; }
-  else if(hasb7){ base += '7'; }
-  else if(has7){ base += 'M7'; }
-  else if(has6 && has3 && has5 && !hasb3){ base += '6'; }
-  else if(has6 && hasb3 && has5){ base += '6'; }
+  if(!seventhIncludedInBase){
+    if(hasBoth7){ base += 'M7'; }
+    else if(hasb7){ base += '7'; }
+    else if(has7){ base += 'M7'; }
+    else if(has6 && has3 && has5 && !hasb3){ base += '6'; }
+    else if(has6 && hasb3 && has5){ base += '6'; }
+  }
   const mods=[];
   const add=(m)=>{ if(!mods.includes(m)) mods.push(m); };
   const hasAny3 = has3 || hasb3;
@@ -2585,7 +2913,14 @@ function buildChordDisplaySummary(compositionSummary){
     if(!prev || c.score>prev.score || (c.score===prev.score && c.picked.length>prev.picked.length)) dedup.set(c.name,c);
   }
   const out = Array.from(dedup.values()).sort((a,b)=> b.score-a.score || a.name.length-b.name.length).slice(0, chordCandidateCount);
-  return {formalCode, formalDegreeCode, candidates: out, rootPc, optionalPcs};
+  return {
+    formalCode,
+    formalDegreeCode,
+    candidates: out,
+    rootPc,
+    optionalPcs,
+    customNotation: compositionSummary.customNotation || null
+  };
 }
 
 function formatChordNameForDisplay(name){
@@ -2608,6 +2943,35 @@ function normalizeAngleDeg(value){
   let out = value % 360;
   if(out < 0) out += 360;
   return out;
+}
+function movableDoDegreeForKAngle(angleDeg){
+  if(!Number.isFinite(angleDeg)) return '1';
+  const step = ((Math.round(-normalizeAngleDeg(angleDeg) / 30) % 12) + 12) % 12;
+  return MOVABLE_DO_SEQUENCE[step];
+}
+function degreeForPitchClassInK2(pc, drawRot, halfCenter, k2){
+  const k1Angle = kAngleInKForPitchClass(pc, drawRot, halfCenter);
+  const k2Angle = normalizeAngleDeg(k1Angle - (k2?.rawDeltaDeg ?? k2?.appliedDeltaDeg ?? 0));
+  return movableDoDegreeForKAngle(k2Angle);
+}
+// 独自コード表記では表示モードによる符号反転を避け、論理上のK2移動量を使う。
+function degreeForPitchClassInK2ByDelta(pc, drawRot, halfCenter, deltaDeg){
+  const k1Angle = kAngleInKForPitchClass(pc, drawRot, halfCenter);
+  return movableDoDegreeForKAngle(normalizeAngleDeg(k1Angle - (deltaDeg || 0)));
+}
+function pitchClassForDegreeInK1(targetDegree, drawRot, halfCenter){
+  for(let pc=0; pc<12; pc++){
+    if(degreeForPitchClass(pc, drawRot, halfCenter) === targetDegree) return pc;
+  }
+  return null;
+}
+function romanForDegree(degree){
+  const roman = ROMAN_BY_DEGREE[degree] || degree || 'I';
+  return String(roman).replace(/^b/, '♭').replace(/^#/, '♯');
+}
+function signedK2UnitText(units){
+  const n = Number.isFinite(units) ? Math.round(units) : 0;
+  return n < 0 ? `−${Math.abs(n)}` : String(n);
 }
 function kOuterAnglesInK(k2, degrees){
   if(!k2 || !degrees || !degrees.length) return [];
@@ -2685,8 +3049,9 @@ function k2Analysis(activeNotes, drawRot, halfCenter, anchorMode){
     .sort((a,b)=>K2_OUTSIDE_BITS.indexOf(a)-K2_OUTSIDE_BITS.indexOf(b));
   const mask = uniqueOutside.reduce((acc, deg)=> acc | (1 << K2_OUTSIDE_BITS.indexOf(deg)), 0);
   const rawDeltaDeg = K2_DELTA_BY_MASK[mask] ?? 0;
-  const anchorCorrected = (anchorMode === 'disk');
-  const appliedDeltaDeg = anchorCorrected ? -rawDeltaDeg : rawDeltaDeg;
+  // K2の相対移動量は音楽理論上の値であり、表示モードでは反転させない。
+  const anchorCorrected = false;
+  const appliedDeltaDeg = rawDeltaDeg;
   const k1StartDeg = 90;
   const k1EndDeg = 270;
   const k2StartDeg = k1StartDeg + appliedDeltaDeg;
@@ -2709,6 +3074,7 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   if(!activeNotes || activeNotes.size === 0) return null;
   const sortedMidis = Array.from(activeNotes.keys()).sort((a,b)=>a-b);
   if(!sortedMidis.length) return null;
+  // 転回形の推定は仕様対象外。コード名の根音は常に現在の最低音とする。
   const rootMidi = sortedMidis[0];
   const rootPc = ((rootMidi % 12) + 12) % 12;
   const degreeToMidi = new Map();
@@ -2737,6 +3103,43 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
   const rootRoman = ROMAN_BY_DEGREE[degreeForPitchClass(rootPc, drawRot, halfCenter)] || 'I';
   const rootDegree = degreeForPitchClass(rootPc, drawRot, halfCenter);
   const k2 = k2Analysis(activeNotes, drawRot, halfCenter, anchorSel.value);
+  // K2欄の移動ドはK1の階名を流用せず、K2の回転差を反映して求める。
+  const rootDegreeK2 = degreeForPitchClassInK2(rootPc, drawRot, halfCenter, k2);
+
+  // 呼び出し元から渡された論理座標で K1、K2、Dark/Bright を求める。
+  // 表示モードの座標はここへ渡さない。
+  const notationDrawRot = drawRot;
+  const notationHalfCenter = halfCenter;
+  const notationK2 = k2Analysis(activeNotes, notationDrawRot, notationHalfCenter, 'water');
+  const notationK1Pc = pitchClassForDegreeInK1('1', notationDrawRot, notationHalfCenter);
+  const notationRootDegreeK2 = degreeForPitchClassInK2ByDelta(
+    rootPc,
+    notationDrawRot,
+    notationHalfCenter,
+    notationK2?.rawDeltaDeg || 0
+  );
+  const notationRootAngleInK1 = kAngleInKForPitchClass(rootPc, notationDrawRot, notationHalfCenter);
+  const notationRootAngleInK2 = normalizeAngleDeg(notationRootAngleInK1 - (notationK2?.rawDeltaDeg || 0));
+  const notationCompositionAngles = uniquePcs.map((pc)=>({
+    pc,
+    angle: kAngleInKForPitchClass(pc, notationDrawRot, notationHalfCenter)
+  }));
+  const notationAroundRoot = pickCwCcwWithinHalfTurn(
+    notationRootAngleInK1,
+    notationCompositionAngles.filter((entry)=>entry.pc !== rootPc),
+    notationDrawRot,
+    notationHalfCenter,
+    notationRootAngleInK2
+  );
+  const notationSingleTone = uniquePcs.length === 1;
+  const customNotation = {
+    darkUnits: notationSingleTone ? 0 : Math.round((notationAroundRoot?.ccw?.delta || 0) / 30),
+    k1Label: notationK1Pc == null ? '–' : formatChordNameForDisplay(PITCH_CLASS_LABELS[notationK1Pc]),
+    k2DeltaUnits: Math.round((notationK2?.rawDeltaDeg || 0) / 30),
+    k2RootRoman: romanForDegree(notationRootDegreeK2),
+    brightUnits: notationSingleTone ? 0 : Math.round((notationAroundRoot?.cw?.delta || 0) / 30)
+  };
+
   const outerAngles = kOuterAnglesInK(k2, k2?.outsideDegrees || []);
   const rootAngleInK1 = kAngleInKForPitchClass(rootPc, drawRot, halfCenter);
   const rootAngleInK2 = normalizeAngleDeg(rootAngleInK1 - (k2?.appliedDeltaDeg || 0));
@@ -2762,12 +3165,13 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
       .filter((entry)=> normalizeAngleDeg(entry.angle - rootAngleInK1) <= aroundRoot.ccw.delta + 1e-6)
       .map((entry)=> entry.degree)
     : [];
-  const rootMovableDo = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
-  const outerFromRootLine1 = `rootK1: ${Math.round(rootAngleInK1)}(${rootMovableDo})`;
+  const rootMovableDoK1 = MOVABLE_DO_SOLFEGE[rootDegree] || rootDegree;
+  const rootMovableDoK2 = MOVABLE_DO_SOLFEGE[rootDegreeK2] || rootDegreeK2;
+  const outerFromRootLine1 = `rootK1: ${Math.round(rootAngleInK1)}(${rootMovableDoK1})`;
   const singleCompositionTone = uniquePcs.length === 1;
   const ccwDistance = aroundRoot?.ccw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.ccw.degree)) : '1';
   const cwDistance = aroundRoot?.cw ? distanceLabelFromMidi(degreeToMidi.get(aroundRoot.cw.degree)) : '1';
-  const outerFromRootLine2 = `rootK2: ${Math.round(rootAngleInK2)}(${rootMovableDo})`;
+  const outerFromRootLine2 = `rootK2: ${Math.round(rootAngleInK2)}(${rootMovableDoK2})`;
   const outerFromRootLine3 = singleCompositionTone
     ? `DarkAngle: 0(1)`
     : (aroundRoot && aroundRoot.ccw)
@@ -2823,6 +3227,8 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     absoluteLine: absolute.join(' '),
     relativeLine: [rootRoman, ...relative.slice(1)].join(' '),
     rootRoman,
+    rootDegreeK1: rootDegree,
+    rootDegreeK2,
     k2,
     k2Line1: k2RangeText,
     k2Line2: `Outside tones: ${outsideText}`,
@@ -2845,10 +3251,11 @@ function noteCompositionSummary(activeNotes, drawRot, halfCenter){
     highlightCwPcs,
     highlightCcwPcs,
     keyboardHighlightCwPcs: uniqueSorted(keyboardHighlightCwPcs),
-    keyboardHighlightCcwPcs: uniqueSorted(keyboardHighlightCcwPcs)
+    keyboardHighlightCcwPcs: uniqueSorted(keyboardHighlightCcwPcs),
+    customNotation
   };
 }
-function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
+function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax, theoryDrawRot=drawRot, theoryHalfCenter=halfCenter){
   if(!summary) return;
   const {cx, cy} = canvasCenter();
   const radius = rMax + 18;
@@ -2869,8 +3276,8 @@ function drawOuterAngleHighlights(summary, drawRot, halfCenter, rMax){
     const cwSpan = normalizeAngleDeg(rootAngle - cwLimit);
     const ccwSpan = normalizeAngleDeg(ccwLimit - rootAngle);
     for(let pc=0; pc<12; pc++){
-      const angleInK = kAngleInKForPitchClass(pc, drawRot, halfCenter);
-      const inK2 = !K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, drawRot, halfCenter));
+      const angleInK = kAngleInKForPitchClass(pc, theoryDrawRot, theoryHalfCenter);
+      const inK2 = !K2_OUTSIDE_BITS.includes(degreeForPitchClass(pc, theoryDrawRot, theoryHalfCenter));
       if(!inK2 && !activePcs.has(pc)) continue;
       const theta = angleForMidiDraw(pc, drawRot);
       if(normalizeAngleDeg(rootAngle - angleInK) <= cwSpan + 1e-6){
@@ -2889,11 +3296,10 @@ function drawCompositionOverlay(summary){
   if(!summary) return;
   const keyboard = keyboardMetrics();
   const landscape = cv.width > cv.height * 1.25;
-  const pad = 14 * devicePixelRatio;
-  const lineGap = 6 * devicePixelRatio;
-  const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
-  ctx.save();
-  ctx.font = `${textSize}px system-ui`;
+  const basePad = 14 * devicePixelRatio;
+  const baseLineGap = 6 * devicePixelRatio;
+  const baseTextSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
+  const minTextSize = Math.max(8.5 * devicePixelRatio, baseTextSize * 0.72);
   const lines = [
     summary.absoluteLine,
     summary.relativeLine,
@@ -2907,34 +3313,67 @@ function drawCompositionOverlay(summary){
     summary.k2Line8 || '',
     summary.k2Line9 || ''
   ];
-  const boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
-  const boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
-  let x = cv.width - boxW - 12 * devicePixelRatio;
+
+  ctx.save();
+  let textSize = baseTextSize;
+  let pad = basePad;
+  let lineGap = baseLineGap;
+  let boxW = 0;
+  let boxH = 0;
+  let x = 12 * devicePixelRatio;
   let y = 12 * devicePixelRatio;
-  if(landscape && keyboard.active){
-    if(keyboard.mode === 'side'){
-      const panelX = cv.width - keyboard.panelWidth;
-      const halfW = keyboard.panelWidth * 0.5;
-      x = panelX + halfW + Math.max(8 * devicePixelRatio, (halfW - boxW) * 0.5) - keyboard.panelWidth * 0.1;
-      y = 12 * devicePixelRatio;
-    }else{
-      x = cv.width - boxW - 12 * devicePixelRatio;
-      y = 12 * devicePixelRatio;
-    }
+  let maxW = cv.width - 24 * devicePixelRatio;
+  const keyboardTop = keyboard.active
+    ? cv.height - keyboard.transportBottom - keyboard.height - keyboard.padding
+    : cv.height - keyboard.transportBottom;
+  let maxBottom = Math.max(24 * devicePixelRatio, keyboardTop - 8 * devicePixelRatio);
+
+  if(landscape && keyboard.active && keyboard.mode === 'side'){
+    const panelX = cv.width - keyboard.panelWidth;
+    const halfW = keyboard.panelWidth * 0.5;
+    x = panelX + halfW + 8 * devicePixelRatio;
+    y = 12 * devicePixelRatio;
+    maxW = Math.max(80 * devicePixelRatio, halfW - 16 * devicePixelRatio);
   }else if(!landscape){
     const {cx, cy} = canvasCenter();
     const {rMax} = ringParams();
-    x = Math.min(cv.width - boxW - 12 * devicePixelRatio, cx + rMax - boxW);
-    y = Math.min(cv.height - boxH - 12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
+    y = Math.max(12 * devicePixelRatio, cy + rMax + 18 * devicePixelRatio);
+    maxW = Math.max(120 * devicePixelRatio, cv.width * 0.48 - 18 * devicePixelRatio);
   }else{
-    const {cx, cy} = canvasCenter();
-    const {rMax} = ringParams();
-    x = Math.min(cv.width - boxW - 12 * devicePixelRatio, cx + rMax * 0.35);
-    y = Math.min(
-      cv.height - boxH - 12 * devicePixelRatio,
-      cy + rMax - boxH * 0.2
-    );
+    maxW = Math.max(120 * devicePixelRatio, cv.width * 0.42);
   }
+
+  const measure = ()=>{
+    ctx.font = `${textSize}px system-ui`;
+    boxW = Math.max(...lines.map((line)=>ctx.measureText(line).width)) + pad * 2;
+    boxH = textSize * lines.length + lineGap * (lines.length - 1) + pad * 2;
+  };
+  measure();
+
+  // 右側情報は全項目を見せる。幅を削る前に文字と余白を穏やかに縮小する。
+  const availableH = Math.max(1, maxBottom - y);
+  while((boxW > maxW || boxH > availableH) && textSize > minTextSize + 0.1){
+    textSize = Math.max(minTextSize, textSize * 0.94);
+    const ratio = textSize / baseTextSize;
+    pad = Math.max(7 * devicePixelRatio, basePad * ratio);
+    lineGap = Math.max(2.5 * devicePixelRatio, baseLineGap * ratio);
+    measure();
+  }
+
+  // 高さが不足する場合は情報欄を上へ寄せる。鍵盤幅は変更しない。
+  if(y + boxH > maxBottom) y = Math.max(8 * devicePixelRatio, maxBottom - boxH);
+
+  if(landscape && keyboard.active && keyboard.mode === 'side'){
+    const panelX = cv.width - keyboard.panelWidth;
+    const halfW = keyboard.panelWidth * 0.5;
+    x = Math.min(cv.width - boxW - 8 * devicePixelRatio, panelX + halfW + 8 * devicePixelRatio);
+  }else if(!landscape){
+    x = cv.width - boxW - 12 * devicePixelRatio;
+  }else{
+    x = cv.width - boxW - 12 * devicePixelRatio;
+  }
+  x = Math.max(8 * devicePixelRatio, x);
+
   const boxAlpha = Math.max(0, Math.min(1, compositionInfoAlpha));
   ctx.fillStyle = `rgba(10,14,20,${0.76 * boxAlpha})`;
   ctx.fillRect(x, y, boxW, boxH);
@@ -2944,22 +3383,57 @@ function drawCompositionOverlay(summary){
   ctx.fillStyle = `rgba(255,255,255,${0.95 * boxAlpha})`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
+  ctx.font = `${textSize}px system-ui`;
   lines.forEach((line, idx)=>{
     ctx.fillText(line, x + pad, y + pad + (textSize + lineGap) * idx);
   });
   ctx.restore();
 }
 
+function customNotationParts(notation){
+  if(!notation) return null;
+  return {
+    lead: `Notation: ${notation.darkUnits}〈${notation.k1Label}`,
+    delta: signedK2UnitText(notation.k2DeltaUnits),
+    tail: `${notation.k2RootRoman}〉${notation.brightUnits}`
+  };
+}
+function measureCustomNotation(ctx, notation, textSize, smallTextSize){
+  const parts = customNotationParts(notation);
+  if(!parts) return 0;
+  ctx.font = `${textSize}px system-ui`;
+  const leadW = ctx.measureText(parts.lead).width;
+  const tailW = ctx.measureText(parts.tail).width;
+  ctx.font = `${smallTextSize}px system-ui`;
+  const deltaW = ctx.measureText(parts.delta).width;
+  ctx.font = `${textSize}px system-ui`;
+  return leadW + deltaW + tailW;
+}
+function drawCustomNotation(ctx, notation, x, y, textSize, smallTextSize){
+  const parts = customNotationParts(notation);
+  if(!parts) return;
+  ctx.font = `${textSize}px system-ui`;
+  ctx.fillText(parts.lead, x, y);
+  let cursor = x + ctx.measureText(parts.lead).width;
+  ctx.font = `${smallTextSize}px system-ui`;
+  const smallYOffset = (textSize - smallTextSize) * 0.42;
+  ctx.fillText(parts.delta, cursor, y + smallYOffset);
+  cursor += ctx.measureText(parts.delta).width;
+  ctx.font = `${textSize}px system-ui`;
+  ctx.fillText(parts.tail, cursor, y);
+}
 
 function drawChordOverlay(chordSummary){
   if(!chordSummary) return;
   const pad = 12 * devicePixelRatio;
   const lineGap = 5 * devicePixelRatio;
   const textSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.9);
-  const headerLines = [
-    `Chord: ${formatChordNameForDisplay(chordSummary.formalCode)}`,
-    `Degree: ${formatChordNameForDisplay(chordSummary.formalDegreeCode || '–')}`,
-    `Candidates:`
+  const smallTextSize = textSize * 0.72;
+  const headerRows = [
+    {kind:'text', text:`Chord: ${formatChordNameForDisplay(chordSummary.formalCode)}`},
+    {kind:'text', text:`Degree: ${formatChordNameForDisplay(chordSummary.formalDegreeCode || '–')}`},
+    ...(chordSummary.customNotation ? [{kind:'notation', notation:chordSummary.customNotation}] : []),
+    {kind:'text', text:'Candidates:'}
   ];
   const candidateLines = chordSummary.candidates.length
     ? chordSummary.candidates.map((c)=>`${formatChordNameForDisplay(c.name)} | ${formatChordNameForDisplay(c.degreeName || '–')}`)
@@ -2969,10 +3443,10 @@ function drawChordOverlay(chordSummary){
   ctx.font = `${textSize}px system-ui`;
 
   const km = keyboardMetrics();
-  const keyReserved = (keyboardEnabled && km.mode !== 'side') ? (km.height + km.padding * 2) : 0;
+  const keyReserved = km.reservedBottom;
   const maxH = cv.height - 24 * devicePixelRatio - keyReserved;
   const rowH = textSize + lineGap;
-  const headerHeight = rowH * headerLines.length;
+  const headerHeight = rowH * headerRows.length;
   const availableForCandidates = Math.max(rowH, maxH - (pad * 2 + headerHeight));
   const rowsPerColumn = Math.max(1, Math.floor(availableForCandidates / rowH));
   const columns = [];
@@ -2983,7 +3457,12 @@ function drawChordOverlay(chordSummary){
   const colWidths = columns.map((col)=> Math.max(...col.map((line)=>ctx.measureText(line).width), 0));
   const gapX = 18 * devicePixelRatio;
   const bodyWidth = colWidths.reduce((a,b)=>a+b,0) + Math.max(0, (columns.length-1)*gapX);
-  const headerWidth = Math.max(...headerLines.map((line)=>ctx.measureText(line).width));
+  const headerWidth = Math.max(...headerRows.map((row)=>{
+    if(row.kind === 'notation') return measureCustomNotation(ctx, row.notation, textSize, smallTextSize);
+    ctx.font = `${textSize}px system-ui`;
+    return ctx.measureText(row.text).width;
+  }));
+  ctx.font = `${textSize}px system-ui`;
   const boxW = Math.max(headerWidth, bodyWidth) + pad * 2;
   const candidateRowsMax = Math.max(...columns.map((c)=>c.length), 0);
   const boxH = pad * 2 + headerHeight + candidateRowsMax * rowH;
@@ -3014,10 +3493,17 @@ function drawChordOverlay(chordSummary){
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
-  headerLines.forEach((line, idx)=>{
-    ctx.fillText(line, x + pad, y + pad + idx * rowH);
+  headerRows.forEach((row, idx)=>{
+    const rowY = y + pad + idx * rowH;
+    if(row.kind === 'notation'){
+      drawCustomNotation(ctx, row.notation, x + pad, rowY, textSize, smallTextSize);
+    }else{
+      ctx.font = `${textSize}px system-ui`;
+      ctx.fillText(row.text, x + pad, rowY);
+    }
   });
 
+  ctx.font = `${textSize}px system-ui`;
   let colX = x + pad;
   const startY = y + pad + headerHeight;
   columns.forEach((col, colIdx)=>{
@@ -3089,13 +3575,17 @@ function draw(){
 
   diskAngle += diskOmega * dt;
 
-  // 表示回転と水面中心
+  // 表示座標と音楽理論上の座標を分離する。
+  // ディスク固定では画面座標系（Y軸下向き）で水面全体を回し、ディスクとの相対関係を水面固定時と一致させる。
   const anchor = anchorSel.value;                 // 'water' | 'disk'
   const drawRot = (anchor==='water') ? diskAngle : 0;
   const halfCenter = (anchor==='water') ? GRAV_ABS : (GRAV_ABS + diskAngle);
+  // K1/K2、移動ド、Dark/Bright、独自表記は表示モードに関係なく同じ論理座標で計算する。
+  const theoryDrawRot = diskAngle;
+  const theoryHalfCenter = GRAV_ABS;
   const activeNotes = mergeNoteMaps(liveNotes, tapNotes, lockedTouchNotes, fileNotes);
-  const k2Info = k2Analysis(activeNotes, drawRot, halfCenter, anchor);
-  const compositionSummaryRaw = noteCompositionSummary(activeNotes, drawRot, halfCenter);
+  const k2Info = k2Analysis(activeNotes, theoryDrawRot, theoryHalfCenter, 'theory');
+  const compositionSummaryRaw = noteCompositionSummary(activeNotes, theoryDrawRot, theoryHalfCenter);
   if(compositionSummaryRaw) lastCompositionSummary = compositionSummaryRaw;
   const compositionSummary = compositionSummaryRaw || lastCompositionSummary;
   const chordSummaryRaw = buildChordDisplaySummary(compositionSummaryRaw);
@@ -3104,7 +3594,7 @@ function draw(){
   worldRot = drawRot;
 
   info.textContent = `disk | τ=${tau.toFixed(3)} α=${alpha.toFixed(3)} ω=${diskOmega.toFixed(3)} rad/s`;
-  drawOuterAngleHighlights(compositionSummaryRaw, drawRot, halfCenter, rMax);
+  drawOuterAngleHighlights(compositionSummaryRaw, drawRot, halfCenter, rMax, theoryDrawRot, theoryHalfCenter);
 
   // 放射線
   ctx.save(); ctx.translate(cx,cy);
@@ -3163,7 +3653,7 @@ function draw(){
   ctx.restore();
 
   if(k2Info){
-    const k2Center = halfCenter + (k2Info.appliedDeltaDeg * Math.PI / 180);
+    const k2Center = halfCenter + (k2Info.rawDeltaDeg * Math.PI / 180);
     ctx.save(); ctx.translate(cx,cy);
     const k2Path = halfPlanePath(k2Center, rMax+6);
     // K2（赤）は K1（青）との重なりを除外して描画する
@@ -3237,9 +3727,7 @@ function draw(){
     if(tn && tn.length) drawTargetNotes(tn, drawRot, trainer.hitNotes);
   }
 
-  drawCompositionOverlay(compositionSummary);
-  drawChordOverlay(chordSummary);
-
+  // 鍵盤を先に描き、情報欄を後から描く。右側情報が鍵盤に隠れないようにする。
   drawKeyboard(
     displayMinFreq,
     displayMaxFreq,
@@ -3248,8 +3736,13 @@ function draw(){
     halfCenter,
     lowestMidi,
     highestMidi,
-    compositionSummaryRaw
+    compositionSummaryRaw,
+    theoryDrawRot,
+    theoryHalfCenter
   );
+  // 左側コード欄は従来どおり見切れを許容し、右側情報欄を最後に描いて可視性を保つ。
+  drawChordOverlay(chordSummary);
+  drawCompositionOverlay(compositionSummary);
 
   requestAnimationFrame(draw);
 }
@@ -3301,7 +3794,8 @@ class PolySynth{
     this.master.gain.setTargetAtTime(target, this.ctx.currentTime, 0.01);
   }
 }
-let synth=null;
+let liveSynth=null;
+let fileSynth=null;
 let tapSynth=null;
 
 /* ===== Web MIDI In（常時） ===== */
@@ -3323,14 +3817,14 @@ function midiMessageHandler(ev){
   if(st===0x90){
     if(vel>0){
       liveNotes.set(note, vel/127);
-      if(liveMon.checked){ if(!synth) synth=new PolySynth(ensureCtx()); applySeekMuteState(); synth.noteOn(note, vel/127); }
+      if(liveMon.checked){ if(!liveSynth) liveSynth=new PolySynth(ensureCtx()); applySeekMuteState(); liveSynth.noteOn(note, vel/127); }
     }else{
       liveNotes.delete(note);
-      if(synth) synth.noteOff(note);
+      if(liveSynth) liveSynth.noteOff(note);
     }
   }else if(st===0x80){
     liveNotes.delete(note);
-    if(synth) synth.noteOff(note);
+    if(liveSynth) liveSynth.noteOff(note);
   }
 
   trainerOnInputChange();
@@ -3366,8 +3860,9 @@ function detachAllInputs(){
 }
 async function attachInput(inp){
   try{ await inp.open(); }catch{}
+  // onmidimessage と addEventListener の二重登録は同じイベントを2回処理するため、
+  // Web MIDI／iOSブリッジとも単一の登録方式に統一する。
   inp.onmidimessage = midiMessageHandler;
-  if(inp.addEventListener) inp.addEventListener('midimessage', midiMessageHandler);
   attachedInputs.add(inp);
 }
 async function connectMIDIAccordingToUI(){
@@ -3387,7 +3882,10 @@ async function connectMIDIAccordingToUI(){
 midiDev.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
 midiAll.onchange = ()=>{ connectMIDIAccordingToUI(); saveSettings(); };
 // ライブモニタのON/OFFだけは状態を保存するだけで十分
-liveMon.onchange = ()=>{ saveSettings(); };
+liveMon.onchange = ()=>{
+  if(!liveMon.checked && liveSynth) liveSynth.allNotesOff();
+  saveSettings();
+};
 
 /* ===== 自動開始 ===== */
 function autoStart(){
@@ -3465,7 +3963,14 @@ async function handlePickedFile(file){
     const parsed = parseMIDI(ab);
     if(!parsed || !parsed.notes) throw new Error('parse failed');
     midiDataRaw = parsed;
+    lastChordSummary = null;
+    lastCompositionSummary = null;
+    currentMidiFileName = file.name || 'MIDI';
+    chordCaptures = [];
+    sectionMarkers = [];
+    applySuggestedCaptureMeter(parsed);
     rebuildMidiView();
+    updateCaptureUI();
 
     const trks = (Array.isArray(midiData.tracks) ? midiData.tracks.length : (midiData.tracks ?? 0));
     uiLog(`OK: ${file.name}  trks:${trks}  ppq:${midiData.ppq}  len:${midiData.lengthSec.toFixed(2)}s  notes:${midiData.notes.length}`);
@@ -3563,6 +4068,7 @@ function parseMIDI(ab){
   for(let t=0;t<ntrks;t++){
     expect('MTrk'); const tlen=rdU32(); const end=p+tlen; let tick=0; let running=0; const evs=[];
     let tempoEvents=[];
+    let timeSignatureEvents=[];
     while(p<end){
       const dt = rdVLQ(); tick += dt;
       let st = u8[p++];
@@ -3570,6 +4076,7 @@ function parseMIDI(ab){
       if(st===0xFF){
         const type=u8[p++]; const len=rdVLQ(); const data=u8.slice(p,p+len); p+=len;
         if(type===0x51 && len===3){ const usPerQ = (data[0]<<16)|(data[1]<<8)|data[2]; tempoEvents.push({tick, usPerQ}); }
+        if(type===0x58 && len>=2){ timeSignatureEvents.push({tick, numerator:data[0], denominator:2 ** data[1]}); }
       }else if(st===0xF0 || st===0xF7){
         const len=rdVLQ(); p+=len;
       }else{
@@ -3583,7 +4090,7 @@ function parseMIDI(ab){
         }
       }
     }
-    tracks.push({events:evs, tempos:tempoEvents});
+    tracks.push({events:evs, tempos:tempoEvents, timeSignatures:timeSignatureEvents});
   }
 
   let tempos = tracks.flatMap(tr=>tr.tempos);
@@ -3604,6 +4111,13 @@ function parseMIDI(ab){
     while(lo<=hi){ const mid=(lo+hi)>>1; if(segments[mid].tick<=t){ idx=mid; lo=mid+1; } else hi=mid-1; }
     const s=segments[idx];
     return s.timeSec + ((t - s.tick) * s.usPerQ) / 1e6 / ppq;
+  }
+  function secToTicks(sec){
+    const value = Math.max(0, Number.isFinite(sec) ? sec : 0);
+    let lo=0, hi=segments.length-1, idx=0;
+    while(lo<=hi){ const mid=(lo+hi)>>1; if(segments[mid].timeSec<=value){ idx=mid; lo=mid+1; } else hi=mid-1; }
+    const s=segments[idx];
+    return s.tick + ((value - s.timeSec) * 1e6 * ppq) / s.usPerQ;
   }
 
   const all = tracks.flatMap(tr=>tr.events);
@@ -3641,7 +4155,8 @@ function parseMIDI(ab){
   for(const n of notes){ const arr = onsets.get(n.startTick) || []; arr.push({note:n.note, vel:n.vel}); onsets.set(n.startTick, arr); }
   const onsetTicks = Array.from(onsets.keys()).sort((a,b)=>a-b);
 
-  return { ppq, tracks, tempos, segments, ticksToSec, notes, lengthSec, onsets, onsetTicks };
+  const timeSignatures = tracks.flatMap(tr=>tr.timeSignatures || []).sort((a,b)=>a.tick-b.tick);
+  return { ppq, tracks, tempos, segments, ticksToSec, secToTicks, timeSignatures, notes, lengthSec, onsets, onsetTicks };
   }
 
   function applyTransposeToMIDI(data, shift){
@@ -3689,9 +4204,10 @@ function parseMIDI(ab){
   }
 
   /* ===== Player ===== */
-  class Player{
+class Player{
   constructor(ctx, notes){
     this.ctx=ctx; this.notes=notes;
+    this.rate=playbackRate;
     this.events = [];
     for(const n of notes){
       this.events.push({time:n.startSec, type:'on', note:n.note, vel:n.vel/127});
@@ -3718,23 +4234,23 @@ function parseMIDI(ab){
   clearPlayingState(){
     this.clearTimers();
     fileNotes.clear();
-    if(synth) synth.allNotesOff();
+    if(fileSynth) fileSynth.allNotesOff();
   }
   activateHeldNotes(posSec){
     if(!this.notes || !this.notes.length) return;
     const when = this.ctx.currentTime + 0.001;
-    if(!synth) synth=new PolySynth(this.ctx);
+    if(!fileSynth) fileSynth=new PolySynth(this.ctx);
     applySeekMuteState();
     for(const n of this.notes){
       if(n.startSec < posSec && n.endSec > posSec){
         const vel = n.vel/127;
-        synth.noteOn(n.note, vel, when);
+        fileSynth.noteOn(n.note, vel, when);
         fileNotes.set(n.note, vel);
       }
     }
   }
   currentPosition(){
-    const now = this.running ? (this.ctx.currentTime - this.t0Ctx) : this.posSec;
+    const now = this.running ? ((this.ctx.currentTime - this.t0Ctx) * this.rate) : this.posSec;
     return Math.max(0, Math.min(now, this.totalLength()));
   }
   retargetIndex(){
@@ -3744,28 +4260,34 @@ function parseMIDI(ab){
   }
   scheduleUntil(tCut){
     const ctx=this.ctx;
-    if(!synth) synth=new PolySynth(ctx);
+    if(!fileSynth) fileSynth=new PolySynth(ctx);
     applySeekMuteState();
     while(this.nextIdx < this.events.length && this.events[this.nextIdx].time <= tCut){
       const ev = this.events[this.nextIdx++];
-      const whenAbs = this.t0Ctx + ev.time;
+      const whenAbs = this.t0Ctx + ev.time / this.rate;
       if(ev.type==='on'){
-        synth.noteOn(ev.note, ev.vel||0.8, whenAbs);
+        fileSynth.noteOn(ev.note, ev.vel||0.8, whenAbs);
         const delay = Math.max(0, (whenAbs - ctx.currentTime))*1000;
-        const to = setTimeout(()=>{ fileNotes.set(ev.note, ev.vel||0.8); }, delay);
+        const to = setTimeout(()=>{
+          fileNotes.set(ev.note, ev.vel||0.8);
+          this.timeouts.delete(to);
+        }, delay);
         this.timeouts.add(to);
       }else{
-        synth.noteOff(ev.note, whenAbs);
+        fileSynth.noteOff(ev.note, whenAbs);
         const delay = Math.max(0, (whenAbs - ctx.currentTime))*1000;
-        const to = setTimeout(()=>{ fileNotes.delete(ev.note); }, delay+5);
+        const to = setTimeout(()=>{
+          fileNotes.delete(ev.note);
+          this.timeouts.delete(to);
+        }, delay+5);
         this.timeouts.add(to);
       }
     }
   }
   tick = ()=>{
     if(!this.running) return;
-    const now = this.ctx.currentTime - this.t0Ctx;
-    this.scheduleUntil(now + this.lookahead);
+    const now = (this.ctx.currentTime - this.t0Ctx) * this.rate;
+    this.scheduleUntil(now + this.lookahead * this.rate);
     this.emitProgress();
     if(now >= this.totalLength()){ this.stop(); return; }
     this.timer = setTimeout(this.tick, 20);
@@ -3773,16 +4295,16 @@ function parseMIDI(ab){
   totalLength(){ return this.events.length? this.events[this.events.length-1].time : 0; }
   play(){
     if(this.running) return;
-    this.t0Ctx = this.ctx.currentTime - this.posSec;
+    this.t0Ctx = this.ctx.currentTime - this.posSec / this.rate;
     this.running = true;
     this.emitProgress();
     this.activateHeldNotes(this.posSec);
-    this.scheduleUntil(this.posSec + this.lookahead);
+    this.scheduleUntil(this.posSec + this.lookahead * this.rate);
     this.tick();
   }
   pause(){
     if(!this.running) return;
-    this.posSec = this.ctx.currentTime - this.t0Ctx;
+    this.posSec = this.currentPosition();
     this.retargetIndex();
     this.running = false;
     this.clearTimers();
@@ -3797,16 +4319,26 @@ function parseMIDI(ab){
   setPosition(sec){
     const total = this.totalLength();
     const clamped = Math.max(0, Math.min(Number.isFinite(sec) ? sec : 0, total));
+    const wasRunning = this.running;
+    this.running = false;
     this.posSec = clamped;
-    this.retargetIndex();
     this.clearPlayingState();
-    if(this.running){
-      this.t0Ctx = this.ctx.currentTime - this.posSec;
-      this.activateHeldNotes(this.posSec);
-      this.scheduleUntil(this.posSec + this.lookahead);
-      this.tick();
-    }
-    this.emitProgress();
+    this.retargetIndex();
+    if(wasRunning) this.play();
+    else this.emitProgress();
+  }
+  setRate(rate){
+    const nextRate = normalizePlaybackRate(rate);
+    if(Math.abs(nextRate - this.rate) < 1e-9) return;
+    const wasRunning = this.running;
+    const pos = this.currentPosition();
+    this.running = false;
+    this.posSec = pos;
+    this.clearPlayingState();
+    this.rate = nextRate;
+    this.retargetIndex();
+    if(wasRunning) this.play();
+    else this.emitProgress();
   }
 }
 /* ===== Trainer（離鍵必須のエッジ検出） ===== */
@@ -3942,6 +4474,316 @@ function updateTrainerUI(){
     trainerStat.textContent = 'step: –';
   }
 }
+
+
+/* ===== Manual chord capture ===== */
+function notationText(notation){
+  if(!notation) return '–';
+  return `${notation.darkUnits}〈${notation.k1Label}${signedK2UnitText(notation.k2DeltaUnits)}${notation.k2RootRoman}〉${notation.brightUnits}`;
+}
+function currentMidiPositionSec(){
+  if(player) return player.currentPosition();
+  const total = midiData?.lengthSec || 0;
+  const raw = parseFloat(seekSlider.value);
+  return total * Math.max(0, Math.min(1, Number.isFinite(raw) ? raw/1000 : 0));
+}
+function captureCurrentChord(){
+  if(!midiData || !lastChordSummary){ showCaptureToast('記録できるコードがありません'); return; }
+  const sec = currentMidiPositionSec();
+  const tick = midiData.secToTicks ? midiData.secToTicks(sec) : (sec * midiData.ppq * 2);
+  const row = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    tick,
+    timeSec: sec,
+    chord: formatChordNameForDisplay(lastChordSummary.formalCode || '–'),
+    degree: formatChordNameForDisplay(lastChordSummary.formalDegreeCode || '–'),
+    notation: notationText(lastChordSummary.customNotation)
+  };
+  chordCaptures.push(row);
+  chordCaptures.sort((a,b)=>a.tick-b.tick || a.timeSec-b.timeSec);
+  updateCaptureUI();
+  showCaptureToast(`${formatTimeMs(sec)}  ${row.chord} を記録`);
+}
+function captureSectionMarker(label){
+  if(!midiData){ showCaptureToast('MIDIファイルを読み込んでください'); return; }
+  const marker=String(label || '').toUpperCase();
+  if(!['A','B','C','D'].includes(marker)) return;
+  const sec=currentMidiPositionSec();
+  const tick=midiData.secToTicks ? midiData.secToTicks(sec) : (sec * midiData.ppq * 2);
+  sectionMarkers.push({
+    id:`marker-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    label:marker,
+    tick,
+    timeSec:sec
+  });
+  sectionMarkers.sort((a,b)=>a.tick-b.tick || a.timeSec-b.timeSec);
+  updateCaptureUI();
+  showCaptureToast(`${formatTimeMs(sec)}  区間 ${marker} を記録`);
+}
+function showCaptureToast(text){
+  captureToast.textContent = text;
+  captureToast.style.display = 'block';
+  if(captureToastTimer) clearTimeout(captureToastTimer);
+  captureToastTimer = setTimeout(()=>{ captureToast.style.display='none'; }, 1500);
+}
+function meterParts(){
+  const [n,d] = String(captureMeter.value || '4/4').split('/').map(Number);
+  return {numerator:Math.max(1,n||4), denominator:Math.max(1,d||4)};
+}
+function rebuildStartBeatOptions(keep=true){
+  const old = keep ? parseInt(captureStartBeat.value,10) : 1;
+  const {numerator} = meterParts();
+  captureStartBeat.innerHTML = '';
+  for(let i=1;i<=numerator;i++){
+    const opt=document.createElement('option'); opt.value=String(i); opt.textContent=`第${i}拍`; captureStartBeat.appendChild(opt);
+  }
+  captureStartBeat.value=String(Math.min(numerator, Math.max(1, old||1)));
+}
+function applySuggestedCaptureMeter(data){
+  const ts=(data?.timeSignatures || []).find(x=>x.tick===0) || (data?.timeSignatures || [])[0];
+  if(ts){
+    const value=`${ts.numerator}/${ts.denominator}`;
+    if(Array.from(captureMeter.options).some(o=>o.value===value)) captureMeter.value=value;
+  }
+  rebuildStartBeatOptions(false);
+}
+function captureLocation(tick){
+  const {numerator, denominator}=meterParts();
+  const beatTicks=midiData ? midiData.ppq * 4 / denominator : 480 * 4 / denominator;
+  const rawBeat=Math.max(0,tick)/beatTicks;
+  const startBeat=Math.max(1,parseInt(captureStartBeat.value,10)||1);
+  const pickupLength=startBeat===1 ? 0 : numerator-startBeat+1;
+  if(rawBeat < pickupLength - 1e-9){ return {section:'前奏', measure:null, beat:startBeat+rawBeat}; }
+  const shifted=Math.max(0,rawBeat-pickupLength);
+  const measure=Math.floor((shifted+1e-9)/numerator)+1;
+  const beat=(shifted % numerator)+1;
+  return {section:String(measure).padStart(3,'0'), measure, beat};
+}
+function formatBeat(v){ return Number(v).toFixed(3); }
+function formatTimeMs(sec){
+  const ms=Math.max(0,Math.round((Number(sec)||0)*1000));
+  const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000), r=ms%1000;
+  return `${m}:${String(s).padStart(2,'0')}.${String(r).padStart(3,'0')}`;
+}
+function formatCaptureTime(sec){
+  const ms=Math.max(0,Math.round((Number(sec)||0)*1000));
+  const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000), r=ms%1000;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(r).padStart(3,'0')}`;
+}
+function captureOutputOptions(){
+  return {
+    layout: captureLayout?.value || 'event',
+    showBeat: !!captureShowBeat?.checked,
+    showNotation: !!captureShowNotation?.checked,
+    showChord: !!captureShowChord?.checked,
+    showDegree: !!captureShowDegree?.checked,
+    showTime: !!captureShowTime?.checked,
+    showMarkers: !!captureShowMarkers?.checked,
+    showHeader: !!captureShowHeader?.checked
+  };
+}
+function saveCaptureOutputOptions(){
+  try{ localStorage.setItem('tonalityCaptureOutputV1', JSON.stringify(captureOutputOptions())); }catch(e){}
+}
+function loadCaptureOutputOptions(){
+  try{
+    const o=JSON.parse(localStorage.getItem('tonalityCaptureOutputV1')||'null');
+    if(!o)return;
+    if(captureLayout && ['event','measure'].includes(o.layout)) captureLayout.value=o.layout;
+    if(captureShowBeat && typeof o.showBeat==='boolean') captureShowBeat.checked=o.showBeat;
+    if(captureShowNotation && typeof o.showNotation==='boolean') captureShowNotation.checked=o.showNotation;
+    if(captureShowChord && typeof o.showChord==='boolean') captureShowChord.checked=o.showChord;
+    if(captureShowDegree && typeof o.showDegree==='boolean') captureShowDegree.checked=o.showDegree;
+    if(captureShowTime && typeof o.showTime==='boolean') captureShowTime.checked=o.showTime;
+    if(captureShowMarkers && typeof o.showMarkers==='boolean') captureShowMarkers.checked=o.showMarkers;
+    if(captureShowHeader && typeof o.showHeader==='boolean') captureShowHeader.checked=o.showHeader;
+  }catch(e){}
+}
+function captureEntryText(row, loc, widths, options){
+  const parts=[];
+  if(options.showBeat) parts.push(formatBeat(loc.beat).padEnd(widths.beat,' '));
+  if(options.showNotation) parts.push(String(row.notation || '–').padEnd(widths.notation,' '));
+  if(options.showDegree) parts.push(String(row.degree || '–').padEnd(widths.degree,' '));
+  // 再生時間は一般的なコード名の直前に置く。
+  if(options.showTime) parts.push(formatCaptureTime(row.timeSec).padEnd(widths.time,' '));
+  if(options.showChord) parts.push(String(row.chord || '–'));
+  return parts.join('  ').trimEnd();
+}
+function captureMarkerText(marker, loc, widths, options){
+  const parts=[];
+  if(options.showBeat) parts.push(formatBeat(loc.beat).padEnd(widths.beat,' '));
+  if(options.showTime) parts.push(formatCaptureTime(marker.timeSec).padEnd(widths.time,' '));
+  parts.push(`【${marker.label}】`);
+  return parts.join('  ').trimEnd();
+}
+function buildCaptureText(){
+  const {numerator,denominator}=meterParts();
+  const startBeat=Math.max(1,parseInt(captureStartBeat.value,10)||1);
+  const options=captureOutputOptions();
+  const rows=[...chordCaptures].sort((a,b)=>a.tick-b.tick || a.timeSec-b.timeSec);
+  const markers=options.showMarkers
+    ? [...sectionMarkers].sort((a,b)=>a.tick-b.tick || a.timeSec-b.timeSec)
+    : [];
+  const widths={
+    beat:5,
+    notation:Math.max(8,...rows.map(row=>String(row.notation || '–').length)),
+    degree:Math.max(6,...rows.map(row=>String(row.degree || '–').length)),
+    time:Math.max(9,...rows.map(row=>formatCaptureTime(row.timeSec).length),...markers.map(row=>formatCaptureTime(row.timeSec).length))
+  };
+  const lines=[];
+  if(options.showHeader){
+    lines.push('Tonality Visualizer Chord Capture','',`File: ${currentMidiFileName || '–'}`,`Time Signature: ${numerator}/${denominator}`,`MIDI Start Beat: ${startBeat}`,'');
+  }
+  const showAnyChordField=options.showBeat || options.showNotation || options.showDegree || options.showTime || options.showChord;
+  const events=[
+    ...(showAnyChordField ? rows.map(row=>({kind:'chord',tick:row.tick,timeSec:row.timeSec,row})) : []),
+    ...markers.map(marker=>({kind:'marker',tick:marker.tick,timeSec:marker.timeSec,marker}))
+  ].sort((a,b)=>{
+    const byPosition=a.tick-b.tick || a.timeSec-b.timeSec;
+    if(byPosition) return byPosition;
+    if(a.kind===b.kind) return 0;
+    return a.kind==='marker' ? -1 : 1;
+  });
+  if(!events.length){
+    const hasAnyRecord=chordCaptures.length || sectionMarkers.length;
+    lines.push(hasAnyRecord ? '(表示対象なし)' : '(記録なし)');
+    return lines.join('\n');
+  }
+  const grouped=[];
+  let current=null;
+  for(const event of events){
+    const loc=captureLocation(event.tick);
+    if(!current || current.section!==loc.section){
+      current={section:loc.section, entries:[]};
+      grouped.push(current);
+    }
+    current.entries.push({event,loc});
+  }
+  for(let gi=0;gi<grouped.length;gi++){
+    const group=grouped[gi];
+    const heading=group.section==='前奏'?'[前奏]':`[${group.section}]`;
+    const entryText=({event,loc})=>event.kind==='marker'
+      ? captureMarkerText(event.marker,loc,widths,options)
+      : captureEntryText(event.row,loc,widths,options);
+    if(options.layout==='measure'){
+      const body=group.entries.map(entryText).filter(Boolean).join(' | ');
+      lines.push(body ? `${heading} ${body}` : heading);
+    }else{
+      lines.push(heading);
+      for(const entry of group.entries){
+        const body=entryText(entry);
+        if(body) lines.push(body);
+      }
+      if(gi<grouped.length-1) lines.push('');
+    }
+  }
+  return lines.join('\n');
+}
+function updateCapturePreview(){ capturePreview.value=buildCaptureText(); }
+function updateCaptureUI(){
+  const enabled=!!midiData;
+  if(captureNowBtn) captureNowBtn.disabled=!enabled;
+  if(captureRevealBtn) captureRevealBtn.disabled=!enabled;
+  captureMarkerButtons.forEach(button=>{ button.disabled=!enabled; });
+  const totalRecords=chordCaptures.length+sectionMarkers.length;
+  captureCount.textContent=`コード ${chordCaptures.length}件 / 区間 ${sectionMarkers.length}件`;
+  captureClearBtn.disabled=!totalRecords;
+  if(!totalRecords) resetCaptureClearButton();
+  captureShareBtn.disabled=!totalRecords;
+  if(captureSummary){
+    const latestEvents=[
+      ...chordCaptures.map(row=>({kind:'chord',tick:row.tick,timeSec:row.timeSec,row})),
+      ...sectionMarkers.map(marker=>({kind:'marker',tick:marker.tick,timeSec:marker.timeSec,marker}))
+    ].sort((a,b)=>a.tick-b.tick || a.timeSec-b.timeSec);
+    const latest=latestEvents[latestEvents.length-1];
+    if(latest){
+      const loc=captureLocation(latest.tick);
+      const where=`${loc.section==='前奏'?'前奏':loc.section}:${formatBeat(loc.beat)}`;
+      captureSummary.textContent=latest.kind==='marker'
+        ? `記録数: ${totalRecords}件 / 最新: ${where}  区間 ${latest.marker.label}`
+        : `記録数: ${totalRecords}件 / 最新: ${where}  ${latest.row.notation || '–'}  ${latest.row.chord || '–'}`;
+    }else{
+      captureSummary.textContent='記録はまだありません。再生しながらコードまたは区間A〜Dを記録できます。';
+    }
+  }
+  updateCapturePreview();
+}
+function openCapturePanel(){ updateCaptureUI(); capturePanel.classList.add('open'); capturePanel.setAttribute('aria-hidden','false'); }
+function closeCapturePanel(){ capturePanel.classList.remove('open'); capturePanel.setAttribute('aria-hidden','true'); }
+async function exportCaptureText(){
+  const text=buildCaptureText();
+  const base=(currentMidiFileName || 'MIDI').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|]+/g,'_');
+  const filename=`${base}_Chord_Capture.txt`;
+  if(window.webkit?.messageHandlers?.exportText){
+    window.webkit.messageHandlers.exportText.postMessage({filename,text});
+    return;
+  }
+  try{
+    const file=new File([text],filename,{type:'text/plain;charset=utf-8'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:filename}); return; }
+  }catch(e){}
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+let captureClearArmedUntil = 0;
+let captureClearResetTimer = null;
+function resetCaptureClearButton(){
+  captureClearArmedUntil = 0;
+  if(captureClearResetTimer){ clearTimeout(captureClearResetTimer); captureClearResetTimer=null; }
+  if(captureClearBtn) captureClearBtn.textContent='すべて削除';
+}
+function requestClearCaptures(){
+  if(!(chordCaptures.length || sectionMarkers.length)){ showCaptureToast('削除する記録がありません'); return; }
+  const now=Date.now();
+  if(now < captureClearArmedUntil){
+    chordCaptures.splice(0, chordCaptures.length);
+    sectionMarkers.splice(0, sectionMarkers.length);
+    resetCaptureClearButton();
+    updateCaptureUI();
+    showCaptureToast('すべての記録を削除しました');
+    return;
+  }
+  captureClearArmedUntil = now + 3500;
+  captureClearBtn.textContent='もう一度押して削除';
+  showCaptureToast('もう一度押すと、すべて削除します');
+  captureClearResetTimer=setTimeout(resetCaptureClearButton,3500);
+}
+function bindRapidActionButton(button, action){
+  if(!button || typeof action!=='function') return;
+  let lastTouchAt=-Infinity;
+  button.addEventListener('touchend',(e)=>{
+    if(button.disabled) return;
+    e.preventDefault();
+    e.stopPropagation();
+    lastTouchAt=performance.now();
+    action();
+  },{passive:false});
+  button.addEventListener('click',(e)=>{
+    if(performance.now()-lastTouchAt < 700){ e.preventDefault(); return; }
+    action();
+  });
+}
+// iOSのダブルタップ拡大を抑止し、素早い連続記録を優先する。
+document.addEventListener('dblclick',(e)=>e.preventDefault(),{passive:false});
+
+captureListBtn.addEventListener('click',openCapturePanel);
+bindRapidActionButton(captureNowBtn,captureCurrentChord);
+bindRapidActionButton(captureRevealBtn,captureCurrentChord);
+captureMarkerButtons.forEach(button=>{
+  bindRapidActionButton(button,()=>captureSectionMarker(button.dataset.marker));
+});
+captureClearBtn.addEventListener('click',requestClearCaptures);
+captureCloseBtn.addEventListener('click',closeCapturePanel);
+capturePanel.addEventListener('click',(e)=>{if(e.target===capturePanel)closeCapturePanel();});
+captureMeter.addEventListener('change',()=>{rebuildStartBeatOptions(true);updateCaptureUI();});
+captureStartBeat.addEventListener('change',updateCaptureUI);
+[captureLayout,captureShowBeat,captureShowNotation,captureShowChord,captureShowDegree,captureShowTime,captureShowMarkers,captureShowHeader].forEach(el=>{
+  if(el) el.addEventListener('change',()=>{saveCaptureOutputOptions();updateCaptureUI();});
+});
+captureShareBtn.addEventListener('click',exportCaptureText);
+loadCaptureOutputOptions();
+rebuildStartBeatOptions(false);
+updateCaptureUI();
 
 /* ===== Keyboard shortcuts ===== */
 addEventListener('keydown', e=>{

@@ -37,6 +37,7 @@ struct WebView: UIViewRepresentable {
         })();
         """
         uc.addUserScript(WKUserScript(source: preJS, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        uc.add(context.coordinator, name: "exportText")
 
         let cfg = WKWebViewConfiguration()
         cfg.userContentController = uc
