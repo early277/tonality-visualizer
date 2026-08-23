@@ -59,6 +59,20 @@
   #candidateToggle[data-display-level="candidates"],#researchToggle[aria-pressed="true"]{background:#374151;border-color:#9ca3af}
   #analysisSourceStatus{padding:0 6px;color:#bfdbfe;font-size:12px}
   #uiToggle,#diskLock{position:static;z-index:auto;opacity:1}
+  #landscapeNavToggle{
+    position:fixed;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));
+    z-index:9;display:none;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+    align-items:center;justify-content:center;border:1px solid rgba(147,197,253,.62);
+    border-radius:10px;background:rgba(38,55,80,.96);color:#eff6ff;font-size:21px;font-weight:800;
+    box-shadow:0 4px 16px rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
+  }
+  #landscapeNavToggle[hidden]{display:none!important}
+  #landscapeNavToggle[aria-expanded="true"]{background:rgba(55,65,81,.98)}
+  #appBar[hidden]{display:none!important}
+  body.app-bar-hidden #appBar{visibility:hidden;opacity:0;pointer-events:none}
+  body.app-bar-hidden #landscapeNavToggle{
+    position:fixed;display:flex;min-width:44px;min-height:44px
+  }
   body:not(.ui-hidden)::before{content:"";position:fixed;inset:0;z-index:5;background:rgba(2,6,12,.56);pointer-events:none}
   @media(max-width:760px){
     #appBrand{display:none}
@@ -82,10 +96,38 @@
   }
   @media (max-height:500px) and (orientation:landscape){
     #appBrand{display:none}
-    #appBar #uiToggle{
-      position:sticky;right:0;flex:0 0 auto;margin-left:auto;background:#263750;
-      box-shadow:-8px 0 12px rgba(12,16,23,.96)
+    /*
+      低い横画面ではナビを一時表示の2段オーバーレイにする。
+      円盤の幾何からは除外し、短辺方向を可視化へ返す。
+    */
+    #appBar{
+      left:auto;
+      right:calc(max(8px,env(safe-area-inset-right)) + 52px);
+      width:min(720px,calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)) - 60px));
+      max-width:calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)) - 60px);height:94px;
+      display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:44px 44px;
+      align-items:stretch;gap:2px;padding:2px 5px;
+      overflow:visible;white-space:normal;
+      transition:opacity .14s ease,transform .14s ease,visibility .14s linear;
     }
+    #purposeNav{
+      grid-column:1/-1;grid-row:1;display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));gap:4px
+    }
+    #appBar button{
+      min-width:0;min-height:44px;height:44px;padding:3px 4px;font-size:12px;line-height:1.05;
+      overflow:hidden;text-overflow:clip;white-space:normal
+    }
+    #appBar #openMidiQuick{grid-column:1/3;grid-row:2}
+    #appBar #candidateToggle{grid-column:3/6;grid-row:2}
+    #appBar #researchToggle{grid-column:6/8;grid-row:2}
+    #appBar #diskLock{grid-column:8/11;grid-row:2}
+    #appBar #uiToggle{grid-column:11/13;grid-row:2;position:static;margin:0;box-shadow:none}
+    #analysisSourceStatus{display:none}
+    body.landscape-nav-collapsed #appBar{
+      visibility:hidden;opacity:0;transform:translateY(-10px);pointer-events:none
+    }
+    #landscapeNavToggle{position:fixed;display:flex;min-width:44px;min-height:44px}
   }
 
   /* UIを隠しても残る、MIDI再生・トレーナー用の小型操作部 */
@@ -274,6 +316,8 @@
   <button id="diskLock" type="button" aria-pressed="false">回転モード</button>
   <button id="uiToggle" type="button" aria-pressed="false" aria-expanded="false" aria-controls="ui">設定</button>
 </header>
+<button id="landscapeNavToggle" type="button" aria-controls="appBar" aria-expanded="false"
+  aria-label="操作を表示" title="操作を表示" hidden>☰</button>
 <div id="ui">
   <div id="settingsHeader">
     <!-- 言語名は、現在のUI言語に依存せず判別できるendonymで表示する。 -->
@@ -293,6 +337,7 @@
   </div>
 
   <button id="resetSettings" type="button">初期設定に戻す</button>
+  <button id="appBarVisibilityBtn" type="button" aria-pressed="false">上部タブを隠す</button>
 
   <label id="presetWrap" data-lbl="presetSlot">
     <select id="presetSlot"></select>
@@ -619,19 +664,32 @@ if (isIPhone) {
 // メインキャンバスの初期化とリサイズ処理
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
+const COMPACT_LANDSCAPE_QUERY = '(max-height:500px) and (orientation:landscape)';
+function isCompactLandscapeViewport(){ return matchMedia(COMPACT_LANDSCAPE_QUERY).matches; }
 let topControlsInsetCss = 0;
 function updateCanvasChromeInsets(){
   const canvasRect = cv.getBoundingClientRect();
   let controlsBottom = canvasRect.top;
+  const landscapeNavIsOverlay = isCompactLandscapeViewport();
+  const appBarIsUserHidden = !!document.body?.classList?.contains?.('app-bar-hidden');
   for(const id of ['appBar']){
+    if((landscapeNavIsOverlay || appBarIsUserHidden) && id === 'appBar') continue;
     const element = document.getElementById(id);
     if(!element) continue;
     const rect = element.getBoundingClientRect();
     if(rect.width > 0 && rect.height > 0) controlsBottom = Math.max(controlsBottom, rect.bottom);
   }
+  // 縦画面で上部タブを隠したときも、Dynamic Island／ノッチと
+  // 44pxの復元ボタンの直下までは円盤・外周音名を入れない。
+  if(appBarIsUserHidden){
+    const reveal = document.getElementById('landscapeNavToggle');
+    const rect = reveal?.getBoundingClientRect?.();
+    if(rect && rect.width > 0 && rect.height > 0) controlsBottom = Math.max(controlsBottom, rect.bottom);
+  }
   // 上部UIの実測下端から間隔を空け、円盤の描画・タッチ領域を始める。
   // 縦向きiPhoneでは外周音名もタブへ入らないよう、その文字高まで予約する。
-  const chromeGapCss = matchMedia('(max-width:760px) and (orientation:portrait)').matches ? 32 : 8;
+  const compactPortrait = matchMedia('(max-width:760px) and (orientation:portrait)').matches;
+  const chromeGapCss = compactPortrait ? (appBarIsUserHidden ? 8 : 32) : 8;
   topControlsInsetCss = Math.max(0, Math.ceil(controlsBottom - canvasRect.top + chromeGapCss));
 }
 // ウィンドウの大きさに応じてキャンバスをリサイズし、Retina解像度にも対応
@@ -670,9 +728,13 @@ const NOTE_BG = {0:[191,28,28],1:[191,109,28],2:[191,191,28],3:[109,191,28],4:[2
 /* ===== UI refs ===== */
 // UI要素の参照をまとめて保持
 const uiPanel = document.getElementById('ui');
+const appBar = document.getElementById('appBar');
+const landscapeNavToggle = document.getElementById('landscapeNavToggle');
+const appBarVisibilityBtn = document.getElementById('appBarVisibilityBtn');
 const uiToggle = document.getElementById('uiToggle');
 const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const diskLockBtn = document.getElementById('diskLock');
+const purposeNav = document.getElementById('purposeNav');
 const workspaceModeButtons = Array.from(document.querySelectorAll('[data-workspace-mode]'));
 const openMidiQuick = document.getElementById('openMidiQuick');
 const candidateToggle = document.getElementById('candidateToggle');
@@ -776,7 +838,7 @@ const SETTINGS_SECTIONS = [
   {key:"settingsDisplay", fallback:"表示詳細", ids:["circleOrderWrap","lineAWrap","straightLineAWrap","noteGuideAWrap","arcGuideAWrap","movNumAWrap","movNumSizeWrap","noteDotSizeWrap","labelSizeWrap","labelBGWrap","labelAlphaWrap","outerHighlightAlphaWrap"]},
   {key:"settingsPhysics", fallback:"動き・物理", ids:["excludeWrap","omaxWrap","dampWrap","snapAlphaWrap","massWrap"]},
   {key:"settingsResearch", fallback:"研究・診断", ids:["waterAWrap","k2WaterAWrap","noteGuideLabelAWrap","compositionInfoAWrap","chordCandidateCountWrap","info","midiLast","fileInfo","trainerStat"]},
-  {key:"settingsGeneral", fallback:"プロファイル・一般", ids:["presetWrap","savePreset","loadPreset","fileOpWrap","uiopWrap","resetSettings"]}
+  {key:"settingsGeneral", fallback:"プロファイル・一般", ids:["presetWrap","savePreset","loadPreset","fileOpWrap","uiopWrap","appBarVisibilityBtn","resetSettings"]}
 ];
 function buildSettingsSections(){
   if(!uiPanel || uiPanel.querySelector(".settings-section")) return;
@@ -881,6 +943,7 @@ const I18N = {
     canvasRotate:"Interaction: rotate disk", canvasPlay:"Interaction: touch play", canvasRotateShort:"rotate mode", canvasPlayShort:"play mode", analysisWaiting:"analysis: waiting", analysisLive:"analysis: live", analysisFile:"analysis: file", analysisBoth:"analysis: live + file",
     hintLive:"Play a MIDI instrument or use the Canvas", hintPlay:"Play the sample or open a MIDI file", hintTrain:"Start, then enter the green notes in any order", hintAnalyzing:"Analyzing input — open chord candidates or details when needed",
     settingsBasic:"Basics", settingsDisplay:"Display details", settingsPhysics:"Motion & physics", settingsResearch:"Research & diagnostics", settingsGeneral:"Profiles & general",
+    workspacePurposeLabel:"workspace purpose", landscapeNavOpen:"show controls", landscapeNavClose:"hide controls", appBarHide:"hide top tabs", appBarShow:"show top tabs",
     diskLock:"lock disk", diskUnlock:"unlock disk"
   },
   "pt-BR":{
@@ -916,6 +979,7 @@ const I18N = {
     canvasRotate:"Interação: girar disco", canvasPlay:"Interação: tocar por toque", canvasRotateShort:"modo girar", canvasPlayShort:"modo tocar", analysisWaiting:"análise: aguardando", analysisLive:"análise: ao vivo", analysisFile:"análise: arquivo", analysisBoth:"análise: ao vivo + arquivo",
     hintLive:"Toque um instrumento MIDI ou use o Canvas", hintPlay:"Reproduza a amostra ou abra um MIDI", hintTrain:"Inicie e toque as notas verdes em qualquer ordem", hintAnalyzing:"Analisando a entrada — abra candidatos de acordes ou detalhes quando precisar",
     settingsBasic:"Básico", settingsDisplay:"Detalhes visuais", settingsPhysics:"Movimento e física", settingsResearch:"Pesquisa e diagnóstico", settingsGeneral:"Perfis e geral",
+    workspacePurposeLabel:"finalidade do espaço de trabalho", landscapeNavOpen:"mostrar controles", landscapeNavClose:"ocultar controles", appBarHide:"ocultar abas superiores", appBarShow:"mostrar abas superiores",
     diskLock:"travar disco", diskUnlock:"destravar disco"
   },
   "es-MX":{
@@ -951,6 +1015,7 @@ const I18N = {
     canvasRotate:"Interacción: girar disco", canvasPlay:"Interacción: tocar en pantalla", canvasRotateShort:"modo giro", canvasPlayShort:"modo tocar", analysisWaiting:"análisis: esperando", analysisLive:"análisis: en vivo", analysisFile:"análisis: archivo", analysisBoth:"análisis: en vivo + archivo",
     hintLive:"Toca un instrumento MIDI o usa el Canvas", hintPlay:"Reproduce la muestra o abre un MIDI", hintTrain:"Inicia e introduce las notas verdes en cualquier orden", hintAnalyzing:"Analizando la entrada — abre candidatos de acordes o detalles cuando lo necesites",
     settingsBasic:"Básico", settingsDisplay:"Detalles visuales", settingsPhysics:"Movimiento y física", settingsResearch:"Investigación y diagnóstico", settingsGeneral:"Perfiles y general",
+    workspacePurposeLabel:"propósito del espacio de trabajo", landscapeNavOpen:"mostrar controles", landscapeNavClose:"ocultar controles", appBarHide:"ocultar pestañas superiores", appBarShow:"mostrar pestañas superiores",
     diskLock:"bloquear disco", diskUnlock:"desbloquear disco"
   },
   ja:{
@@ -986,6 +1051,7 @@ const I18N = {
     canvasRotate:"操作：円盤回転", canvasPlay:"操作：タッチ演奏", canvasRotateShort:"回転モード", canvasPlayShort:"演奏モード", analysisWaiting:"解析: 入力待ち", analysisLive:"解析: ライブ", analysisFile:"解析: ファイル", analysisBoth:"解析: ライブ＋ファイル",
     hintLive:"MIDI鍵盤を演奏するか、Canvasを操作してください", hintPlay:"サンプルを再生するか、MIDIを開いてください", hintTrain:"開始後、緑の音群を順不同で入力します", hintAnalyzing:"入力を解析中です。必要に応じてコード候補や詳細表示を開けます",
     settingsBasic:"基本", settingsDisplay:"表示詳細", settingsPhysics:"動き・物理", settingsResearch:"研究・診断", settingsGeneral:"プロファイル・一般",
+    workspacePurposeLabel:"利用目的", landscapeNavOpen:"操作を表示", landscapeNavClose:"操作を隠す", appBarHide:"上部タブを隠す", appBarShow:"上部タブを表示",
     diskLock:"円盤ロック", diskUnlock:"ロック解除"
   },
   ko:{
@@ -1021,6 +1087,7 @@ const I18N = {
     canvasRotate:"조작: 디스크 회전", canvasPlay:"조작: 터치 연주", canvasRotateShort:"회전 모드", canvasPlayShort:"연주 모드", analysisWaiting:"분석: 입력 대기", analysisLive:"분석: 라이브", analysisFile:"분석: 파일", analysisBoth:"분석: 라이브 + 파일",
     hintLive:"MIDI 건반을 연주하거나 Canvas를 사용하세요", hintPlay:"샘플을 재생하거나 MIDI를 여세요", hintTrain:"시작 후 초록 음을 순서와 관계없이 입력하세요", hintAnalyzing:"입력을 분석 중입니다. 필요할 때 코드 후보나 상세 보기를 여세요",
     settingsBasic:"기본", settingsDisplay:"표시 상세", settingsPhysics:"움직임 및 물리", settingsResearch:"연구 및 진단", settingsGeneral:"프로필 및 일반",
+    workspacePurposeLabel:"작업 목적", landscapeNavOpen:"조작 표시", landscapeNavClose:"조작 숨기기", appBarHide:"상단 탭 숨기기", appBarShow:"상단 탭 표시",
     diskLock:"디스크 잠금", diskUnlock:"잠금 해제"
   },
   zh:{
@@ -1056,6 +1123,7 @@ const I18N = {
     canvasRotate:"操作：旋转圆盘", canvasPlay:"操作：触屏演奏", canvasRotateShort:"旋转模式", canvasPlayShort:"演奏模式", analysisWaiting:"分析：等待输入", analysisLive:"分析：现场", analysisFile:"分析：文件", analysisBoth:"分析：现场＋文件",
     hintLive:"演奏 MIDI 键盘或操作 Canvas", hintPlay:"播放示例或打开 MIDI", hintTrain:"开始后，以任意顺序输入绿色音组", hintAnalyzing:"正在分析输入；需要时可打开和弦候选或详细显示",
     settingsBasic:"基本", settingsDisplay:"显示详情", settingsPhysics:"运动与物理", settingsResearch:"研究与诊断", settingsGeneral:"配置与常规",
+    workspacePurposeLabel:"工作区用途", landscapeNavOpen:"显示操作", landscapeNavClose:"隐藏操作", appBarHide:"隐藏顶部标签", appBarShow:"显示顶部标签",
     diskLock:"锁定圆盘", diskUnlock:"解除锁定"
   }
 };
@@ -1390,6 +1458,7 @@ function applyI18N(){
   fileOp.querySelector('option[value="train"]').textContent = t('train');
   btnStartTrain.textContent = t('trainStart');
   if(resetBtn) resetBtn.textContent = t('resetDefaults');
+  if(purposeNav) purposeNav.setAttribute('aria-label', t('workspacePurposeLabel'));
   updateUIVisibility();
   document.querySelectorAll(".settings-section").forEach(details=>{
     const summary = details.querySelector(":scope > summary");
@@ -1406,6 +1475,7 @@ function applyI18N(){
   midiLast.textContent = t('last') + ' –';
   updateFileOpUI();
   updateCaptureLocalization();
+  updateLandscapeNavVisibility();
 }
 // 言語選択ドロップダウンの変更ハンドラ
 document.getElementById('lang').addEventListener('change', e=>{
@@ -1483,6 +1553,7 @@ function collectSettingsFromUI(){
     fileOp: fileOp.value,
     uiHidden: !uiVisible,
     transportHidden: !transportVisible,
+    appBarHidden,
     diskLocked
   };
 }
@@ -1728,6 +1799,10 @@ function applySettings(settings, {force = false} = {}){
     transportVisible = !s.transportHidden;
     updateTransportVisibility();
   }
+  if(has('appBarHidden')){
+    appBarHidden = !!s.appBarHidden;
+    updateLandscapeNavVisibility();
+  }
 }
 function finalizeAppliedSettings({shouldConnectMIDI = false} = {}){
   applyUIScale();
@@ -1844,6 +1919,104 @@ if(transportReveal){
 }
 addEventListener('resize', updateTransportVisibility);
 
+/* ===== Compact landscape navigation ===== */
+// A low landscape viewport uses the app bar as a temporary overlay.  It is
+// deliberately independent from the settings panel's ui-hidden state.
+let landscapeNavExpanded = false;
+let landscapeNavWasCompact = false;
+let appBarHidden = false;
+function focusSelectedWorkspaceTab(){
+  if(typeof workspaceModeButtons === 'undefined') return;
+  const selected = workspaceModeButtons.find(button=>button.getAttribute?.('aria-selected') === 'true')
+    || workspaceModeButtons[0];
+  selected?.focus?.();
+}
+function updateLandscapeNavVisibility(){
+  const compact = matchMedia('(max-height:500px) and (orientation:landscape)').matches;
+  const portrait = matchMedia('(orientation:portrait)').matches;
+  if(compact && !landscapeNavWasCompact) landscapeNavExpanded = false;
+  if(!compact) landscapeNavExpanded = false;
+  const landscapeCollapsed = compact && !landscapeNavExpanded;
+  const portraitHidden = !compact && portrait && appBarHidden;
+  const collapsed = landscapeCollapsed || portraitHidden;
+  document.body.classList.toggle('landscape-nav-collapsed', landscapeCollapsed);
+  document.body.classList.toggle('app-bar-hidden', portraitHidden);
+  if(landscapeNavToggle){
+    landscapeNavToggle.hidden = !(compact || portraitHidden);
+    landscapeNavToggle.setAttribute('aria-expanded', String(compact && landscapeNavExpanded));
+    const label = t(landscapeNavExpanded ? 'landscapeNavClose' : 'landscapeNavOpen');
+    landscapeNavToggle.setAttribute('aria-label', label);
+    landscapeNavToggle.title = label;
+    landscapeNavToggle.textContent = landscapeNavExpanded ? '×' : '☰';
+  }
+  if(appBar){
+    appBar.hidden = collapsed;
+    appBar.setAttribute('aria-hidden', String(collapsed));
+    appBar.inert = collapsed;
+  }
+  if(appBarVisibilityBtn){
+    appBarVisibilityBtn.hidden = !portrait;
+    const visibilityLabel = t(appBarHidden ? 'appBarShow' : 'appBarHide');
+    appBarVisibilityBtn.textContent = visibilityLabel;
+    appBarVisibilityBtn.setAttribute('aria-label', visibilityLabel);
+    appBarVisibilityBtn.setAttribute('aria-pressed', String(portraitHidden));
+  }
+  landscapeNavWasCompact = compact;
+  updateCanvasChromeInsets();
+}
+if(landscapeNavToggle){
+  landscapeNavToggle.addEventListener('click', ()=>{
+    const compact = isCompactLandscapeViewport();
+    if(compact){
+      landscapeNavExpanded = !landscapeNavExpanded;
+    }else if(matchMedia('(orientation:portrait)').matches && appBarHidden){
+      appBarHidden = false;
+    }else{
+      return;
+    }
+    updateLandscapeNavVisibility();
+    saveSettings();
+    if(compact && landscapeNavExpanded){
+      focusSelectedWorkspaceTab();
+    }else if(!landscapeNavToggle.hidden){
+      landscapeNavToggle.focus();
+    }else{
+      focusSelectedWorkspaceTab();
+    }
+  });
+}
+if(appBarVisibilityBtn){
+  appBarVisibilityBtn.addEventListener('click', ()=>{
+    if(!matchMedia('(orientation:portrait)').matches) return;
+    appBarHidden = !appBarHidden;
+    updateLandscapeNavVisibility();
+    saveSettings();
+  });
+}
+if(appBar){
+  appBar.addEventListener('click', event=>{
+    const actionButton = event.target?.closest?.('button');
+    if(!isCompactLandscapeViewport() || !actionButton) return;
+    landscapeNavExpanded = false;
+    document.body.classList.add('landscape-nav-collapsed');
+    updateLandscapeNavVisibility();
+    if(actionButton === uiToggle && typeof uiVisible !== 'undefined' && uiVisible){
+      settingsCloseBtn?.focus?.();
+    }else{
+      landscapeNavToggle?.focus?.();
+    }
+  });
+}
+addEventListener('keydown', event=>{
+  if(event.key !== 'Escape' || !isCompactLandscapeViewport() || !landscapeNavExpanded) return;
+  event.preventDefault();
+  landscapeNavExpanded = false;
+  updateLandscapeNavVisibility();
+  landscapeNavToggle?.focus();
+});
+addEventListener('resize', updateLandscapeNavVisibility);
+updateLandscapeNavVisibility();
+
 /* ===== UI show/hide ===== */
 let uiVisible = false;
 function updateUIVisibility(){
@@ -1861,11 +2034,16 @@ function updateUIVisibility(){
 }
 // ボタン操作時は状態をトグルして即座に保存
 uiToggle.onclick = ()=>{ uiVisible = !uiVisible; updateUIVisibility(); saveSettings(); };
+function focusSettingsLauncher(){
+  const appBarIsAvailable = !!appBar && !appBar.hidden && !appBar.inert;
+  (appBarIsAvailable ? uiToggle : landscapeNavToggle)?.focus?.();
+}
 if(settingsCloseBtn){
   settingsCloseBtn.addEventListener('click', ()=>{
     uiVisible = false;
     updateUIVisibility();
     saveSettings();
+    focusSettingsLauncher();
   });
 }
 addEventListener('keydown', e=>{
@@ -1873,7 +2051,7 @@ addEventListener('keydown', e=>{
     uiVisible = false;
     updateUIVisibility();
     saveSettings();
-    uiToggle.focus?.();
+    focusSettingsLauncher();
   }
 });
 // キーボードショートカット（Uキー）での開閉をサポート
@@ -1884,7 +2062,8 @@ function updateDiskLockUI(){
   const fullLabel = diskLocked ? t('canvasPlay') : t('canvasRotate');
   const compactLabel = diskLocked ? t('canvasPlayShort') : t('canvasRotateShort');
   diskLockBtn.setAttribute('aria-pressed', String(diskLocked));
-  diskLockBtn.textContent = matchMedia('(max-width:760px)').matches ? compactLabel : fullLabel;
+  const compact = matchMedia('(max-width:760px), (max-height:500px) and (orientation:landscape)').matches;
+  diskLockBtn.textContent = compact ? compactLabel : fullLabel;
   diskLockBtn.setAttribute('aria-label', fullLabel);
   diskLockBtn.title = fullLabel;
 }
