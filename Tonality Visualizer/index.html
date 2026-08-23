@@ -61,7 +61,7 @@
   #uiToggle,#diskLock{position:static;z-index:auto;opacity:1}
   #landscapeNavToggle{
     position:fixed;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));
-    z-index:9;display:none;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+    z-index:9;display:none;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;box-sizing:border-box;
     align-items:center;justify-content:center;border:1px solid rgba(147,197,253,.62);
     border-radius:10px;background:rgba(38,55,80,.96);color:#eff6ff;font-size:21px;font-weight:800;
     box-shadow:0 4px 16px rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
@@ -101,10 +101,11 @@
       円盤の幾何からは除外し、短辺方向を可視化へ返す。
     */
     #appBar{
+      top:calc(max(6px,env(safe-area-inset-top)) + 52px);
       left:auto;
-      right:calc(max(8px,env(safe-area-inset-right)) + 52px);
-      width:min(720px,calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)) - 60px));
-      max-width:calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)) - 60px);height:94px;
+      right:max(8px,env(safe-area-inset-right));
+      width:min(720px,calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right))));
+      max-width:calc(100vw - max(8px,env(safe-area-inset-left)) - max(8px,env(safe-area-inset-right)));height:94px;
       display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:44px 44px;
       align-items:stretch;gap:2px;padding:2px 5px;
       overflow:visible;white-space:normal;
@@ -128,6 +129,7 @@
       visibility:hidden;opacity:0;transform:translateY(-10px);pointer-events:none
     }
     #landscapeNavToggle{position:fixed;display:flex;min-width:44px;min-height:44px}
+    #landscapeNavToggle[aria-expanded="true"]{box-shadow:none}
   }
 
   /* UIを隠しても残る、MIDI再生・トレーナー用の小型操作部 */
@@ -255,6 +257,15 @@
     .captureMarkerGroup{gap:2px}
     .captureMarkerBtn{width:34px!important;min-width:34px!important}
     #transportHideBtn{order:-100;min-width:58px!important;width:auto;padding-inline:5px!important;font-size:10px}
+  }
+  /* 横画面の練習操作は右側鍵盤の直下へまとめ、全幅の空ドックを作らない。 */
+  @media (orientation:landscape) and (min-aspect-ratio:5/4){
+    body[data-workspace-mode="train"] #transportDock{
+      left:auto;right:max(16px,env(safe-area-inset-right));width:max-content;
+      max-width:min(58vw,calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+      transform:none;justify-content:center;padding-inline:7px
+    }
+    body[data-workspace-mode="train"] #trainBtns{max-width:100%;justify-content:center}
   }
   @media (pointer:coarse){
     #transportDock button,#transportDock select{min-height:44px}
@@ -2151,7 +2162,23 @@ function keyboardMetrics(){
     const maxPanelWidth = Math.max(0, cv.width - minDiskAreaWidth - panelGap);
     const panelWidth = Math.min(desiredPanelWidth, maxPanelWidth);
     if(panelWidth >= 180 * devicePixelRatio){
-      return {active:true, mode:'side', height, padding, reservedBottom:transportBottom, reservedRight:panelWidth + panelGap, panelWidth, panelGap, transportBottom};
+      // In compact landscape training the three practice actions live only
+      // beneath the right-side keyboard.  Keep their height for the keyboard
+      // Y position, but do not subtract that right-only dock from the disk's
+      // entire bottom edge.
+      const trainerDockIsSideOnly = workspaceMode === 'train';
+      return {
+        active:true,
+        mode:'side',
+        height,
+        padding,
+        reservedBottom:trainerDockIsSideOnly ? 0 : transportBottom,
+        reservedRight:panelWidth + panelGap,
+        panelWidth,
+        panelGap,
+        transportBottom,
+        trainerDockIsSideOnly
+      };
     }
   }
   return {active:true, mode:'bottom', height, padding, reservedBottom:height + padding * 2 + transportBottom, reservedRight:0, panelWidth:0, panelGap:0, transportBottom};
@@ -2172,6 +2199,46 @@ function canvasContentRect(marginCss = 12){
     keyboard
   };
 }
+// 低い横画面のナビ復元ボタンはCanvas上に浮くため、右上の研究欄だけ
+// その実測矩形より下へ逃がす。円盤全体の上余白には含めない。
+function avoidLandscapeNavToggle(rect){
+  if(!rect || !isCompactLandscapeViewport() || !landscapeNavToggle || landscapeNavToggle.hidden) return rect;
+  const toggleRect = landscapeNavToggle.getBoundingClientRect?.();
+  const canvasRect = cv.getBoundingClientRect?.();
+  if(!toggleRect || !canvasRect || !(canvasRect.width > 0) || !(canvasRect.height > 0)) return rect;
+  const scaleX = cv.width / canvasRect.width;
+  const scaleY = cv.height / canvasRect.height;
+  const toggleLeft = (toggleRect.left - canvasRect.left) * scaleX;
+  const toggleRight = (toggleRect.right - canvasRect.left) * scaleX;
+  if(!Number.isFinite(toggleLeft) || !Number.isFinite(toggleRight)) return rect;
+  if(toggleRight <= rect.left || toggleLeft >= rect.right) return rect;
+  // Keep the full vertical room above the keyboard whenever the detail pane
+  // can fit to the left of the reveal button.  Moving it down first makes the
+  // 11 research rows compete with the keyboard on short iPhone landscapes.
+  const horizontalRight = Math.min(rect.right, toggleLeft - 8 * scaleX);
+  const minHorizontalWidth = Math.min(rect.width, 108 * scaleX);
+  if(horizontalRight - rect.left >= minHorizontalWidth){
+    return {
+      ...rect,
+      right:horizontalRight,
+      width:Math.max(1, horizontalRight - rect.left),
+      navToggleAvoided:true,
+      navToggleAvoidance:'horizontal'
+    };
+  }
+  const toggleBottom = (toggleRect.bottom - canvasRect.top) * scaleY;
+  if(!Number.isFinite(toggleBottom)) return rect;
+  const safeTop = toggleBottom + 8 * scaleY;
+  const top = Math.min(rect.bottom - 1, Math.max(rect.top, safeTop));
+  return {
+    ...rect,
+    top,
+    height:Math.max(1, rect.bottom - top),
+    navToggleAvoided:top > rect.top,
+    navToggleAvoidance:top > rect.top ? 'vertical' : null
+  };
+}
+
 // 横画面の右側鍵盤では、鍵盤より上の空間を解析情報専用領域として使う。
 // コードと研究詳細を同時表示する場合も、円盤側へ戻さず左右へ分割する。
 function analysisOverlayContentRect(kind, marginCss = 12){
@@ -2194,7 +2261,7 @@ function analysisOverlayContentRect(kind, marginCss = 12){
   };
 
   const bothVisible = chordDisplayLevel > 0 && researchDetailsVisible;
-  if(!bothVisible) return whole;
+  if(!bothVisible) return kind === 'research' ? avoidLandscapeNavToggle(whole) : whole;
 
   const gap = Math.min(10 * devicePixelRatio, whole.width * 0.08);
   const usableWidth = Math.max(2, whole.width - gap);
@@ -2202,11 +2269,11 @@ function analysisOverlayContentRect(kind, marginCss = 12){
   const splitLeft = whole.left + chordWidth;
   if(kind === 'research'){
     const paneLeft = splitLeft + gap;
-    return {
+    return avoidLandscapeNavToggle({
       ...whole,
       left:paneLeft,
       width:Math.max(1, whole.right - paneLeft)
-    };
+    });
   }
   return {
     ...whole,
@@ -4748,9 +4815,11 @@ function drawCompositionOverlay(summary){
   const basePad = 14 * devicePixelRatio;
   const baseLineGap = 6 * devicePixelRatio;
   const baseTextSize = Math.max(11 * devicePixelRatio, labelFontPx * devicePixelRatio * 0.92);
-  const minTextSize = inDiskCorner
+  const minTextSize = (inDiskCorner || aboveSideKeyboard)
     ? 7.5 * devicePixelRatio
     : Math.max(8.5 * devicePixelRatio, baseTextSize * 0.72);
+  const minPad = aboveSideKeyboard ? 5 * devicePixelRatio : 7 * devicePixelRatio;
+  const minLineGap = aboveSideKeyboard ? 1.5 * devicePixelRatio : 2.5 * devicePixelRatio;
   const lines = [
     summary.absoluteLine,
     summary.relativeLine,
@@ -4796,8 +4865,18 @@ function drawCompositionOverlay(summary){
   while((boxW > maxW || boxH > availableH) && textSize > minTextSize + 0.1){
     textSize = Math.max(minTextSize, textSize * 0.94);
     const ratio = textSize / baseTextSize;
-    pad = Math.max(7 * devicePixelRatio, basePad * ratio);
-    lineGap = Math.max(2.5 * devicePixelRatio, baseLineGap * ratio);
+    pad = Math.max(minPad, basePad * ratio);
+    lineGap = Math.max(minLineGap, baseLineGap * ratio);
+    measure();
+  }
+  // The slider can request very large labels while compact landscape leaves
+  // little height.  Fit the actual 11-row geometry instead of only clipping
+  // the box, which used to hide BrightAngle/Optional behind the keyboard.
+  if(boxH > availableH){
+    pad = Math.min(pad, minPad);
+    lineGap = Math.min(lineGap, minLineGap);
+    const innerHeight = Math.max(1, availableH - pad * 2 - lineGap * (lines.length - 1));
+    textSize = Math.max(1, Math.min(textSize, innerHeight / lines.length));
     measure();
   }
   boxW = Math.min(content.width, maxW, boxW);
