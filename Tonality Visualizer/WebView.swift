@@ -38,6 +38,9 @@ struct WebView: UIViewRepresentable {
         """
         uc.addUserScript(WKUserScript(source: preJS, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         uc.add(context.coordinator, name: "exportText")
+        uc.addScriptMessageHandler(PracticeOrientationHandler(), contentWorld: .page, name: "practiceOrientation")
+
+        uc.add(PracticeHapticsHandler(), name: "practiceHaptics")
 
         let cfg = WKWebViewConfiguration()
         cfg.userContentController = uc

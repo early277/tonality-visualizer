@@ -149,6 +149,13 @@ extension WebView {
             }
         }
 
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            // The page can disappear without dispatching the dialog's close
+            // event.  Orientation is a practice-only capability, so release
+            // it as soon as WebKit reports that termination.
+            AppOrientationDelegate.releasePracticeLock()
+        }
+
         @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
                      requestMediaCapturePermissionFor origin: WKSecurityOrigin,

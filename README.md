@@ -8,6 +8,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - **MIDI Input** — visualize notes in real time from any CoreMIDI device.  
 - **MIDI File Playback** — load `.mid` files and watch the tonal motion.  
 - **Trainer Mode** — practice chord-by-chord; advance when you play all target notes.  
+- **ASTRAL TRIAL** — a 32-stage, two-octave pitch-location game with screen-keyboard and MIDI input.  
 - **Live Sound Option** — toggle on/off the built-in WebAudio synth for live MIDI playback.  
 - **Physics-Based Disk** — the disk rotates according to tonal balance.  
 - **Customizable UI** — toggle visibility, anchor (water/disk), bilingual JP/EN, opacity, etc.  
@@ -34,6 +35,10 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - CoreMIDI bridge for hardware input  
 - Works fully offline — no data sent or stored  
 
+### Public source edition
+
+This repository contains the complete visualizer and ASTRAL TRIAL game, but intentionally excludes the author's recorded movable-do voice samples. The public build uses the WebAudio synthesizer for note playback. No voice PCM, voice manifest, or generated voice bank is included.
+
 ---
 
 ### 📜 License
@@ -51,6 +56,7 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - **MIDI入力対応**：MIDIキーボードや外部デバイスの演奏をリアルタイムに可視化  
 - **MIDIファイル対応**：ファイルを再生して音の流れを表示  
 - **トレーナーモード**：和音ごとに順に練習できる「モグラたたき」式トレーニング  
+- **ASTRAL TRIAL**：画面鍵盤またはMIDI入力で遊べる、2オクターブ・全32ステージの円盤音感ゲーム  
 - **ライブ音声ON/OFF**：MIDI入力をアプリ内シンセで鳴らすか選択可能  
 - **物理ベースの回転円盤**：音の配置バランスでディスクが回転  
 - **UI調整**：UI表示/非表示、日本語・英語切替、水面固定／ディスク固定など  
@@ -91,6 +97,10 @@ It reacts to **MIDI input** or **MIDI files**, allowing you to *see* harmony and
 - HTML5 / JavaScript / WebAudio / WebMIDI API (スタブ対応)
 - CoreMIDI（ハードMIDI入力ブリッジ）
 - 完全ローカル動作（ネット通信不要）
+
+### 公開ソース版について
+
+このリポジトリには、ビジュアライザーとASTRAL TRIALの全機能を収録しています。ただし、作者本人が録音した移動ド音声サンプルは含みません。公開版の発音にはWebAudioシンセを使用し、音声PCM、音声マニフェスト、生成済み音声バンクはいずれも収録していません。
 
 ---
 

@@ -14,7 +14,7 @@
   #ui{position:fixed;top:calc(max(6px,env(safe-area-inset-top)) + 92px);right:8px;left:auto;z-index:6;display:block;box-sizing:border-box;
        width:min(380px,calc(100vw - 16px));max-height:calc(100vh - 114px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
        overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px;
-       border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(12,16,23,.96);
+       border:1px solid rgba(255,255,255,.2);border-radius:0;background:rgba(12,16,23,.96);
        box-shadow:0 12px 38px rgba(0,0,0,.46);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
        transform-origin:top right;transform:scale(var(--ui-scale));}
   body.ios #ui{transform:none}
@@ -26,8 +26,8 @@
   }
   #settingsHeader #langWrap{flex:1 1 auto;min-width:0;font-weight:750}
   #settingsHeader #lang{min-width:0;max-width:190px;min-height:44px;flex:1 1 auto}
-  #settingsCloseBtn{flex:0 0 auto;min-height:44px;border:1px solid rgba(147,197,253,.55);border-radius:9px;background:#263750;color:#f8fafc;font-weight:750}
-  .settings-section{margin:0 0 8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.025)}
+  #settingsCloseBtn{flex:0 0 auto;min-height:44px;border:1px solid rgba(147,197,253,.55);border-radius:0;background:#263750;color:#f8fafc;font-weight:750}
+  .settings-section{margin:0 0 8px;border:1px solid rgba(255,255,255,.12);border-radius:0;background:rgba(255,255,255,.025)}
   .settings-section>summary{cursor:pointer;padding:10px 11px;min-height:44px;box-sizing:border-box;font-weight:750;list-style-position:inside}
   .settings-section-content{display:grid;gap:10px;padding:4px 11px 12px}
   .settings-section-content>label{justify-content:space-between;min-height:40px}
@@ -46,11 +46,11 @@
   /* 目的を先に選べる常設ナビゲーション */
   #appBar{position:fixed;top:max(6px,env(safe-area-inset-top));left:8px;right:8px;height:54px;z-index:7;
     display:flex;align-items:center;gap:7px;box-sizing:border-box;padding:5px 7px;border:1px solid rgba(255,255,255,.16);
-    border-radius:13px;background:rgba(12,16,23,.92);box-shadow:0 4px 20px rgba(0,0,0,.32);
+    border-radius:0;background:rgba(12,16,23,.92);box-shadow:0 4px 20px rgba(0,0,0,.32);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-x:auto;white-space:nowrap}
   #appBrand{font-weight:800;letter-spacing:.01em;padding:0 5px;color:#f8fafc}
   #purposeNav{display:flex;align-items:center;gap:4px}
-  #appBar button{min-height:44px;padding:6px 10px;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:#222a36;color:#e5e7eb}
+  #appBar button{min-height:44px;padding:6px 10px;border:1px solid rgba(255,255,255,.16);border-radius:0;background:#222a36;color:#e5e7eb}
   #appBar button:focus-visible,.settings-section>summary:focus-visible,#ui button:focus-visible,#ui input:focus-visible,#ui select:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
   #appBar button:hover{background:#2c3746}
   #purposeNav button[aria-selected="true"]{background:#2563eb;border-color:#60a5fa;color:#fff}
@@ -63,7 +63,7 @@
     position:fixed;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));
     z-index:9;display:none;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;box-sizing:border-box;
     align-items:center;justify-content:center;border:1px solid rgba(147,197,253,.62);
-    border-radius:10px;background:rgba(38,55,80,.96);color:#eff6ff;font-size:21px;font-weight:800;
+    border-radius:0;background:rgba(38,55,80,.96);color:#eff6ff;font-size:21px;font-weight:800;
     box-shadow:0 4px 16px rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
   }
   #landscapeNavToggle[hidden]{display:none!important}
@@ -78,7 +78,7 @@
     #appBrand{display:none}
     #appBar{right:6px;left:6px;height:88px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
       grid-template-rows:40px 40px;gap:2px;padding:2px 5px;overflow:visible;white-space:normal}
-    #purposeNav{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+    #purposeNav{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
     #appBar button{min-width:0;min-height:40px;height:40px;padding:4px 3px;font-size:12px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     #purposeNav button{white-space:normal;text-overflow:clip}
     #appBar #openMidiQuick{grid-column:1/3;grid-row:2;white-space:normal;text-overflow:clip;line-height:1.05}
@@ -113,7 +113,7 @@
     }
     #purposeNav{
       grid-column:1/-1;grid-row:1;display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));gap:4px
+      grid-template-columns:repeat(4,minmax(0,1fr));gap:4px
     }
     #appBar button{
       min-width:0;min-height:44px;height:44px;padding:3px 4px;font-size:12px;line-height:1.05;
@@ -148,7 +148,7 @@
     max-width:calc(100vw - 16px);
     padding:7px 10px;
     border:1px solid rgba(255,255,255,0.18);
-    border-radius:12px;
+    border-radius:0;
     background:rgba(12,16,23,0.86);
     box-shadow:0 4px 18px rgba(0,0,0,0.35);
     backdrop-filter:blur(10px);
@@ -161,7 +161,7 @@
   #playBtns,#trainBtns{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
   #transportHideBtn{
     min-width:72px!important;padding:5px 10px!important;font-size:12px;font-weight:750;line-height:1;
-    border:1px solid rgba(147,197,253,.62);border-radius:9px;background:#263750;color:#eff6ff;
+    border:1px solid rgba(147,197,253,.62);border-radius:0;background:#263750;color:#eff6ff;
   }
   #transportRevealDock{
     position:fixed;left:50%;bottom:max(8px, env(safe-area-inset-bottom));transform:translateX(-50%);
@@ -170,7 +170,7 @@
   }
   #transportRevealDock>*{flex:0 0 auto}
   #transportReveal, #captureRevealBtn{
-    min-height:30px;padding:4px 10px;border-radius:999px;
+    min-height:30px;padding:4px 10px;border-radius:0;
     border:1px solid rgba(255,255,255,0.20);background:rgba(12,16,23,0.90);color:#ddd;
     box-shadow:0 3px 12px rgba(0,0,0,0.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   }
@@ -179,9 +179,9 @@
   .captureMarkerGroup{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}
   .captureMarkerBtn{
     min-width:30px!important;width:30px;height:34px;min-height:34px!important;padding:0!important;
-    border-radius:7px;font-weight:750;line-height:1;background:#2a303a;color:#f3f4f6;
+    border-radius:0;font-weight:750;line-height:1;background:#2a303a;color:#f3f4f6;
   }
-  #transportRevealDock .captureMarkerBtn{width:30px;height:30px;min-height:30px!important;border-radius:999px}
+  #transportRevealDock .captureMarkerBtn{width:30px;height:30px;min-height:30px!important;border-radius:0}
   body.transport-hidden #transportDock{display:none!important}
   body.transport-hidden #transportRevealDock{display:flex}
   body[data-workspace-mode="live"] #transportDock,body[data-workspace-mode="live"] #transportRevealDock{display:none!important}
@@ -284,7 +284,7 @@
   /* 手動コード記録 */
   #captureToast{
     position:fixed;left:50%;bottom:calc(max(8px, env(safe-area-inset-bottom)) + 120px);transform:translateX(-50%);
-    z-index:7;display:none;padding:7px 12px;border-radius:999px;background:rgba(0,0,0,.84);color:#fff;
+    z-index:7;display:none;padding:7px 12px;border-radius:0;background:rgba(0,0,0,.84);color:#fff;
     max-width:calc(100vw - 24px);box-sizing:border-box;pointer-events:none;white-space:normal;text-align:center;
   }
   #capturePanel{
@@ -295,22 +295,344 @@
   #capturePanel.open{display:flex}
   #captureDialog{
     width:min(760px,100%);max-height:100%;overflow:auto;box-sizing:border-box;
-    border:1px solid rgba(255,255,255,.22);border-radius:14px;background:#151a22;padding:14px;
+    border:1px solid rgba(255,255,255,.22);border-radius:0;background:#151a22;padding:14px;
     box-shadow:0 8px 32px rgba(0,0,0,.5);-webkit-user-select:text;user-select:text;
   }
   #captureDialog h2{font-size:18px;margin:0 0 10px}
   #captureToolbar,#captureExportSettings{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-  #captureRecoveryStatus{margin:-2px 0 10px;padding:7px 9px;border-radius:8px;background:rgba(59,130,246,.12);color:#bfdbfe;font-size:13px}
+  #captureRecoveryStatus{margin:-2px 0 10px;padding:7px 9px;border-radius:0;background:rgba(59,130,246,.12);color:#bfdbfe;font-size:13px}
   #captureRecoveryStatus:empty{display:none}
   #captureRecoveryStatus.warning{background:rgba(245,158,11,.15);color:#fde68a}
   #captureToolbar button,#captureExportSettings button,#captureExportSettings select{min-height:36px}
   #captureFormatOptions{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 10px}
   #captureFormatOptions label{white-space:nowrap}
   #captureSummary{margin:8px 0 10px;color:#cbd5e1;font-size:14px}
-  #capturePreview{width:100%;min-height:260px;box-sizing:border-box;padding:10px;background:#0b0f15;color:#e6edf7;border:1px solid #465064;border-radius:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;-webkit-user-select:text;user-select:text}
+  #capturePreview{width:100%;min-height:260px;box-sizing:border-box;padding:10px;background:#0b0f15;color:#e6edf7;border:1px solid #465064;border-radius:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;-webkit-user-select:text;user-select:text}
   @media(max-width:620px){
     #captureDialog{padding:10px}
   }
+
+/* Dedicated disk drill: full-width two-octave keyboard, fixed controls. */
+#diskPractice{box-sizing:border-box;position:fixed;inset:0;margin:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#0d131e;color:#edf3fc;font:14px system-ui;overflow:hidden}
+#diskPractice[open]{display:grid;grid-template-rows:44px minmax(0,1fr) clamp(100px,26vh,180px);gap:8px}
+#diskPractice::backdrop{background:#0d131e}
+#diskPractice [hidden]{display:none!important}
+#diskPractice button,#diskPractice select{font:inherit;min-height:40px;border:1px solid #435169;border-radius:0;background:#1b293c;color:#edf3fc;box-sizing:border-box;touch-action:manipulation}
+#diskPractice button:focus-visible,#diskPractice select:focus-visible{outline:3px solid #8fccff;outline-offset:2px}
+#diskPractice .dp-header{display:flex;align-items:center;gap:16px;min-width:0}
+#dpTitle{font-size:18px;white-space:nowrap}
+#diskPractice .dp-range{color:#99adc7;font-size:12px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dpClose{margin-left:auto}
+#diskPractice .dp-main{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;min-height:0}
+#diskPractice .dp-disk{position:relative;min-width:0;min-height:0}
+#dpCanvas{width:100%;height:100%;touch-action:auto}
+#dpRadar{position:absolute;left:12px;bottom:12px;width:clamp(138px,18vw,210px);height:clamp(210px,30vh,310px);max-height:calc(100% - 24px);z-index:6;border:1px solid #62dfd866;border-radius:0;background:linear-gradient(180deg,#0e27363d,#0813212d 68%,#06101d40);box-shadow:0 0 18px #3ae6d92e,inset 0 0 18px #46ddcf25;pointer-events:none;overflow:hidden;clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)}
+#dpRadarCanvas{display:block;width:100%;height:100%}
+#dpOrientation{display:none}
+#diskPractice .dp-panel{overflow-y:auto;min-height:0;padding:4px 8px 8px 0;scrollbar-width:thin}
+#dpSettings{display:grid;gap:8px}
+#dpSettings label{display:grid;grid-template-columns:82px minmax(0,1fr);gap:6px;min-width:0;font-size:12px}
+#dpSettings select{width:100%;min-width:0;font-size:12px}
+#diskPractice .dp-help{font-size:12px;line-height:1.65;color:#99adc7;margin:8px 0}
+#diskPractice #dpStart{width:100%;background:#d5e8ff;color:#11223c;border-color:#d5e8ff;font-weight:700;min-height:44px}
+#dpCount{font-size:24px;font-variant-numeric:tabular-nums;margin:8px 0}
+#dpFeedback{font-size:15px;line-height:1.5;min-height:46px}
+#dpResult{font-size:13px;line-height:1.5;color:#a9e6cf}
+#dpMidiStatus{font-size:11px;color:#8295b0;margin-top:10px}
+#dpKeyboard{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#diskPractice #dpKeyboard button{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;padding:0 0 9px;touch-action:none;min-height:0;border-radius:0;font-size:11px}
+#diskPractice #dpKeyboard .dp-white{height:100%;background:#e7edf4;color:#26354a;border:1px solid #718097;z-index:1}
+#diskPractice #dpKeyboard .dp-black{height:61%;background:#172232;color:#e6edf7;border:1px solid #080f1b;z-index:2;font-size:10px}
+#diskPractice #dpKeyboard small{font-size:10px;opacity:.7}
+#diskPractice #dpKeyboard .pressed{background:#74c3c4;color:#092c31}
+#solfegeVoiceHint{color:#99adc7;line-height:1.5}
+@media(orientation:portrait){
+  #diskPractice[open]{grid-template-rows:44px minmax(0,1fr) 120px}
+  #diskPractice .dp-main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(180px,1fr) minmax(130px,220px);gap:4px}
+  #diskPractice .dp-panel{padding:0 4px 4px}
+  #dpSettings{grid-template-columns:1fr 1fr;gap:6px 10px}
+  #dpSettings label{grid-template-columns:1fr;gap:2px}
+  #dpSettings .dp-help{grid-column:1/-1}
+  #dpOrientation{display:block;position:absolute;bottom:0;width:100%;text-align:center;font-size:10px;color:#8ca0b9}
+  #dpCount{font-size:20px;margin:0}
+  #dpFeedback{min-height:28px;font-size:13px}
+  #diskPractice #dpKeyboard button{font-size:8px;padding-bottom:7px}
+  #diskPractice #dpKeyboard small{font-size:8px}
+}
+@media(orientation:landscape) and (max-height:500px){
+  #diskPractice[open]{grid-template-rows:36px minmax(0,1fr) 100px;gap:4px}
+  #diskPractice .dp-main{grid-template-columns:minmax(0,1fr) 250px;gap:8px}
+  #diskPractice .dp-header button{min-height:32px}
+  #diskPractice .dp-panel{font-size:12px}
+  #dpSettings{gap:4px}
+  #dpSettings select{min-height:32px}
+  #dpCount{font-size:21px;margin:3px 0}
+  #dpFeedback{min-height:38px;font-size:13px}
+}
+
+/* Time gauge does not shift the keyboard as time or feedback changes. */
+#diskPractice .dp-time{display:flex;align-items:center;gap:9px;margin:6px 0}
+#dpGauge{appearance:none;-webkit-appearance:none;flex:1;min-width:0;height:12px;border:0;border-radius:0;overflow:hidden;background:#28384c;color:#64cebe}
+#dpGauge::-webkit-progress-bar{background:#28384c}
+#dpGauge::-webkit-progress-value{background:#64cebe}
+#dpGauge::-moz-progress-bar{background:#64cebe}
+#dpGauge.low::-webkit-progress-value{background:#ffa476}
+#dpGauge.low::-moz-progress-bar{background:#ffa476}
+#dpTime{width:42px;font-variant-numeric:tabular-nums;color:#d4e3f6;font-size:14px;text-align:right}
+
+#dpStages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;grid-column:1/-1}
+#diskPractice #dpStages button{min-height:52px;font-size:18px}
+#diskPractice #dpStages button[aria-pressed="true"]{background:#356db2;border-color:#add6ff}
+#diskPractice.choosing[open]{grid-template-rows:44px minmax(0,1fr)}
+#diskPractice.choosing .dp-main{display:block;overflow:auto}
+#diskPractice.choosing .dp-disk,#diskPractice.choosing #dpKeyboard{display:none}
+#diskPractice.choosing .dp-panel{max-width:640px;margin:0 auto;padding:8px}
+#diskPractice.choosing #dpSettings{display:block}
+
+/* Square controls, including native WebKit button defaults. */
+button,select,textarea,input:not([type="range"]):not([type="checkbox"]):not([type="radio"]){border-radius:0}
+
+/* Stage selection keeps both the stage grid and Start inside the viewport. */
+#dpLastResult{color:#8de0ca;font-size:13px;line-height:1.5;margin:0}
+@media (orientation:landscape){
+  #diskPractice.choosing[open]{grid-template-rows:36px minmax(0,1fr);gap:6px}
+  #diskPractice.choosing .dp-main{overflow:hidden}
+  #diskPractice.choosing .dp-panel{height:100%;box-sizing:border-box;max-width:1000px;padding:4px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,28%);grid-template-rows:auto minmax(0,1fr) 48px;gap:8px 16px}
+  #diskPractice.choosing #dpSettings{display:contents}
+  #diskPractice.choosing #dpSettings>.dp-help:first-child{display:none}
+  #diskPractice.choosing #dpStages{grid-column:1;grid-row:1/4;grid-template-rows:repeat(4,minmax(44px,1fr));gap:6px;min-height:0}
+  #diskPractice.choosing #dpStages button{min-height:44px;padding:4px}
+  #diskPractice.choosing #dpStageDescription{grid-column:2;grid-row:1;margin:0;line-height:1.5}
+  #diskPractice.choosing #dpLastResult{grid-column:2;grid-row:2;font-size:12px;align-self:center}
+  #diskPractice.choosing #dpStart{grid-column:2;grid-row:3;min-height:44px}
+  #diskPractice.choosing #dpMidiStatus{display:none}
+}
+@media (orientation:landscape){
+  #diskPractice:not(.choosing) .dp-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr) 40px;gap:6px;overflow:hidden;padding:0;line-height:1.3;font-size:12px}
+  #diskPractice:not(.choosing) #dpProgress{grid-column:1/-1;grid-row:1;min-height:0}
+  #diskPractice:not(.choosing) #dpProgress .dp-help{display:none}
+  #diskPractice:not(.choosing) .dp-time{margin:0 0 4px}
+  #diskPractice:not(.choosing) #dpCount{font-size:12px;margin:0 0 3px}
+  #diskPractice:not(.choosing) #dpFeedback{font-size:12px;min-height:0;margin:3px 0}
+  #diskPractice:not(.choosing) #dpResult{font-size:11px;line-height:1.3;margin:3px 0}
+  #diskPractice:not(.choosing) #dpStart{grid-column:1;grid-row:2;min-height:40px;font-size:12px;padding:4px}
+  #diskPractice:not(.choosing) #dpMidiStatus{display:none}
+}
+@media (orientation:landscape) and (max-height:350px){
+  #diskPractice:not(.choosing)[open]{grid-template-rows:32px minmax(0,1fr) 80px;gap:4px}
+}
+
+/* All stages stay visible: one chapter per row. */
+#dpStagePicker{min-height:0;display:grid;grid-template-rows:minmax(0,1fr)}
+#diskPractice.choosing #dpStages{grid-column:auto;grid-row:auto;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(5,minmax(40px,1fr));gap:5px}
+#diskPractice.choosing #dpStages button{min-width:0;min-height:40px;font-size:14px;padding:2px;white-space:nowrap}
+#diskPractice.choosing #dpStages button:nth-child(16n+9),
+#diskPractice.choosing #dpStages button:nth-child(16n+10),
+#diskPractice.choosing #dpStages button:nth-child(16n+11),
+#diskPractice.choosing #dpStages button:nth-child(16n+12),
+#diskPractice.choosing #dpStages button:nth-child(16n+13),
+#diskPractice.choosing #dpStages button:nth-child(16n+14),
+#diskPractice.choosing #dpStages button:nth-child(16n+15),
+#diskPractice.choosing #dpStages button:nth-child(16n+16){border-color:#72849d}
+@media (orientation:landscape){
+  #diskPractice.choosing #dpStagePicker{grid-column:1;grid-row:1/4}
+  #diskPractice.choosing .dp-panel{column-gap:12px;grid-template-columns:minmax(0,1fr) minmax(170px,25%)}
+}
+
+/* Arcade treatment is scoped to disk practice. */
+#diskPractice{background:radial-gradient(ellipse at 35% 40%,#202b53 0,#10172c 45%,#090e1a 100%)}
+#diskPractice .dp-header strong{color:#ffe394;letter-spacing:.12em;text-shadow:0 0 18px #edbe5570}
+#diskPractice #dpStart{background:linear-gradient(135deg,#ffe9a4,#ffbf58);color:#251b0d;border-color:#ffe4a2;box-shadow:0 0 18px #ffb64935}
+#diskPractice #dpStages button[aria-pressed="true"]{background:linear-gradient(135deg,#3a6594,#54458e);border-color:#ffdf82;box-shadow:inset 0 0 12px #eac86b30}
+#diskPractice .dp-disk{isolation:isolate}
+#diskPractice.dp-combo-hot .dp-disk{filter:drop-shadow(0 0 9px #ffe08b50)}
+#diskPractice.dp-impact #dpArcadeBg::before{animation:dp-impact-aura .52s ease-out both}
+#diskPractice.dp-impact #dpGauge{box-shadow:0 0 22px #fff08acc,inset 0 0 12px #5effe9aa}
+@keyframes dp-impact-aura{0%{opacity:.28}28%{opacity:1}100%{opacity:.42}}
+#diskPractice #dpFeedback{color:#ffe394;font-weight:750}
+#diskPractice .dp-fx-toggle{font-size:11px;min-height:32px;padding:4px 8px}
+.dp-celebration{position:absolute;left:50%;top:4px;transform:translate(-50%,8px) scale(.94);opacity:0;transition:opacity .15s,transform .2s;pointer-events:none;white-space:nowrap;font:bold 22px system-ui;letter-spacing:.05em;color:#ffe594;text-shadow:0 2px 2px #000,0 0 15px #e9a93e80;z-index:30}
+.dp-celebration.visible{opacity:1;transform:translate(-50%,0) scale(1)}
+.dp-celebration.victory{position:fixed;left:50%;top:50%;width:min(90vw,900px);white-space:normal;text-align:center;transform:translate(-50%,-50%);padding:22px 20px;background:linear-gradient(90deg,transparent,#17172bf2 10%,#17172bf2 90%,transparent);z-index:50}
+.dp-celebration.victory strong{display:block;font-size:clamp(22px,4vw,42px);color:#ffe5a0}
+.dp-celebration.victory span{display:block;margin-top:10px;font-size:16px;color:#90f4df}
+#diskPractice .dp-damage-vignette{position:absolute;inset:0;z-index:20;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 34%,#8d1b2c10 58%,#bd263d75 100%)}
+#diskPractice.dp-damage-warning .dp-damage-vignette{animation:dp-damage-vignette 1s ease-out both}
+#diskPractice.dp-damage-shake .dp-header,#diskPractice.dp-damage-shake .dp-main,#diskPractice.dp-damage-shake #dpKeyboard{animation:dp-damage-shake .34s ease-out both}
+@keyframes dp-damage-vignette{0%{opacity:0}24%{opacity:.44}100%{opacity:.18}}
+@keyframes dp-damage-shake{0%,100%{transform:translate3d(0,0,0)}18%{transform:translate3d(-3px,1px,0)}36%{transform:translate3d(3px,-1px,0)}54%{transform:translate3d(-2px,1px,0)}72%{transform:translate3d(2px,0,0)}}
+#diskPractice.dp-cleared #dpGauge::-webkit-progress-value{background:linear-gradient(90deg,#58dccf,#fbd777)}
+@media(prefers-reduced-motion:reduce){.dp-celebration{transition:none}#diskPractice.dp-combo-hot .dp-disk{filter:none}#diskPractice.dp-damage-shake .dp-header,#diskPractice.dp-damage-shake .dp-main,#diskPractice.dp-damage-shake #dpKeyboard{animation:none}#diskPractice.dp-damage-warning .dp-damage-vignette{animation:none;opacity:.22}}
+#diskPractice:not(.choosing) .dp-range{font-size:18px;font-weight:900;color:#ffe293;transform-origin:left center;text-shadow:0 0 18px #ffd05b90}
+#diskPractice[data-combo-tier="1"]{background:radial-gradient(ellipse at 35% 40%,#523a68,#1b1838 55%,#100e22)}
+#diskPractice[data-combo-tier="2"]{background:radial-gradient(ellipse at 35% 40%,#7a385d,#361a43 55%,#160d24)}
+#diskPractice[data-combo-tier="3"]{background:radial-gradient(ellipse at 35% 40%,#8c6127,#51264f 55%,#1c0c25)}
+#diskPractice[data-combo-tier="4"]{background:radial-gradient(ellipse at 35% 40%,#b3731f,#6d245e 48%,#17113f 78%,#090b1b)}
+#diskPractice.dp-combo-hot #dpGauge{box-shadow:0 0 20px #ffdd83b0,0 0 38px #e878ff70}
+#diskPractice.dp-combo-hot #dpArcadeBg::after{opacity:.62;animation:dp-overdrive-grid 1.2s ease-in-out infinite alternate}
+@keyframes dp-overdrive-grid{from{transform:scale(1);filter:saturate(1)}to{transform:scale(1.035);filter:saturate(1.8)}}
+#diskPractice.dp-cleared .dp-celebration.victory{border-block:2px solid #ffdf7d;box-shadow:0 0 45px #ffc83f55}
+#diskPractice.dp-cleared .dp-celebration.victory strong{font-size:clamp(28px,5vw,54px);text-shadow:0 3px 0 #8f5020,0 0 25px #ffce5c}
+#diskPractice.dp-cleared .dp-celebration.victory{top:40%;max-height:calc(100% - 150px);box-sizing:border-box}
+#diskPractice #dpHP{font-size:17px;letter-spacing:.16em;color:#dffaf5;text-shadow:0 0 8px #70dcd766;margin:0 6px;white-space:nowrap}
+#diskPractice[data-combo-tier="0"] #dpHP{color:#dffaf5}
+#diskPractice.dp-hull-damaged #dpHP{color:#ffcf68;text-shadow:0 0 9px #ffb84a70}
+#diskPractice #dpHP:not(:empty){font-variant-numeric:tabular-nums}
+
+/* In landscape the disk owns the whole playfield; the status panel floats over its edge. */
+@media (orientation:landscape){
+  #diskPractice:not(.choosing) .dp-main{display:block;position:relative;min-height:0}
+  #diskPractice:not(.choosing) .dp-disk{position:absolute;inset:0;width:100%;height:100%}
+  #diskPractice:not(.choosing) .dp-panel{position:absolute;top:0;right:0;bottom:0;width:250px;max-width:30vw;box-sizing:border-box;background:linear-gradient(90deg,transparent,#0b1220c9 18%,#0b1220ed 100%);padding-left:24px}
+}
+
+/* Moving arcade background, kept behind the controls and disk. */
+#diskPractice #dpArcadeBg{--dp-light-x:50%;--dp-light-y:50%;--dp-light-angle:20deg;position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;background:radial-gradient(circle at 18% 28%,#6a3d8b50 0 7%,transparent 29%),radial-gradient(circle at 82% 72%,#087d8460 0 8%,transparent 30%),linear-gradient(135deg,#090d1c,#1b1234 48%,#081c29)}
+#diskPractice #dpStarfield{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0}
+#diskPractice #dpArcadeBg::before{content:"";position:absolute;inset:0;background:conic-gradient(from var(--dp-light-angle) at var(--dp-light-x) var(--dp-light-y),transparent 0 14%,#ffcf5c22 18%,transparent 25% 43%,#55e9e01c 48%,transparent 56% 74%,#d378ff1c 80%,transparent 87%);mix-blend-mode:screen}
+#diskPractice #dpArcadeBg::after{content:"";position:absolute;inset:0;background-image:linear-gradient(115deg,transparent 0 44%,#ffe18b12 45%,transparent 46% 65%,#63f4e318 66%,transparent 67%);background-size:100% 100%;opacity:.3}
+#diskPractice .dp-header,#diskPractice .dp-main,#diskPractice #dpKeyboard{position:relative;z-index:1}
+@keyframes dp-bg-drift{from{background-position:0 0,0 0,0 0;transform:scale(1)}to{background-position:0 0,19px -27px,-31px 43px;transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){#diskPractice #dpArcadeBg::before,#diskPractice #dpArcadeBg::after{animation:none}}
+
+#diskPractice.choosing #dpRadar{display:none}
+
+#diskPractice.choosing #dpStages button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative}
+#diskPractice.choosing #dpStages button.is-cleared{background:linear-gradient(145deg,#fff0b3 0%,#edbc55 42%,#ce8b24 100%);border-color:#ffe8a0;color:#332009;box-shadow:inset 0 1px 0 #fff9d5,0 0 9px #f6c35e35;font-weight:850}
+#diskPractice.choosing #dpStages button .dp-clear-badge{font-size:11px;line-height:1.1;letter-spacing:.02em;white-space:nowrap;color:#49300b;max-width:100%;overflow:hidden}
+#diskPractice.choosing #dpStages button[aria-pressed="true"]{outline:2px solid #edf7ff;outline-offset:1px;z-index:1}
+#diskPractice.choosing #dpStages button.is-cleared[aria-pressed="true"]{background:linear-gradient(145deg,#fffad4,#ffce69 65%,#e9a83e);box-shadow:0 0 18px #ffd05b80,inset 0 0 8px #fff2b3}
+
+/* Spacecraft HUD skin shared by stage selection and gameplay. */
+#diskPractice{--space-cyan:#70f5e6;--space-blue:#65b8ff;--space-violet:#a97cff;--space-gold:#ffd66f;border:1px solid #6ad9e24d;box-shadow:0 0 0 1px #a078ff18,0 0 42px #4877d52b,inset 0 0 48px #132c5148;background:#050b18}
+#diskPractice::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(180deg,transparent 0 3px,#7fe9ff08 4px,#7fe9ff08 5px);mix-blend-mode:screen;opacity:.65}
+#diskPractice .dp-header{border-bottom:1px solid #61e5df42;padding:0 8px;background:linear-gradient(90deg,#071323d9,#15163ad9 55%,#071323d9);box-shadow:0 5px 20px #4d70d31c}
+#diskPractice .dp-header strong{font-size:20px;letter-spacing:.16em;color:#b8fff5;text-shadow:0 0 8px #5effe7,0 0 24px #728cff;}
+#diskPractice .dp-range{color:#a9cfff;text-shadow:0 0 9px #4db8ff80}
+#diskPractice .dp-header button,#diskPractice .dp-fx-toggle{border-color:#5fe6df88;background:linear-gradient(180deg,#162f48e8,#0b162be8);color:#cafff7;box-shadow:inset 0 0 14px #51caff12,0 0 10px #4fe4dd1a;text-transform:uppercase;letter-spacing:.04em}
+#diskPractice .dp-header button:hover,#diskPractice .dp-fx-toggle:hover{border-color:#a8fff3;background:linear-gradient(180deg,#20486ae8,#111d3be8);box-shadow:0 0 15px #52f2e966}
+#diskPractice .dp-main{background:linear-gradient(90deg,#07142640 0,#0b122600 58%,#0b1220a8 100%)}
+#diskPractice:not(.choosing) .dp-panel{border-left:1px solid #64e3dc42;padding-left:18px;background:linear-gradient(90deg,#07132218,#070e1dcc);box-shadow:inset 12px 0 22px #5a73da0b}
+#diskPractice #dpProgress{border:1px solid #5bdedb42;padding:9px 10px;background:linear-gradient(160deg,#0c2134c9,#11152fc9);box-shadow:0 0 18px #3ad5d51a,inset 0 0 20px #6f72e60d}
+#diskPractice #dpCount{color:#b9fff3;text-shadow:0 0 10px #55e5d0aa;letter-spacing:.08em}
+#diskPractice #dpFeedback{color:#ffdc83;text-shadow:0 0 10px #ff9f4c70}
+#diskPractice #dpResult{color:#a8e9ff;text-shadow:0 0 8px #4ebcff60}
+#diskPractice .dp-time{border-bottom:1px solid #62dfe033;padding-bottom:5px}
+#diskPractice #dpGauge{background:#0b2030;box-shadow:0 0 12px #42d9d955,inset 0 0 6px #001018}
+#diskPractice #dpGauge::-webkit-progress-value{background:linear-gradient(90deg,#43d9df,#8cf5d2,#ffd26b);box-shadow:0 0 12px #6df4e8}
+#diskPractice #dpKeyboard{border-top:1px solid #65e7df66;box-shadow:0 -10px 24px #4892d21a,inset 0 9px 20px #071d31cc;background:linear-gradient(180deg,#091a2c,#050b16)}
+#diskPractice #dpKeyboard .dp-white{background:linear-gradient(180deg,#dbe9f3,#8ba9c4);color:#16283c;border-color:#7ee2e080;box-shadow:inset 0 0 16px #dfffff44}
+#diskPractice #dpKeyboard .dp-black{background:linear-gradient(180deg,#203b58,#070f1e);border-color:#76caff66;color:#c6f9f5;box-shadow:0 0 8px #4ea9e52e}
+#diskPractice #dpKeyboard .pressed{background:linear-gradient(180deg,#9cf8e5,#3cb4c4);color:#06282d;box-shadow:0 0 18px #5ff7d5, inset 0 0 15px #e0fff5}
+#diskPractice #dpStart{background:linear-gradient(100deg,#73f4d9,#79bdfc 48%,#b085ff);color:#061326;border-color:#c5fff2;box-shadow:0 0 20px #55e8d080,inset 0 0 12px #fff8;letter-spacing:.12em}
+#diskPractice #dpStart:hover{box-shadow:0 0 28px #7dfae8,inset 0 0 14px #fff9}
+#diskPractice.choosing .dp-main{background:radial-gradient(ellipse at 50% 45%,#142d4ed1,#090f22e6 62%,#050a15f4);border-block:1px solid #6ae4e044}
+#diskPractice.choosing .dp-panel{max-width:1040px;padding:14px 18px;background:linear-gradient(145deg,#0a1c31d9,#111533e8 55%,#071322e8);border:1px solid #5cdedb42;box-shadow:0 0 28px #4e7bd52e,inset 0 0 30px #7584e514}
+#diskPractice.choosing #dpStageDescription{color:#a7d8ff;text-shadow:0 0 8px #4caaff55}
+#diskPractice.choosing #dpStages button{background:linear-gradient(145deg,#112b45ed,#151633ed);border-color:#4bb6d766;color:#bcecff;box-shadow:inset 0 0 14px #68d4ff0c,0 0 7px #3c7fe01b;clip-path:polygon(0 5px,5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px))}
+#diskPractice.choosing #dpStages button:hover{border-color:#8cfff0;color:#f0ffff;box-shadow:0 0 16px #51e9e955,inset 0 0 12px #6fdfff1c}
+#diskPractice.choosing #dpStages button[aria-pressed="true"]{outline:2px solid var(--space-cyan);outline-offset:2px;background:linear-gradient(145deg,#1c5270ed,#31236ded);box-shadow:0 0 20px #6eeadf66,inset 0 0 16px #d0ffff18}
+#diskPractice.choosing #dpStages button.is-cleared{background:linear-gradient(145deg,#604b26,#263f51 55%,#1a2c40);border-color:#f6d572;color:#ffe9a2;box-shadow:0 0 14px #ffd46f3e,inset 0 0 12px #ffe39a18}
+#diskPractice.choosing #dpStages button.is-cleared[aria-pressed="true"]{background:linear-gradient(145deg,#8b6b2d,#295a64 55%,#352667);box-shadow:0 0 23px #74f2dc70,inset 0 0 16px #fff3a528}
+#diskPractice.choosing #dpStages button .dp-clear-badge{color:#ffe8a5;text-shadow:0 0 5px #ffd46f80}
+#diskPractice.choosing #dpLastResult{color:#8ef8dc;text-shadow:0 0 8px #4ee6c580}
+@media(prefers-reduced-motion:reduce){#diskPractice::before{opacity:.35}#diskPractice.dp-impact #dpArcadeBg::before,#diskPractice.dp-combo-hot #dpArcadeBg::after{animation:none}}
+
+/* Transparent cockpit glass and compact one-line HUD labels. */
+#diskPractice:not(.choosing) .dp-header{gap:clamp(6px,1vw,12px)}
+#diskPractice:not(.choosing) .dp-range{font-size:clamp(11px,1.7vw,16px);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#diskPractice:not(.choosing) .dp-panel{background:linear-gradient(90deg,transparent,#07132212 42%,#0713222c 100%) !important;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#diskPractice:not(.choosing) #dpProgress{background:#071a2c18;border-color:#64e3dc38;box-shadow:0 0 18px #3ad5d510,inset 0 0 20px #6f72e506}
+#diskPractice:not(.choosing) #dpRadar{background:linear-gradient(180deg,#0e273622,#08132118 68%,#06101d24);backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px)}
+#diskPractice:not(.choosing) #dpRadar{border-color:#70f5e688;box-shadow:0 0 24px #35e9d944,inset 0 0 22px #5be8dc2e}
+@media (orientation:portrait){#diskPractice:not(.choosing) #dpRadar{width:140px;height:210px;left:6px;bottom:6px}}
+
+/* Stage briefing: flavor first, technical conditions second. */
+#dpStageInfo{min-width:0;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:8px}
+#dpStageHighScore{margin:0;padding:5px 9px;border:1px solid #6df3df70;background:linear-gradient(90deg,#0b2939b8,#18284d66);color:#fff0a7;font:900 clamp(15px,1.65vw,22px) ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.09em;text-shadow:0 0 10px #ffd467aa;box-shadow:inset 0 0 14px #5be9db16,0 0 12px #5be9db20}
+#dpStageFlavor{margin:0;padding:10px 12px;border-left:3px solid #ffcf6c;border-block:1px solid #70e9de40;background:linear-gradient(100deg,#152d4b55,transparent);color:#ffe5a3;font-size:clamp(14px,1.45vw,20px);font-weight:800;line-height:1.45;letter-spacing:.02em;text-shadow:0 0 9px #ffb8546b}
+#diskPractice.choosing #dpStageDescription{margin:0;color:#9dc9e7;line-height:1.45}
+@media (orientation:landscape){
+  #diskPractice.choosing .dp-panel{grid-template-rows:auto minmax(0,1fr) auto 48px}
+  #diskPractice.choosing #dpStagePicker{grid-column:1;grid-row:1/5}
+  #diskPractice.choosing #dpStages{grid-column:1;grid-row:1/5}
+  #diskPractice.choosing #dpStageInfo{grid-column:2;grid-row:1/3;overflow:hidden}
+  #diskPractice.choosing #dpStageFlavor{max-height:calc(100% - 62px);overflow:hidden}
+  #diskPractice.choosing #dpLastResult{grid-column:2;grid-row:3;font-size:12px;align-self:center}
+#diskPractice.choosing #dpStart{grid-column:2;grid-row:4;min-height:44px}
+}
+
+/* Critical hull warning: a restrained red cockpit pulse instead of a white flash. */
+#diskPractice.dp-hull-critical .dp-damage-vignette{opacity:.2;background:radial-gradient(ellipse at center,transparent 28%,#8d1b2c18 56%,#e31d4f9e 100%);animation:dp-hull-warning .78s steps(2,end) infinite}
+#diskPractice.dp-hull-critical .dp-header{box-shadow:0 0 22px #ff31545c,inset 0 -2px 0 #ff526b80}
+#diskPractice.dp-hull-critical #dpHP{color:#ff6b78;text-shadow:0 0 12px #ff294d,0 0 24px #ff294d}
+@keyframes dp-hull-warning{0%,100%{opacity:.12}42%{opacity:.52}58%{opacity:.24}}
+@media(prefers-reduced-motion:reduce){#diskPractice.dp-hull-critical .dp-damage-vignette{animation:none;opacity:.3}}
+
+/* Game over: a persistent cockpit breach with branching cracks, rather than a
+   bright flash. The layer is removed by reset() when the player leaves the
+   result screen or relaunches the mission. */
+#diskPractice .dp-gameover-overlay{position:absolute;inset:0;z-index:34;pointer-events:none;visibility:hidden;opacity:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,transparent 26%,#5f071626 58%,#b90f2a72 100%);box-shadow:inset 0 0 60px #ef243b80,inset 0 0 180px #710b2260}
+#diskPractice .dp-gameover-overlay::before{content:"";position:absolute;inset:-12%;opacity:.72;background:linear-gradient(112deg,transparent 0 37.8%,#ffd9df 38% 38.18%,transparent 38.4% 100%),linear-gradient(72deg,transparent 0 54.8%,#ffb9c4 55% 55.16%,transparent 55.4% 100%),linear-gradient(132deg,transparent 0 48.8%,#f58a9d 49% 49.14%,transparent 49.4% 100%),linear-gradient(52deg,transparent 0 63.4%,#ffced6 63.6% 63.76%,transparent 64% 100%),linear-gradient(164deg,transparent 0 28.8%,#e96c83 29% 29.13%,transparent 29.4% 100%);mix-blend-mode:screen;filter:drop-shadow(0 0 5px #ff5e76)}
+#diskPractice .dp-gameover-overlay::after{content:attr(data-label);position:absolute;left:50%;top:35%;transform:translate(-50%,-50%);width:min(86vw,720px);box-sizing:border-box;padding:8px 14px;border:1px solid #ff8a99a8;background:#350913b8;color:#ffb7c1;font:800 clamp(12px,1.45vw,18px) ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;text-align:center;text-shadow:0 0 10px #ff3658;box-shadow:0 0 24px #e41d4266;white-space:normal}
+#diskPractice.dp-gameover .dp-gameover-overlay{visibility:visible;opacity:1;animation:dp-gameover-settle .24s ease-out both}
+#diskPractice.dp-gameover .dp-header{border-color:#ff536a88;background:linear-gradient(90deg,#260c1bd9,#301029e8 55%,#1c0a18d9);box-shadow:0 0 28px #ff244c68,inset 0 -2px 0 #ff536a88}
+#diskPractice.dp-gameover #dpKeyboard{border-color:#ff536a80;filter:saturate(.58);box-shadow:0 -10px 28px #ff243c42,inset 0 9px 20px #220812cc}
+#diskPractice .dp-gameover-prompt{position:fixed;z-index:80;left:50%;top:55%;transform:translate(-50%,-50%);width:min(86vw,820px);box-sizing:border-box;display:grid;gap:7px;pointer-events:auto}
+#diskPractice .dp-gameover-prompt[hidden]{display:none}
+#diskPractice .dp-gameover-message{width:min(100%,620px);min-height:0;margin-inline:auto;box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:4px 8px;border:0;background:#07101a78;color:#adb7c8;text-align:left;font:500 clamp(10px,.9vw,12px)/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;text-shadow:0 1px 1px #000;box-shadow:none;opacity:.78}
+#diskPractice .dp-gameover-message[data-kind="command"]{color:#c8ba91;font-weight:650}
+#diskPractice .dp-gameover-message[data-kind="operator"],#diskPractice .dp-gameover-message[data-kind="ally"]{color:#9dbec3;font-weight:500}
+#diskPractice .dp-gameover-message[data-kind="technical"]{color:#b9a58e}
+#diskPractice .dp-gameover-message[data-kind="ai"]{color:#aaa2ba;letter-spacing:.035em}
+#diskPractice .dp-gameover-message[data-kind="rival"],#diskPractice .dp-gameover-message[data-kind="unknown"]{color:#b39caa;letter-spacing:.03em}
+#diskPractice .dp-gameover-message[data-kind="protagonist"]{color:#c8bd91;font-size:clamp(10px,.9vw,12px);font-weight:650;letter-spacing:.025em}
+#diskPractice .dp-radio-caller{display:block;color:#9dbec3}
+#diskPractice .dp-radio-hero{display:block;margin-top:2px;color:#c8bd91;font-size:1em;font-weight:650}
+#diskPractice .dp-gameover-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-inline:auto;width:min(100%,620px)}
+#diskPractice .dp-gameover-actions button{min-height:46px;border:1px solid #baffef;background:linear-gradient(100deg,#73f4d9,#79bdfc 48%,#b085ff);color:#061326;box-shadow:0 0 22px #69f4df8a,inset 0 0 12px #fff9;font:900 clamp(11px,1.25vw,15px) ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em}
+#diskPractice .dp-gameover-actions #dpGameOverSelect{background:linear-gradient(100deg,#152942,#293d66 52%,#4c326b);color:#d8fff7;border-color:#72e8dd;box-shadow:0 0 16px #49dfd34d}
+#diskPractice.dp-gameover .dp-header,#diskPractice.dp-gameover .dp-main,#diskPractice.dp-gameover #dpKeyboard{pointer-events:none}
+@keyframes dp-gameover-settle{0%{opacity:0;transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+@media (orientation:portrait){#diskPractice .dp-gameover-prompt{top:54%;width:min(92vw,620px)}#diskPractice .dp-gameover-actions{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#diskPractice.dp-gameover .dp-gameover-overlay{animation:none}}
+
+/* The cockpit speaks in compact system labels; the mission logs keep their own voice. */
+#diskPractice .dp-header button,#diskPractice .dp-fx-toggle,#diskPractice #dpStart,
+#diskPractice .dp-help,#diskPractice #dpCount,#diskPractice #dpResult,#diskPractice #dpMidiStatus,
+#diskPractice #dpStageDescription{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em}
+#diskPractice .dp-help{line-height:1.45}
+#diskPractice #dpStart{font-weight:900}
+
+/* Final landscape fit pass: keep telemetry readable instead of ellipsizing it. */
+#diskPractice:not(.choosing) .dp-header{gap:10px}
+#diskPractice:not(.choosing) .dp-range{flex:0 0 102px;width:102px;max-width:102px;font-size:clamp(11px,1.15vw,15px);letter-spacing:.035em;overflow:visible;text-overflow:clip}
+#diskPractice:not(.choosing) #dpStart{grid-column:1/-1;white-space:nowrap;font-size:clamp(10px,1.1vw,13px);letter-spacing:.06em}
+#diskPractice.choosing #dpStageInfo{overflow:visible;justify-content:flex-start;gap:5px}
+#diskPractice.choosing #dpStageFlavor{max-height:none;overflow:visible;font-size:clamp(12px,1.08vw,16px);line-height:1.28;padding:8px 10px}
+#diskPractice.choosing #dpStageDescription{font-size:clamp(10px,.95vw,12px);line-height:1.28;overflow:visible}
+@media (orientation:landscape) and (max-height:500px){
+  #diskPractice:not(.choosing) .dp-range{flex-basis:92px;max-width:92px;font-size:11px}
+  #diskPractice.choosing #dpStageFlavor{font-size:12px;line-height:1.2;padding:6px 8px}
+  #diskPractice.choosing #dpStageDescription{font-size:10px;line-height:1.18}
+}
+
+/* Keep the cockpit header on one row. Gameplay warnings live in the right
+   telemetry panel, so the header slot is reserved for the short combo callout. */
+#diskPractice .dp-header button{flex:0 0 auto;white-space:nowrap;padding-inline:clamp(6px,1vw,12px)}
+#diskPractice .dp-header .dp-range{display:none!important}
+#diskPractice:not(.choosing) .dp-header{gap:clamp(4px,.8vw,10px)}
+@media (orientation:landscape) and (max-height:500px){
+  #diskPractice .dp-header button{font-size:11px;padding-inline:7px}
+  #diskPractice:not(.choosing) .dp-header{gap:5px}
+}
+
+/* Result actions: retry keeps the full row until a following sector exists. */
+#diskPractice #dpNext{background:linear-gradient(100deg,#172f4f,#243967 55%,#3d2d66);color:#c9fff4;border-color:#66dfd4;box-shadow:0 0 14px #42d6ce36;font:900 clamp(10px,1.1vw,13px) ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;white-space:nowrap}
+@media (orientation:landscape){
+  #diskPractice:not(.choosing) #dpNext{grid-column:2;grid-row:2;min-height:40px;padding:4px}
+  #diskPractice:not(.choosing).dp-has-next #dpStart{grid-column:1}
+}
 </style>
 
 <header id="appBar">
@@ -3495,42 +3817,42 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     return {movable, distance};
   };
 
-  // Allocate only visible lower lanes. The default card+angle-card layout
-  // needs one movable-do lane; angle cards live in the neutral key body above
-  // it. Hidden lanes must not silently consume marker space.
+  // Both analytical rows use black-key height as their common vertical grid.
+  // White keys use their unobscured stems, never the area behind a black key.
+  function markerHorizontalRangeForKey(key, markerTop, markerBottom, inset=0){
+    let left = key.x + inset;
+    let right = key.x + key.width - inset;
+    if(!key.isBlack && markerTop < key.y + blackHeight){
+      const polygon = whiteKeyVisiblePolygon(key, blackKeys, blackHeight);
+      left = Math.max(left, polygon[0][0] + inset);
+      right = Math.min(right, polygon[1][0] - inset);
+    }
+    if(right < left){
+      const center = key.x + key.width / 2;
+      return {left:center, right:center, center};
+    }
+    return {left, right, center:(left + right) / 2};
+  }
+  const laneInset = Math.max(0.7 * devicePixelRatio, blackWidth * 0.025);
+  const laneGap = Math.max(1.2 * devicePixelRatio, blackHeight * 0.035);
+  const laneHeight = blackHeight * (keyboardRelationMode === 'distance' ? 0.44 : 0.42);
+  const laneBottom = y + blackHeight - Math.max(2 * devicePixelRatio, blackHeight * 0.04);
   const analysisLaneRectsForKey = (key)=>{
-    const insetX = Math.max(1 * devicePixelRatio, Math.min(key.width * 0.10, 2.4 * devicePixelRatio));
-    const bottomInset = key.isBlack ? 3 * devicePixelRatio : 5 * devicePixelRatio;
-    const gap = Math.max(1 * devicePixelRatio, Math.min(1.8 * devicePixelRatio, key.height * 0.018));
-    const laneHeightFor = (kind)=>{
-      if(key.isBlack){
-        return Math.min(18 * devicePixelRatio, Math.max(14 * devicePixelRatio, key.height * 0.27));
-      }
-      // Only the white-key movable-do card uses the extra lower-body room.
-      // Text/gradient and interval lanes retain their previous footprint.
-      const minimumCss = kind === 'movable' && keyboardMovableMode === 'card' ? 21 : 15;
-      return Math.min(22 * devicePixelRatio, Math.max(minimumCss * devicePixelRatio, key.height * 0.16));
-    };
-    const width = Math.max(1, key.width - insetX * 2);
-    let cursor = key.y + key.height - bottomInset;
+    let cursor = laneBottom;
     let movable = null;
     let distance = null;
-    if(keyboardMovableMode !== 'off'){
-      const laneHeight = laneHeightFor('movable');
-      movable = {x:key.x + insetX, y:cursor - laneHeight, width, height:laneHeight};
-      cursor = movable.y - gap;
-    }
-    if(keyboardRelationMode === 'distance'){
-      const laneHeight = laneHeightFor('distance');
-      distance = {x:key.x + insetX, y:cursor - laneHeight, width, height:laneHeight};
-      cursor = distance.y - gap;
-    }
+    const nextLane = ()=>{
+      const top = cursor - laneHeight;
+      const range = markerHorizontalRangeForKey(key, top, cursor, laneInset);
+      const lane = {x:range.left, y:top, width:Math.max(1,range.right-range.left), height:laneHeight};
+      cursor = top - laneGap;
+      return lane;
+    };
+    if(keyboardMovableMode !== 'off') movable = nextLane();
+    if(keyboardRelationMode === 'distance') distance = nextLane();
     return {distance, movable, analysisTop:cursor};
   };
-
-  for(const key of keys){
-    key.analysisLanes = analysisLaneRectsForKey(key);
-  }
+  for(const key of keys) key.analysisLanes = analysisLaneRectsForKey(key);
 
   const fillLaneRect = (rect, style)=>{
     ctx.fillStyle = style;
@@ -3616,81 +3938,14 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
     return labels;
   };
 
-  // Return the horizontal part of a key that is actually visible throughout
-  // a marker's height.  Above the white-key shoulder this is the narrow stem
-  // between neighbouring black keys, not the full white-key rectangle.
-  const markerHorizontalRangeForKey = (key, markerTop, markerBottom, inset=0)=>{
-    let left = key.x + inset;
-    let right = key.x + key.width - inset;
-    if(!key.isBlack && markerTop < key.y + blackHeight){
-      const polygon = whiteKeyVisiblePolygon(key, blackKeys, blackHeight);
-      left = Math.max(left, polygon[0][0] + inset);
-      right = Math.min(right, polygon[1][0] - inset);
-    }
-    if(right < left){
-      const center = key.x + key.width / 2;
-      return {left:center, right:center, center};
-    }
-    return {left, right, center:(left + right) / 2};
-  };
-
-  const movableCardFaceSizeForKeyFamily = (isBlack, capCss)=>{
-    const lanes = keys
-      .filter((key)=>key.isBlack === isBlack)
-      .map((key)=>key.analysisLanes.movable)
-      .filter((lane)=>lane && lane.width > 0 && lane.height > 0);
-    return lanes.length
-      ? Math.max(
-          1,
-          Math.min(
-            capCss * devicePixelRatio,
-            ...lanes.map((lane)=>Math.max(1, Math.min(lane.width, lane.height) - 1.2 * devicePixelRatio))
-          )
-        )
-      : 0;
-  };
-  // Recreate the former shared-size ceiling before the white card lane was
-  // enlarged. This keeps black-key cards and fifth-angle dice pixel-stable.
-  const legacySharedMovableCardLimits = keys
-    .map((key)=>{
-      const lane = key.analysisLanes.movable;
-      if(!lane || lane.width <= 0 || lane.height <= 0) return null;
-      const formerHeight = key.isBlack
-        ? lane.height
-        : Math.min(
-            22 * devicePixelRatio,
-            Math.max(15 * devicePixelRatio, key.height * 0.16)
-          );
-      return Math.max(1, Math.min(lane.width, formerHeight) - 1.2 * devicePixelRatio);
-    })
-    .filter((size)=>size != null);
-  const legacySharedMovableCardFaceSize = legacySharedMovableCardLimits.length
-    ? Math.max(1, Math.min(16 * devicePixelRatio, ...legacySharedMovableCardLimits))
-    : 0;
-  // White keys have a visibly larger lower body than black keys. Keep one
-  // stable face per key family, but let that extra white-key space improve the
-  // movable-do card's legibility instead of letterboxing both families to the
-  // smallest black-key lane.
-  const movableCardFaceSizeBlack = Math.min(
-    movableCardFaceSizeForKeyFamily(true, 16),
-    legacySharedMovableCardFaceSize || Infinity
-  );
-  const movableCardFaceSizeWhiteRaw = movableCardFaceSizeForKeyFamily(false, 21);
-  const movableCardFaceSizeWhite = Math.min(
-    movableCardFaceSizeWhiteRaw,
-    movableCardFaceSizeBlack > 0 ? movableCardFaceSizeBlack * 1.45 : movableCardFaceSizeWhiteRaw
-  );
-
   const drawMovableDoCard = (key, lane, symbol)=>{
     if(!lane || lane.width <= 0 || lane.height <= 0) return;
     const descriptor = movableDoCardDescriptor(symbol);
     const foreground = key.isBlack ? 'rgb(246,248,251)' : 'rgb(23,29,38)';
     const contrast = key.isBlack ? 'rgb(12,16,22)' : 'rgb(250,249,245)';
-    const familyFaceSize = key.isBlack ? movableCardFaceSizeBlack : movableCardFaceSizeWhite;
-    const faceSize = Math.min(familyFaceSize, lane.width, lane.height);
+    const faceSize = Math.min(lane.width, lane.height) * 0.96;
     if(faceSize <= 0) return;
-    const pipCapCss = key.isBlack ? 1.45 : 2.0;
-    const pipRadius = Math.min(pipCapCss * devicePixelRatio, Math.max(0.55 * devicePixelRatio, faceSize * 0.095));
+    const pipRadius = faceSize * 0.12;
     const isNatural = descriptor.accidental === 'natural';
     const topStroke = isNatural
       ? Math.max(0.32 * devicePixelRatio, pipRadius * 0.24)
@@ -3700,7 +3955,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       : topStroke + 0.34 * devicePixelRatio;
     const centerX = lane.x + lane.width / 2;
     const centerY = lane.y + lane.height / 2;
-    const spread = faceSize * 0.27;
+    const spread = faceSize * 0.32;
 
     ctx.save();
     ctx.clip(key.path);
@@ -3748,7 +4003,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
 
   const drawKeyLabels = (key, labels, fallbackColor)=>{
     if(!labels.length) return;
-    const preferredTextSize = Math.max(7 * devicePixelRatio, blackWidth * 0.42);
+    const preferredTextSize = Math.max(7 * devicePixelRatio, blackHeight * 0.30);
     const textStroke = key.isBlack ? 'rgba(0,0,0,0.94)' : 'rgba(255,255,255,0.82)';
     for(let i=labels.length-1; i>=0; i--){
       const label = labels[i];
@@ -3844,15 +4099,8 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       };
     };
     const markerLayouts = new Map(keys.map((key)=>[key, markerLayoutForKey(key)]));
-    const usableMarkerSizes = [...markerLayouts.values()]
-      .map((layout)=>Math.min(layout.width, layout.height))
-      .filter((size)=>Number.isFinite(size) && size > 0);
-    // Angle cards use the smallest visible marker bay so every white and black
-    // key shares exactly one size. They are independent of the lower movable-do
-    // card: the upper bay can use its own free space without changing that lane.
-    const relationCardFaceSize = usableMarkerSizes.length
-      ? Math.max(1, Math.min(22 * devicePixelRatio, ...usableMarkerSizes.map((size)=>size * 0.88)))
-      : 0;
+    // Size each face to its actual visible key width, without a fixed pixel cap.
+    const relationFaceSizeFor = (layout)=>Math.min(layout.width,layout.height) * 0.96;
     const drawRootMarker = (key, cx, cy, radius)=>{
       ctx.save();
       ctx.clip(key.path);
@@ -3881,21 +4129,16 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
       const bayHeight = markerBottom - markerTop;
       if(safeWidth <= 2 * devicePixelRatio || bayHeight <= 2 * devicePixelRatio) return;
 
-      // Both signs and both key families share the same square card face.
-      // Bright is a green circle and Dark is a red X.  The wider spacing keeps
-      // 5/6-unit cards readable as individual marks even when emphasized.
-      const faceSize = Math.min(relationCardFaceSize, safeWidth, bayHeight);
+      // Both signs fill the safe square face of this key.
+      const faceSize = relationFaceSizeFor(layout);
       const faceCenterX = safeRange.center;
       const faceCenterY = (markerTop + markerBottom) / 2;
-      const spread = faceSize * 0.305;
-      const brightRadius = Math.min(
-        1.60 * devicePixelRatio,
-        Math.max(0.70 * devicePixelRatio, faceSize * 0.085)
-      );
-      const darkHalf = Math.min(
-        1.90 * devicePixelRatio,
-        Math.max(0.78 * devicePixelRatio, faceSize * 0.09)
-      );
+      const spread = faceSize * 0.32;
+      // Preserve a real gap between neighbouring pips, including their outlines.
+      const brightOutline = Math.max(faceSize * 0.022, Math.min(0.95 * devicePixelRatio, Math.max(0.55 * devicePixelRatio,faceSize*0.045)));
+      const darkOutline = Math.min(0.85 * devicePixelRatio,Math.max(0.48 * devicePixelRatio,faceSize*0.042)) + 0.34 * devicePixelRatio;
+      const brightRadius = Math.min(faceSize * 0.12, (spread-brightOutline-0.85*devicePixelRatio)/2);
+      const darkHalf = Math.min(faceSize * 0.125, (spread-darkOutline-0.50*devicePixelRatio)/2);
       if(Math.min(brightRadius, darkHalf) < 0.3 * devicePixelRatio) return;
 
       ctx.save();
@@ -4008,7 +4251,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
           ? -Math.abs(signedUnits)
           : signedUnits;
       const markerLayout = markerLayouts.get(key);
-      if(!markerLayout || relationCardFaceSize < 2 * devicePixelRatio) continue;
+      if(!markerLayout || relationFaceSizeFor(markerLayout) < 2 * devicePixelRatio) continue;
       if(!isRoot && hasSignedUnits){
         const isBright = displayUnits > 0;
         const color = isBright
@@ -4027,7 +4270,7 @@ function drawKeyboard(displayMinFreq, displayMaxFreq, baseMidi, drawRot, halfCen
         drawSignedPips(key, markerLayout, displayUnits, color, emphasized);
       }
       if(isRoot){
-        const radius = relationCardFaceSize * 0.37;
+        const radius = relationFaceSizeFor(markerLayout) * 0.42;
         drawRootMarker(key, markerLayout.centerX, markerLayout.centerY, radius);
       }
     }
@@ -5196,6 +5439,7 @@ let lastChordSummary = null;
 // draw はキャンバス全体のメイン描画ループ。
 // 物理演算の結果を反映しながら、水面・ノート・補助情報を毎フレーム再描画する。
 function draw(){
+  if(window.diskPractice?.isOpen()){ requestAnimationFrame(draw); return; }
   const w=cv.width, h=cv.height;
   const {cx, cy} = canvasCenter();
   const {rMax, step, octaves, minRadius, minFreq: displayMinFreq, maxFreq: displayMaxFreq} = ringParams();
@@ -5441,12 +5685,19 @@ class PolySynth{
     this.master.gain.value=this.masterGain;
     this.master.connect(ctx.destination);
     this.voices=new Map();
+    this.solfege=null;
     this.muted=false;
   }
   // ノートオン時に2つのオシレータとローパスフィルタを構成し、ADSRでゲインを制御
   noteOn(midi, vel=1, when=null){
     const t = (when!=null)? when : this.ctx.currentTime;
     if(this.voices.has(midi)) this.noteOff(midi, t);
+    this.solfege?.noteOff(midi,t);
+    if(window.solfegeVoice?.enabled()){
+      if(!this.solfege) this.solfege=window.solfegeVoice.create(this.ctx,this.master);
+      this.solfege.noteOn(midi,vel,t,window.solfegeVoice.tonic());
+      return;
+    }
     const f=midiToHz(midi);
     const g=this.ctx.createGain(); g.gain.setValueAtTime(0,t);
     const o1=this.ctx.createOscillator(), o2=this.ctx.createOscillator();
@@ -5461,6 +5712,7 @@ class PolySynth{
   }
   // ノートオフ時はターゲット減衰を設定し、一定時間後にノードを破棄
   noteOff(midi, when=null){
+    this.solfege?.noteOff(midi,when);
     const v=this.voices.get(midi); if(!v) return;
     const t=(when!=null)? when : this.ctx.currentTime, R=v.R;
     v.g.gain.setTargetAtTime(0,t,R/3);
@@ -5468,7 +5720,7 @@ class PolySynth{
     setTimeout(()=>{ try{ v.g.disconnect(); v.flt.disconnect(); }catch{} }, (R+0.1)*1000);
     this.voices.delete(midi);
   }
-  allNotesOff(){ for(const m of Array.from(this.voices.keys())) this.noteOff(m); }
+  allNotesOff(){ this.solfege?.allNotesOff(); for(const m of Array.from(this.voices.keys())) this.noteOff(m); }
   setMuted(m){
     this.muted = m;
     const target = m ? 0 : this.masterGain;
@@ -5489,7 +5741,44 @@ function logMidi(ev){
   const name = ev.currentTarget && (ev.currentTarget.name||ev.currentTarget.id||'input');
   midiLast.textContent = `${t('last')} ${name}  ${d}`;
 }
+// CoreMIDI may deliver multiple messages (or a split message) in one packet.
+class LiveMIDIDecoder{
+  constructor(){this.status=0;this.pending=[];this.sysex=false;}
+  feed(bytes){
+    const messages=[];
+    for(const byte of bytes){
+      if(byte>=0xf8) continue; // Real-time bytes may appear inside any message.
+      if(byte>=0x80){
+        this.pending=[];
+        if(byte===0xf0){this.sysex=true;this.status=0;continue;}
+        if(byte===0xf7){this.sysex=false;this.status=0;continue;}
+        this.sysex=false;this.status=byte;
+        if(byte>=0xf0 && ![0xf1,0xf2,0xf3].includes(byte)) this.status=0;
+        continue;
+      }
+      if(this.sysex || !this.status) continue;
+      this.pending.push(byte);
+      const command=this.status&0xf0;
+      const length=[0xc0,0xd0].includes(command)||[0xf1,0xf3].includes(this.status)?1:2;
+      if(this.pending.length===length){
+        if(this.status<0xf0) messages.push([this.status,...this.pending]);
+        this.pending=[];
+        if(this.status>=0xf0) this.status=0;
+      }
+    }
+    return messages;
+  }
+}
+const liveMIDIDecoders=new Map();
 function midiMessageHandler(ev){
+  const id=ev.currentTarget?.id||ev.target?.id||'midi';
+  if(!liveMIDIDecoders.has(id)) liveMIDIDecoders.set(id,new LiveMIDIDecoder());
+  for(const data of liveMIDIDecoders.get(id).feed(ev.data||[])){
+    dispatchLiveMIDIMessage({data,currentTarget:ev.currentTarget,target:ev.target});
+  }
+}
+function dispatchLiveMIDIMessage(ev){
+  if(window.diskPractice?.handleMIDI(ev)) return;
   logMidi(ev);
   const d=ev.data;
   if(!d || d.length<3) return;
@@ -5525,6 +5814,8 @@ async function setupMIDIInputs(){
 }
 async function refreshMIDIInputs(){
   if(!midiAccess) return;
+  window.diskPractice?.releaseInputs();
+  liveMIDIDecoders.clear();
   midiDev.innerHTML='';
   const inputs = Array.from(midiAccess.inputs.values());
   // 利用可能なMIDI入力をプルダウンに並べる
@@ -6737,9 +7028,985 @@ addEventListener('pagehide', saveCaptureDraft);
 addEventListener('keydown', e=>{
   const target = e.target;
   const editing = target && (["INPUT","SELECT","TEXTAREA"].includes(target.tagName) || target.isContentEditable);
-  if(!editing && workspaceMode==='train' && fileOp.value==='train' && trainer && trainer.active){
+  if(!window.diskPractice?.isOpen() && !editing && workspaceMode==='train' && fileOp.value==='train' && trainer && trainer.active){
     if(e.key==='ArrowLeft'){ e.preventDefault(); trainer.prev(trainerInputState()); updateTrainerUI(); }
     else if(e.key==='ArrowRight'){ e.preventDefault(); trainer.next(trainerInputState()); updateTrainerUI(); }
   }
 });
+
+/* Public source edition: recorded movable-do samples are intentionally omitted. */
+function solfegeIndex(midi, tonic){ return ((midi - tonic) % 12 + 12) % 12; }
+window.solfegeVoice = {enabled:()=>false};
+
+/* Two-octave disk drill. Note identity includes its MIDI octave. */
+function diskPracticePool(base, tonic, chromatic){
+  const major=new Set([0,2,4,5,7,9,11]);
+  return Array.from({length:24},(_,i)=>base+i).filter(n=>chromatic || major.has(solfegeIndex(n,tonic)));
+}
+function diskPracticeRadius(midi, base, radius){
+  // Same logarithmic pitch-to-radius rule as the main disk, with an inner margin.
+  return radius * (1 - 0.78 * (midi-base)/24);
+}
+function diskPracticeLabelVisible(level, pc, target, hiddenCount=null){
+  const count=hiddenCount??(level>=3?12:level===0?0:1);
+  if(count===0)return true;
+  if(count===12)return false;
+  if(target==null)return true;
+  // Consecutive directions on the circle of fifths, centered on the target.
+  const offset=((pc-target%12)*7%12+12)%12;
+  return !Array.from({length:count},(_,i)=>(Math.ceil(i/2)*(i%2?1:-1)+12)%12).includes(offset);
+}
+function diskPracticeFlavor(world,part){
+  const text=[
+    [
+      '軌道門《アストラル・ゲート》確認。位相同期率0.03――四基の共鳴錠《レゾナンス・ロック》を撃ち抜き、真空境界をこじ開けろ。',
+      '零位相覚醒《ゼロ・フェイズ》へ移行。人格層を遮断、聴覚ニューロンを航法核へ直結せよ。',
+      '第四星雲炉《ネビュラ・フォー》、重力子圧臨界。四つの共鳴点から帰還ベクトルを奪取せよ。',
+      '黒匣《ブラックボックス》を回収。A基準線を量子固定し、消去航路の残響座標を引きずり出せ。',
+      '極低温跳躍炉《クライオ・ワープ・コア》が異常共振。指定周波数を叩き込み、冷却燃焼《コールド・バーン》を強制点火せよ。',
+      '敵影ゼロ、通信遅延は負値。到着前の信号を捕捉し、蒼穹戦乙女《ブルー・ヴァルキリー》を起動せよ。',
+      '内周音階《インナー・ピッチ》へ潜行。重力勾配を聴き分け、中心の高位共鳴を撃ち抜け。',
+      '「新人、八連続同期だ。失敗しても安心しろ。第一隔壁の修理費は、お前の給料百四十二年分で済む」',
+    ],
+    [
+      '標識喪失。欠損座標は記憶野に残存――眼を捨て、耳だけで再固定せよ。',
+      '航法知性《ナビゲーション・エーアイ》、黒匣航法へ移行。外周感覚器を閉鎖し、聴覚推定値を主系へ昇格せよ。',
+      '音響探信儀《オーディオ・レーダー》展開。残響断面から敵性共鳴点の絶対座標を割り出せ。',
+      '五度圏暗号《サークル・コード》受信。五度転移《ペンタ・シフト》を開始せよ。',
+      '黒霧帳《ノワール・ヴェール》展開。名を失った天体を位置ベクトルだけで再構成せよ。',
+      '単列艦隊《ワンライン・フリート》へ圧縮。誤差角を切り捨て、全演算資源を次弾へ回せ。',
+      '幽霊修正片《ゴースト・パッチ》侵入。署名は「未来のお前」――位相残差ごと航法核へ焼き付けろ。',
+      '記憶超駆動《メモリー・オーバードライブ》解放。認識を思考より先に射出せよ。',
+    ],
+    [
+      '静粛編纂機《サイレント・コンパイラ》起動。識別名を全廃し、光度差《ルミナンス・デルタ》と周波数勾配だけで航路を再編纂せよ。',
+      '入境審査官「船名は」敵艦「空集合」――無名接触《ノーネーム・コンタクト》を質量位置だけで追跡せよ。',
+      '反転星図《インバース・マップ》発生。A基準光を不動点に固定し、全方位行列を再正規化せよ。',
+      '航海日誌、二十四節点欠損。二十五人目の返答を無視し、共鳴痕だけを復号せよ。',
+      '被弾音を攻撃の0.4秒前に検出。先制感応《プレアタック・センシング》で未来の位相揺らぎへ照準を置け。',
+      '虚数円盤《イマジナリー・ディスク》投影。不可視半径《インビジブル・ラディウス》を保持し、実在座標へ変換せよ。',
+      '時界観測者《クロノス・オブザーバー》接続。神経反応を量子遅延層へ叩き込み、認識限界をゼロへ潰せ。',
+      '蝕信号《エクリプス・シグナル》検出。回転座標系へ呑まれる前に、A基準軸を視覚野へ焼き付けろ。',
+    ],
+    [
+      '慣性座標《イナーシャル・フレーム》を固定。回転規約《ローテーション・プロトコル》を発令し、星図層だけを回頭せよ。',
+      '「右が左、左が右です」「鏡像位相か」「艦長が鏡を見ています」――原因は捨てろ。音響署名だけを追え。',
+      '星幽懸架環《アストラル・ジンバル》、偏差15度。三軸誤差を聴覚帰還《オーディオ・フィードバック》で相殺せよ。',
+      '方位破断《ベクター・ブレイク》、偏差30度。A基準光を固定し、崩壊行列を即時再構築せよ。',
+      '門電圧臨界。門雑音《ゲート・ノイズ》を単一パルスで貫き、航路偏差をゼロへ戻せ。',
+      '逆相警戒《リバース・アラート》発令。逆位相遠隔測定を展開し、偽装方位を演算から排除せよ。',
+      '宇宙、九十度横転。上下の概念を廃棄し、周波数半径だけを信じて撃て。',
+      '零方位《ゼロ・アジマス》成立。全座標は反転した――A絶対光線《エー・アブソリュート・レイ》だけを信じろ。',
+    ],
+    [
+      '時間炉《クロノス・リアクター》強制点火。時界燃焼《クロノス・バーン》で敵性共鳴体を一秒周期へ引きずり込め。',
+      '終極紋章《オメガ・インシグニア》、船殻へ侵食。二十四相の接触点を一つの因果鎖として処理せよ。',
+      '応答猶予1.8秒。超速応答《ハイパー・レスポンス》を解放し、前頭葉を迂回して直接射撃せよ。',
+      '事象境界外から帰還信号《リターン・シグナル》を受信。「二十三音目で迷うな」――二十四周波数で送信源を固定せよ。',
+      '重畳群体《オーバーラップ・スウォーム》襲来。時間軸ごと圧縮し、最後尾まで同時追尾せよ。',
+      '静寂駆動《サイレンス・ドライブ》起動。次波形の前駆振動を奪い、発音より先に撃て。',
+      '航海記憶再築《アーカイブ・リビルド》開始。乗員名簿72、生命反応73――余剰存在ごと神経同期せよ。',
+      '「一秒一射、全二十四相。外したら？」「もう一周だ」――零点二十四相《ゼロ・ポイント24》、因果律直結《コーザル・ダイレクト》。宇宙の方をこちらに合わせろ。',
+    ],
+  ];
+  const mergedSecond=[...text[1].slice(0,4),...text[2].slice(4,8)];
+  const chapter=world===1?text[0]:world===2?mergedSecond:world===3?text[3]:world===4?text[4]:null;
+  return chapter?.[part-1]||'未知宙域《アンノウン・セクター》開放。次の一音で星の秘密を暴け。';
+}
+function diskPracticeStages(){
+  const pools=[[0,7],[0,2,4,7],[0,2,4,5,7,9,11],[0,1,2,4,5,6,7,9,11],null];
+  const stages=[];
+  const add=(world,pool,seconds,hiddenCount=0,keyboardLabels=true,rotationDegrees=0,keyboardLabelMode=keyboardLabels?'all':'none')=>{
+    const part=stages.filter(s=>s.world===world).length+1;
+    const level=hiddenCount===0?0:(!keyboardLabels&&hiddenCount===12?3:rotationDegrees?2:1);
+    stages.push({id:`${world}-${part}`,world,base:60,tonic:0,level,seconds,hiddenCount,keyboardLabels,keyboardLabelMode,rotationDegrees,flavor:diskPracticeFlavor(world,part),
+      notes:Array.from({length:24},(_,n)=>60+n).filter(n=>!pools[pool]||pools[pool].includes(n%12)),
+      title:['音響・位置校正','標識消去','回転規約','超速応答'][world-1]});
+  };
+  for(const pool of [0,1,2,3,4])add(1,pool,6);
+  for(const seconds of [5,4.5,4])add(1,4,seconds);
+  add(2,0,4,1);
+  add(2,4,4,1);
+  add(2,4,4,6);
+  add(2,4,4,12);
+  add(2,4,4,12,true,0,'white');
+  add(2,4,4,12,true,0,'anchors');
+  add(2,4,4,12,false);
+  add(2,4,2.5,12,false);
+  for(const degrees of [15,30,45,60,90,120,150,180])add(3,4,2.5,12,false,degrees);
+  for(const seconds of [2.25,2,1.8,1.6,1.45,1.3,1.15,1])add(4,4,seconds,12,false,180);
+  return stages;
+}
+
+function diskPracticeShouldPaint(state,now,fps=45){
+  const interval=1000/fps,elapsed=state.lastPaint?now-state.lastPaint:interval;
+  if(state.lastPaint&&elapsed<interval)return false;
+  // Keep the fractional remainder so a 60 Hz display alternates frame gaps
+  // and averages 45 fps instead of collapsing to 30 fps.
+  state.lastPaint=state.lastPaint?now-(elapsed%interval):now;
+  return true;
+}
+
+/* A radial snowfield: points are born near the disk center and drift straight outward. */
+class DiskPracticeStars{
+  constructor(root){
+    this.root=root;this.canvas=root.querySelector('#dpStarfield');this.ctx=this.canvas?.getContext('2d');this.stars=[];this.last=0;this.lastPaint=0;this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;this.reset();
+  }
+  reset(){
+    this.stars=Array.from({length:120},()=>this.spawn(Math.random()));this.last=0;this.lastPaint=0;
+  }
+  spawn(age=0){
+    return {angle:Math.random()*Math.PI*2,age,speed:.11+Math.random()*.16,size:.55+Math.random()*1.8,alpha:.25+Math.random()*.65,color:Math.random()>.78?'#ffe6a6':'#d9f5ff'};
+  }
+  draw(now,anchor,paintNow=now){
+    if(!this.canvas||!this.ctx)return;
+    // Throttle against wall time. The animation clock deliberately slows on
+    // defeat and must not reduce the actual paint rate with it.
+    if(!diskPracticeShouldPaint(this,paintNow))return;
+    const rect=this.canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,1.5);
+    const width=Math.max(1,Math.round(rect.width*dpr)),height=Math.max(1,Math.round(rect.height*dpr));
+    if(this.canvas.width!==width||this.canvas.height!==height){this.canvas.width=width;this.canvas.height=height;}
+    const anchorRect=anchor.getBoundingClientRect(),cx=(anchorRect.left+anchorRect.width/2-rect.left),cy=(anchorRect.top+anchorRect.height/2-rect.top);
+    const maxRadius=Math.hypot(Math.max(cx,rect.width-cx),Math.max(cy,rect.height-cy))*1.08;
+    const dt=this.last?Math.min(64,now-this.last):16;this.last=now;
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);this.ctx.clearRect(0,0,rect.width,rect.height);this.ctx.save();
+    for(let i=0;i<this.stars.length;i++){
+      const star=this.stars[i];star.age+=dt/1000*star.speed;
+      if(star.age>1.05){this.stars[i]=this.spawn(0);continue;}
+      const radius=maxRadius*star.age,x=cx+Math.cos(star.angle)*radius,y=cy+Math.sin(star.angle)*radius;
+      const fade=Math.min(1,star.age/.08)*Math.min(1,(1.05-star.age)/.18),size=star.size*(.7+star.age*1.7);
+      this.ctx.globalAlpha=(this.reduced?.42:1)*star.alpha*fade;this.ctx.fillStyle=star.color;this.ctx.beginPath();this.ctx.arc(x,y,size,0,Math.PI*2);this.ctx.fill();
+    }
+    this.ctx.restore();
+  }
+}
+
+/* Forward threat display: seven bearing lanes preserve more of the disk's horizontal position. */
+class DiskPracticeRadar{
+  constructor(root){
+    this.root=root;this.canvas=root.querySelector('#dpRadarCanvas');this.ctx=this.canvas?.getContext('2d');this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;this.contacts=new Map();this.lastPaint=0;
+  }
+  draw(now,session,base,rotation,paintNow=now){
+    if(!this.canvas||!this.ctx)return;
+    if(!diskPracticeShouldPaint(this,paintNow))return;
+    const rect=this.canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,1.75);
+    const width=Math.max(1,Math.round(rect.width*dpr)),height=Math.max(1,Math.round(rect.height*dpr));
+    if(this.canvas.width!==width||this.canvas.height!==height){this.canvas.width=width;this.canvas.height=height;}
+    // Reserve a slim telemetry strip above the lanes so the two HUD labels
+    // never collide on a narrow radar.
+    const cx=rect.width/2,top=28,bottom=rect.height-24,span=Math.max(12,bottom-top),shipY=bottom+13;
+    const ctx=this.ctx;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);ctx.save();
+    const preserveDefeat=session?.outcome==='gameover';
+    if(!session?.active&&!preserveDefeat)this.contacts.clear();
+    ctx.globalAlpha=.95;ctx.fillStyle='#071525e8';ctx.fillRect(0,0,rect.width,rect.height);
+    const laneCount=7,laneX=Array.from({length:laneCount},(_,i)=>rect.width*(.11+.78*i/(laneCount-1)));
+    ctx.strokeStyle='#62dfd866';ctx.lineWidth=1;
+    for(const x of laneX){ctx.beginPath();ctx.moveTo(cx,top);ctx.lineTo(x,bottom);ctx.stroke();}
+    for(const factor of [.22,.46,.7,.92]){const y=top+span*factor;ctx.beginPath();ctx.moveTo(8,y);ctx.lineTo(rect.width-8,y);ctx.stroke();}
+    ctx.strokeStyle='#9cf6e54c';ctx.beginPath();ctx.moveTo(8,top);ctx.lineTo(rect.width-8,top);ctx.stroke();
+    const sweep=this.reduced?-Math.PI/2:Math.PI+(now/1700-Math.floor(now/1700))*Math.PI;
+    const beamLength=Math.hypot(rect.width/2,shipY-top);
+    // The scanner is the radar's "eye": a moving cone that refreshes a
+    // contact only when it passes over that contact's bearing.
+    const sweepTrail=this.reduced?0.02:.17;
+    ctx.globalAlpha=this.reduced?.13:.18;ctx.fillStyle='#63ffe3';ctx.beginPath();ctx.moveTo(cx,shipY);ctx.lineTo(cx+Math.cos(sweep-sweepTrail)*beamLength,shipY+Math.sin(sweep-sweepTrail)*beamLength);ctx.lineTo(cx+Math.cos(sweep)*beamLength,shipY+Math.sin(sweep)*beamLength);ctx.closePath();ctx.fill();
+    for(const trail of [0,.045,.09]){
+      ctx.globalAlpha=Math.max(.16,.62-trail*3.5);ctx.strokeStyle=trail?'#7df7e666':'#a7fff0cc';ctx.lineWidth=trail?1:1.8;ctx.beginPath();ctx.moveTo(cx,shipY);ctx.lineTo(cx+Math.cos(sweep-trail)*beamLength,shipY+Math.sin(sweep-trail)*beamLength);ctx.stroke();
+    }
+    const queue=(session?.active||preserveDefeat)&&Array.isArray(session.queue)?session.queue:[];
+    const progress=session?.active&&session.maxTime?Math.min(1,Math.max(0,(session.approach||0)+(1-session.remaining/session.maxTime)*.9)):preserveDefeat?1:0;
+    const arrived=Math.max(0,Math.min(queue.length,session?.arrivedCount||0));
+    const total=Math.max(1,session?.total||queue.length),rowDenominator=Math.max(1,total-1),colors=['#ffd36a','#74e4e5','#d59bff'];
+    const angleGap=(a,b)=>{const d=Math.abs(a-b)%(Math.PI*2);return d>Math.PI?Math.PI*2-d:d;};
+    const normalized=angle=>{const value=angle%(Math.PI*2);return value<0?value+Math.PI*2:value;};
+    queue.forEach((note,index)=>{
+      const angle=angleForMidiDraw(note,rotation),xPosition=Math.cos(angle),lane=Math.max(0,Math.min(laneCount-1,Math.round((xPosition+1)*(laneCount-1)/2))),waitingIndex=Math.max(0,index-arrived),depth=index<arrived?Math.min(.975,.94+index*.012):Math.min(.94,.9-(waitingIndex/rowDenominator)*.84+progress*.1),x=laneX[lane],y=top+span*depth,size=(index===0?6:Math.max(1.6,3.4-index*.045))*(index===0?1+progress*.28:1);
+      const color=colors[index%colors.length];
+      const bearing=normalized(Math.atan2(y-shipY,x-cx)),scanned=angleGap(bearing,normalized(sweep))<.14;
+      if(scanned)this.contacts.set(note,now);
+      const contactAge=now-(this.contacts.get(note)??-Infinity),lockPulse=Math.max(0,1-contactAge/920),isTarget=index===0;
+      const visibility=isTarget?.98:Math.max(.18,.56-index*.010)+lockPulse*.34;
+      ctx.globalAlpha=Math.min(1,visibility);ctx.strokeStyle=color;ctx.lineWidth=isTarget?2:lockPulse>.05?1.6:1;ctx.beginPath();ctx.arc(x,y,size*(1+lockPulse*.22),0,Math.PI*2);ctx.stroke();
+      ctx.globalAlpha=Math.min(1,(isTarget?.72:Math.max(.10,.32-index*.006))+lockPulse*.42);ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,isTarget?2.8:Math.max(1,1.8-index*.02)+lockPulse*1.4,0,Math.PI*2);ctx.fill();
+      if(lockPulse>.05){
+        ctx.globalAlpha=lockPulse*.45;ctx.strokeStyle='#9ffff0';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,size+5+lockPulse*7,0,Math.PI*2);ctx.stroke();
+      }
+      if(index===0){ctx.globalAlpha=.38;ctx.strokeStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y+size);ctx.lineTo(x,shipY-7);ctx.stroke();}
+    });
+    ctx.globalAlpha=.72;ctx.fillStyle='#98fff1';ctx.font='700 8px ui-monospace,monospace';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('VOID-SCAN // Ω-13',8,5);
+    ctx.textAlign='right';ctx.fillStyle='#ffd978';ctx.fillText(`${String(queue.length).padStart(2,'0')} CONTACTS`,rect.width-8,17);
+    ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillStyle='#72d8e5';ctx.fillText(`SWEEP ${Math.round((normalized(sweep)/(Math.PI*2))*360)}°  //  AETHER LINK`,8,rect.height-6);
+    ctx.globalAlpha=.95;ctx.fillStyle='#091a27';ctx.strokeStyle='#b5fff2';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,shipY-7);ctx.lineTo(cx-9,shipY+5);ctx.lineTo(cx+9,shipY+5);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.globalAlpha=.75;ctx.fillStyle='#b5fff2';ctx.beginPath();ctx.arc(cx,shipY-1,2,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+}
+
+class DiskPracticeSession{
+  constructor(random=Math.random){this.random=random;this.active=false;this.held=new Map();this.total=24;this.target=null;this.maxLives=3;this.lives=3;this.approach=0;this.nextApproach=0;this.lastExpired=null;this.lastAttackers=[];this.lastDamage=0;this.arrivedCount=0;this.score=0;this.lastPoints=0;}
+  start({base=60,tonic=0,level=0,notes=null,seconds=null,rotationDegrees=null}, now=0){
+    this.perNote=seconds!=null;this.responseTimes=[];
+    this.base=base;this.tonic=tonic;this.level=level;this.rotationDegrees=rotationDegrees??(level>=2?180:0);
+    this.pool=notes?[...notes]:diskPracticePool(base,tonic,true);
+    this.deck=[...this.pool];
+    for(let i=this.deck.length-1;i>0;i--){
+      const j=Math.min(i,Math.floor(this.random()*(i+1)));
+      [this.deck[i],this.deck[j]]=[this.deck[j],this.deck[i]];
+    }
+    this.total=this.deck.length;this.queue=[...this.deck];this.enemyShapes=new Map(this.deck.map(note=>[note,Math.floor(Math.random()*4)]));
+    this.hits=0;this.misses=0;this.combo=0;this.bestCombo=0;this.maxLives=3;this.lives=this.maxLives;this.startedAt=now;this.finishedAt=null;this.outcome=null;this.arrivedCount=this.queue.length?1:0;this.lastAttackers=[];this.lastDamage=0;this.score=0;this.lastPoints=0;
+    this.maxTime=seconds??([40,35,30,25][level]||40);this.remaining=this.maxTime;
+    this.active=true;this.target=null;this.lastAnswer=null;this.approach=0;this.nextApproach=0;this.lastExpired=null;
+    this.next(now);
+  }
+  next(now){
+    this.target=this.queue[0]??null;this.approach=this.nextApproach;this.nextApproach=0;
+    if(this.perNote)this.remaining=this.maxTime;
+    this.rotation=this.rotationDegrees?(this.random()*2-1)*this.rotationDegrees*Math.PI/180:0;
+    this.readyAt=now+(this.rotationDegrees?320:180);
+    this.updatedAt=this.readyAt; // Do not consume time while a new question rotates in.
+  }
+  finish(outcome,now){this.active=false;this.outcome=outcome;this.finishedAt=now;this.target=null;}
+  tick(now){
+    if(!this.active || now<=this.updatedAt) return false;
+    this.remaining=Math.max(0,this.remaining-(now-this.updatedAt)/1000);
+    this.updatedAt=now;
+    if(this.remaining<=0){
+      this.lastAttackers=this.target==null?[]:[this.target];this.lastExpired=this.target;this.lastDamage=1;this.misses++;this.combo=0;this.lives=Math.max(0,this.lives-1);this.remaining=this.maxTime;this.updatedAt=now;
+      if(this.lives===0){this.finish('gameover',now);return 'gameover';}
+      return 'escaped';
+    }
+    return false;
+  }
+  press(id,midi,now){
+    const tickResult=this.tick(now);
+    if(this.held.has(id)) return tickResult==='gameover'?'gameover':tickResult==='escaped'?'escaped':'held';
+    const alreadyHeld=Array.from(this.held.values()).includes(midi);
+    this.held.set(id,midi);
+    if(tickResult) return tickResult;
+    if(!this.active || now<this.readyAt || alreadyHeld) return 'waiting';
+    if(midi!==this.target){
+      this.combo=0;this.misses++;
+      // A miss only costs a little time. The enemy stays in place; HP is lost
+      // when the approaching enemy actually reaches the player.
+      this.remaining=Math.max(.05,this.remaining-(this.perNote?Math.min(.12,this.maxTime/8):.15));
+      return 'wrong';
+    }
+    this.responseTimes.push((now-this.readyAt)/1000);
+    this.combo++;this.bestCombo=Math.max(this.bestCombo,this.combo);
+    const speedRatio=Math.max(0,Math.min(1,this.remaining/this.maxTime)),comboMultiplier=1+Math.min(2.5,(this.combo-1)*.15);
+    this.lastPoints=Math.round(((500+speedRatio*1000)*comboMultiplier)/10)*10;this.score+=this.lastPoints;
+    this.hits++;this.lastAnswer=midi;this.queue.shift();this.arrivedCount=this.queue.length?1:0;this.lastAttackers=[];this.lastDamage=0;this.nextApproach=this.perNote?Math.min(.55,(this.remaining/this.maxTime)*.55):0;
+    this.remaining=Math.min(this.maxTime,this.remaining+3);
+    if(this.hits===this.total){this.finish('cleared',now);return 'finished';}
+    this.next(now);return 'correct';
+  }
+  release(id){this.held.delete(id);}
+  stop(){this.active=false;this.target=null;this.held.clear();}
+}
+
+class DiskPracticeMessageDeck{
+  constructor(messages=DISK_GAME_OVER_MESSAGES,storage=localStorage,random=Math.random){
+    this.messages=messages;this.storage=storage;this.random=random;this.key='tv:gameover-message-deck:v1';this.remaining=[];this.previous=null;this.restore();
+  }
+  restore(){
+    try{
+      const saved=JSON.parse(this.storage.getItem(this.key)||'null'),valid=new Set(this.messages.map(message=>message.id));
+      if(saved&&Array.isArray(saved.remaining))this.remaining=saved.remaining.filter((id,index,array)=>valid.has(id)&&array.indexOf(id)===index);
+      if(saved&&valid.has(saved.previous))this.previous=saved.previous;
+    }catch{}
+  }
+  refill(){
+    this.remaining=this.messages.map(message=>message.id);
+    for(let index=this.remaining.length-1;index>0;index--){const swap=Math.floor(this.random()*(index+1));[this.remaining[index],this.remaining[swap]]=[this.remaining[swap],this.remaining[index]];}
+    if(this.remaining.length>1&&this.remaining[this.remaining.length-1]===this.previous)[this.remaining[0],this.remaining[this.remaining.length-1]]=[this.remaining[this.remaining.length-1],this.remaining[0]];
+  }
+  next(){
+    if(!this.remaining.length)this.refill();
+    const id=this.remaining.pop();this.previous=id;
+    try{this.storage.setItem(this.key,JSON.stringify({remaining:this.remaining,previous:id}));}catch{}
+    return this.messages.find(message=>message.id===id)||this.messages[0];
+  }
+}
+
+class DiskPracticeMusic{
+  constructor(root,audio){
+    this.root=root;this.audio=audio;this.nodes=new Set();this.timer=null;this.ctx=null;this.nextTime=0;this.step=0;this.generation=0;this.mode='mission';this.layer=0;
+    this.enabled=true;try{this.enabled=localStorage.getItem('tv:practice-bgm')!=='off';}catch{}
+    // Let the loop carry the scene while leaving room for the keyboard note.
+    this.masterValue=.22;this.selectionValue=.22;this.missionValue=.22;
+    this.toggle=document.createElement('button');this.toggle.type='button';this.toggle.className='dp-fx-toggle';
+    const label=()=>{this.toggle.textContent=`BGM ${this.enabled?'ON':'OFF'}`;this.toggle.setAttribute('aria-pressed',String(this.enabled));};
+    this.toggle.onclick=()=>{this.enabled=!this.enabled;try{localStorage.setItem('tv:practice-bgm',this.enabled?'on':'off');}catch{};if(this.enabled)this.start(root.classList.contains('choosing')?'selection':'mission');else this.stop();label();};
+    root.querySelector('.dp-header').insertBefore(this.toggle,root.querySelector('#dpClose'));label();
+  }
+  setupBus(ctx){
+    if(this.musicBus)return;
+    this.musicBus=ctx.createGain();this.musicBus.gain.value=0;
+    this.musicCompressor=ctx.createDynamicsCompressor();
+    this.musicCompressor.threshold.value=-18;this.musicCompressor.knee.value=18;this.musicCompressor.ratio.value=4;
+    this.musicCompressor.attack.value=.01;this.musicCompressor.release.value=.2;
+    this.musicBus.connect(this.musicCompressor);this.musicCompressor.connect(ctx.destination);
+  }
+  start(mode='mission'){
+    if(!this.enabled)return;
+    this.mode=mode;this.masterValue=mode==='selection'?this.selectionValue:this.missionValue;
+    const ctx=this.audio();this.setupBus(ctx);
+    if(this.timer!=null&&this.ctx===ctx){
+      this.musicBus.gain.cancelScheduledValues(ctx.currentTime);
+      this.musicBus.gain.setTargetAtTime(this.masterValue,ctx.currentTime,.16);
+      return;
+    }
+    const generation=this.generation;
+    const begin=()=>{
+      if(generation!==this.generation||!this.root.open||!this.enabled)return;
+      this.ctx=ctx;this.step=0;this.nextTime=ctx.currentTime+.04;
+      this.musicBus.gain.cancelScheduledValues(ctx.currentTime);
+      this.musicBus.gain.setTargetAtTime(this.masterValue,ctx.currentTime,.08);
+      if(this.timer==null)this.timer=setInterval(()=>this.schedule(),80);this.schedule();
+    };
+    if(ctx.state==='suspended')ctx.resume().then(begin).catch(()=>{});else begin();
+  }
+  stop(){
+    this.generation++;if(this.timer!=null)clearInterval(this.timer);this.timer=null;
+    const ctx=this.ctx;
+    if(!ctx){this.nodes.clear();return;}
+    if(this.musicBus){this.musicBus.gain.cancelScheduledValues(ctx.currentTime);this.musicBus.gain.setTargetAtTime(0,ctx.currentTime,.035);}
+    for(const node of this.nodes){try{node.stop();}catch{}}this.nodes.clear();
+  }
+  duck(){
+    if(!this.musicBus||!this.ctx)return;
+    const now=this.ctx.currentTime;this.musicBus.gain.cancelScheduledValues(now);this.musicBus.gain.setTargetAtTime(.035,now,.004);this.musicBus.gain.setTargetAtTime(this.masterValue,now+.18,.09);
+  }
+  setProgress(hits,total){
+    // Progress is intentionally based on the absolute 24-contact mission.
+    // Keep the pulse unchanged and make the harmony itself accumulate.
+    this.layer=hits>=20?6:hits>=16?5:hits>=12?4:hits>=9?3:hits>=6?2:hits>=3?1:0;
+  }
+  schedule(){
+    if(!this.ctx||!this.enabled||!this.root.open)return;
+    while(this.nextTime<this.ctx.currentTime+.4){this.stepSound(this.step++,this.nextTime);this.nextTime+=.125;}
+  }
+  tone(frequency,time,duration,volume,type='triangle',detune=0){
+    const ctx=this.ctx,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(frequency,time);o.detune.setValueAtTime(detune,time);
+    g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(volume,time+.008);g.gain.exponentialRampToValueAtTime(.0001,time+duration);
+    o.connect(g);g.connect(this.musicBus);this.nodes.add(o);o.onended=()=>{o.disconnect();g.disconnect();this.nodes.delete(o);};o.start(time);o.stop(time+duration+.03);
+  }
+  kick(time){
+    const ctx=this.ctx,o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(170,time);o.frequency.exponentialRampToValueAtTime(52,time+.12);
+    g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(.22,time+.004);g.gain.exponentialRampToValueAtTime(.0001,time+.14);
+    o.connect(g);g.connect(this.musicBus);this.nodes.add(o);o.onended=()=>{o.disconnect();g.disconnect();this.nodes.delete(o);};o.start(time);o.stop(time+.17);
+  }
+  stepSound(step,time){
+    const arpeggio=[261.63,329.63,392,523.25,392,329.63,293.66,349.23,440,587.33,440,349.23,246.94,311.13,369.99,493.88];
+    const bass=[130.81,130.81,146.83,146.83,123.47,123.47,110,110];
+    if(this.mode==='selection'){
+      if(step%2)return;
+      const lead=arpeggio[step%arpeggio.length];
+      this.tone(lead,time,.24,.085,'triangle',step%4?4:-4);
+      if(step%8===0){
+        this.tone(bass[(step/2)%bass.length],time,.5,.14,'triangle');
+        this.tone(lead*1.5,time,.38,.055,'sine');
+      }
+      return;
+    }
+    const layer=this.layer||0,lead=arpeggio[step%arpeggio.length],bassNote=bass[(step/2)%bass.length];
+    this.tone(lead,time,.105,.055,'triangle',step%2?5:-5);
+    if(step%2===0)this.tone(bassNote,time,.24,.11,'sawtooth');
+    if(step%4===0)this.kick(time);
+    if(layer>=1&&step%2===1)this.tone(lead*1.5,time,.16,.026,'sine',-7);
+    if(layer>=2&&step%2===0)this.tone(lead*1.25,time,.14,.022,'triangle',5);
+    if(layer>=3&&step%4===0)this.tone(lead*.75,time,.26,.032,'triangle',7);
+    if(layer>=4&&step%2===0)this.tone(lead*2,time,.14,.018,'square',7);
+    if(layer>=4&&step%4===3)this.tone(1760,time,.04,.009,'square');
+    if(layer>=5&&step%4===0)this.tone(bassNote*1.5,time,.30,.032,'triangle');
+    if(layer>=6&&step%2===1)this.tone(lead*2.25,time,.12,.014,'sine',-5);
+    if(layer>=6&&step%4===1)this.tone(2349.32,time,.035,.007,'square');
+    if(layer>=6&&step%8===0)this.tone(bassNote*2,time,.34,.022,'sine');
+  }
+}
+
+class DiskPracticeEffects{
+  constructor(root,audio,duck){
+    this.root=root;this.audio=audio;this.duck=duck;this.bursts=[];this.shots=[];this.nodes=new Set();
+    this.damageTimer=null;this.impactTimer=null;this.hullWarningTimer=null;this.hullWarningActive=false;
+    this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.haptics=true;try{this.haptics=localStorage.getItem('tv:practice-haptics')!=='off';}catch{}
+    this.enabled=true;try{this.enabled=localStorage.getItem('tv:practice-fx-sound')!=='off';}catch{}
+    // Keep the result banner as a direct dialog child. A banner inside
+    // .dp-disk is trapped by that element's isolated stacking context and can
+    // be covered by the telemetry panel.
+    this.banner=document.createElement('div');this.banner.className='dp-celebration';this.banner.setAttribute('aria-hidden','true');root.append(this.banner);
+    this.damageOverlay=document.createElement('div');this.damageOverlay.className='dp-damage-vignette';this.damageOverlay.setAttribute('aria-hidden','true');root.append(this.damageOverlay);
+    this.gameOverOverlay=document.createElement('div');this.gameOverOverlay.className='dp-gameover-overlay';this.gameOverOverlay.setAttribute('aria-hidden','true');root.append(this.gameOverOverlay);
+    this.toggle=document.createElement('button');this.toggle.type='button';this.toggle.className='dp-fx-toggle';
+    root.querySelector('.dp-header').insertBefore(this.toggle,root.querySelector('#dpClose'));
+    const label=()=>{this.toggle.textContent=`FX ${this.enabled?'ON':'OFF'}`;this.toggle.setAttribute('aria-pressed',String(this.enabled));};
+    this.toggle.onclick=()=>{this.enabled=!this.enabled;if(!this.enabled)this.stopAudio();try{localStorage.setItem('tv:practice-fx-sound',this.enabled?'on':'off');}catch{}label();};label();
+    if(window.webkit?.messageHandlers?.practiceHaptics){
+      const toggle=document.createElement('button');toggle.type='button';toggle.className='dp-fx-toggle';
+      const update=()=>{toggle.textContent=`HAPTICS ${this.haptics?'ON':'OFF'}`;toggle.setAttribute('aria-pressed',String(this.haptics));};
+      toggle.onclick=()=>{if(this.haptics)this.vibrate('stop');this.haptics=!this.haptics;try{localStorage.setItem('tv:practice-haptics',this.haptics?'on':'off');}catch{}update();};update();
+      root.querySelector('.dp-header').insertBefore(toggle,root.querySelector('#dpClose'));
+    }
+  }
+  vibrate(event){if(this.haptics)window.webkit?.messageHandlers?.practiceHaptics?.postMessage(event);}
+  stopAudio(){this.audioGeneration=(this.audioGeneration||0)+1;for(const node of this.nodes){try{node.stop();}catch{}}this.nodes.clear();}
+  reset(){this.vibrate('stop');if(this.damageTimer){clearTimeout(this.damageTimer);this.damageTimer=null;}if(this.impactTimer){clearTimeout(this.impactTimer);this.impactTimer=null;}this.stopHullWarning();this.root.dataset.comboTier='0';this.bursts=[];this.shots=[];this.banner.replaceChildren();this.banner.classList.remove('visible','victory');this.root.classList.remove('dp-combo-hot','dp-cleared','dp-gameover','dp-damage-warning','dp-damage-shake','dp-impact');this.stopAudio();}
+  stopHullWarning(){
+    if(this.hullWarningTimer){clearInterval(this.hullWarningTimer);this.hullWarningTimer=null;}
+    this.hullWarningActive=false;this.root.classList.remove('dp-hull-critical');
+  }
+  setHullWarning(lives,active){
+    const critical=Boolean(active&&lives===1);
+    if(critical===this.hullWarningActive)return;
+    if(!critical){this.stopHullWarning();return;}
+    this.hullWarningActive=true;this.root.classList.add('dp-hull-critical');
+    this.vibrate('critical');
+    this.warningBeep();
+    this.hullWarningTimer=setInterval(()=>this.warningBeep(),540);
+  }
+  warningBeep(){
+    if(!this.enabled||!this.root.open)return;
+    const ctx=this.audio();
+    if(ctx.state==='suspended'){const generation=this.audioGeneration;ctx.resume().then(()=>{if(this.root.open&&this.enabled&&this.hullWarningActive&&this.audioGeneration===generation)this.warningBeep();}).catch(()=>{});return;}
+    if(ctx.state!=='running')return;
+    if(!this.fxBus){
+      this.fxMaster=ctx.createGain();this.fxMaster.gain.value=.9;
+      this.fxBus=ctx.createDynamicsCompressor();this.fxBus.threshold.value=-10;this.fxBus.knee.value=12;this.fxBus.ratio.value=5;this.fxBus.attack.value=.003;this.fxBus.release.value=.12;
+      this.fxBus.connect(this.fxMaster);this.fxMaster.connect(ctx.destination);
+    }
+    const now=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='square';osc.frequency.setValueAtTime(880,now);osc.frequency.setValueAtTime(740,now+.09);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.16,now+.006);gain.gain.exponentialRampToValueAtTime(.0001,now+.16);
+    osc.connect(gain);gain.connect(this.fxBus);this.nodes.add(osc);osc.onended=()=>{osc.disconnect();gain.disconnect();this.nodes.delete(osc);};osc.start(now);osc.stop(now+.18);
+  }
+  damageWarning(){
+    this.root.classList.remove('dp-damage-warning','dp-damage-shake');
+    void this.root.offsetWidth;
+    this.root.classList.add('dp-damage-warning','dp-damage-shake');
+    if(this.damageTimer)clearTimeout(this.damageTimer);
+    this.damageTimer=setTimeout(()=>{this.root.classList.remove('dp-damage-warning','dp-damage-shake');this.damageTimer=null;},720);
+  }
+  sound(clear=false,milestone=false,midi=72){
+    if(!this.enabled)return;
+    const ctx=this.audio();
+    if(ctx.state==='suspended'){const generation=this.audioGeneration;ctx.resume().then(()=>{if(this.root.open&&this.enabled&&this.audioGeneration===generation)this.sound(clear,milestone,midi);}).catch(()=>{});return;}
+    if(ctx.state!=='running')return;
+    if(!this.fxBus){
+      this.fxMaster=ctx.createGain();this.fxMaster.gain.value=.9;
+      this.fxBus=ctx.createDynamicsCompressor();this.fxBus.threshold.value=-10;this.fxBus.knee.value=12;this.fxBus.ratio.value=5;this.fxBus.attack.value=.003;this.fxBus.release.value=.12;
+      this.fxBus.connect(this.fxMaster);this.fxMaster.connect(ctx.destination);
+    }
+    const base=440*Math.pow(2,(midi-69)/12);
+    const tones=clear?[523.25,659.25,783.99,1046.5,1318.51,1567.98,2093]:milestone?[base,base*1.5,base*2,base*3]:[base*2,base*3];
+    const play=(frequency,delay,duration,volume,type)=>{
+      const gain=ctx.createGain(),node=ctx.createOscillator(),t=ctx.currentTime+delay;
+      node.type=type;node.frequency.setValueAtTime(Math.min(6000,frequency),t);
+      gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.005);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      node.connect(gain);gain.connect(this.fxBus);this.nodes.add(node);
+      node.onended=()=>{node.disconnect();gain.disconnect();this.nodes.delete(node);};node.start(t);node.stop(t+duration+.02);
+    };
+    play(240,0,.09,clear?.30:.24,'triangle');
+    tones.forEach((frequency,i)=>play(frequency,clear?i*.085:milestone?i*.035:i*.012,clear?.45:milestone?.22:.13,clear?.25:milestone?.22:.20,'triangle'));
+    if(clear)for(const f of [261.63,329.63,392])play(f,.58,.65,.11,'sine');
+  }
+  burst(midi,base,rotation,big=false,power=1,label=''){
+    if(this.reduced)return;
+    const angle=angleForMidiDraw(midi,rotation),radius=1-.78*(midi-base)/24;
+    const count=big?220:power>=2?Math.min(130,50+power*20):10,palette=power>=4?['#fff4a8','#ff9f45','#f86dff','#72f7ff','#ffffff']:power>=2?['#ffe584','#ffab58','#e88aff','#55ecdf','#ffffff']:['#ffe584','#55ecdf','#ffffff'];
+    this.bursts.push({at:performance.now(),x:big?0:Math.cos(angle)*radius,y:big?0:-Math.sin(angle)*radius,big,power,label,
+      particles:Array.from({length:count},()=>({angle:Math.random()*Math.PI*2,speed:35+Math.random()*(big?330:125+power*28),size:1.5+Math.random()*(big?7:3.5+power),color:palette[Math.floor(Math.random()*palette.length)]}))});
+    this.bursts=this.bursts.slice(-6);
+  }
+  hit(midi,base,rotation,combo,points=0){
+    this.duck?.();
+    this.shots=[];
+    const milestone=combo%5===0,power=Math.min(4,1+Math.floor(combo/5));
+    this.vibrate(milestone?'combo':'hit');
+    const scoreText=points?`+${points.toLocaleString('en-US')}`:'';
+    this.burst(midi,base,rotation,false,power,milestone?`${combo>=15?'MAXIMUM DRIVE':`${combo} CHAIN`} · ${scoreText}`:'');this.sound(false,milestone,midi);
+    this.root.dataset.comboTier=String(Math.min(4,Math.floor(combo/5)));
+    this.root.classList.toggle('dp-combo-hot',combo>=10);
+    this.root.classList.remove('dp-impact');
+    if(milestone){void this.root.offsetWidth;this.root.classList.add('dp-impact');if(this.impactTimer)clearTimeout(this.impactTimer);this.impactTimer=setTimeout(()=>{this.root.classList.remove('dp-impact');this.impactTimer=null;},360);}
+    const key=this.root.querySelector(`[data-midi="${midi}"]`);
+    if(!this.reduced){
+      if(key)key.animate([{boxShadow:`inset 0 0 ${milestone?48:18}px #fff0b0${milestone?'cc':'66'}`,filter:`brightness(${milestone?1.65:1.2})`},{boxShadow:'inset 0 0 0 transparent',filter:'brightness(1)'}],{duration:milestone?520:220});
+      if(milestone){const shake=Math.min(6,3.5+power*.65);for(const layer of this.root.querySelectorAll?.('.dp-header,.dp-main,#dpKeyboard')||[])layer.animate([{transform:'translate3d(0,0,0)'},{transform:`translate3d(${-shake}px,${shake*.3}px,0)`},{transform:`translate3d(${shake}px,${-shake*.24}px,0)`},{transform:`translate3d(${-shake*.4}px,0,0)`},{transform:'translate3d(0,0,0)'}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});this.root.animate([{boxShadow:`inset 0 0 ${80+power*12}px ${power>=3?'#f070ff8c':'#ffd35c88'}`},{boxShadow:'inset 0 0 0 #ffd35c00'}],{duration:680});}
+    }
+  }
+  miss(midi=null,base=60,rotation=0){
+    this.root.dataset.comboTier='0';this.root.classList.remove('dp-combo-hot');this.banner.classList.remove('visible');
+    if(midi==null)return;
+    this.shots.push({at:performance.now(),from:null,to:midi,base,rotation});
+    this.shots=this.shots.slice(-6);
+  }
+  enemyReached(midi,base,rotation,damage=1){
+    if(midi==null)return;this.vibrate('damage');
+    this.root.dataset.comboTier='0';this.root.classList.remove('dp-combo-hot');
+    this.burst(midi,base,rotation,false,Math.min(4,damage),`HULL -${damage}`);this.duck?.();this.sound(false,damage>=3,36);
+    this.damageWarning();
+  }
+  gameOver(){
+    this.root.classList.add('dp-gameover');
+    this.vibrate('gameover');
+    this.damageWarning();
+  }
+  finish(session){
+    this.stopHullWarning();
+    if(session.outcome!=='cleared'){this.miss();if(session.outcome==='gameover')this.gameOver();return;}
+    this.vibrate('clear');
+    this.burst(60,60,0,true,4,'SECTOR ANNIHILATED');this.sound(true);this.root.classList.add('dp-cleared');
+    const title=document.createElement('strong');title.textContent=session.misses===0?'PERFECT CLEAR!':'STAGE CLEAR!';
+    const detail=document.createElement('span');detail.textContent=`${'★'.repeat(session.misses===0?3:(session.hits/(session.hits+session.misses)>=.9?2:1))}  MAX ${session.bestCombo} COMBO`;
+    this.banner.replaceChildren(title,detail);this.banner.classList.add('visible','victory');this.until=Infinity;
+  }
+  draw(ctx,width,height,now){
+    if(now>this.until)this.banner.classList.remove('visible');
+    const radius=Math.max(12,Math.min(width,height)/2-30);
+    this.bursts=this.bursts.filter(b=>now-b.at<(b.big?1500:650));
+    this.shots=this.shots.filter(s=>now-s.at<720);
+    ctx.save();
+    for(const shot of this.shots){
+      const age=now-shot.at,progress=Math.min(1,age/470),to=angleForMidiDraw(shot.to,shot.rotation);
+      const sx=width/2,sy=height/2;
+      const ex=width/2+Math.cos(to)*radius,ey=height/2-Math.sin(to)*radius;
+      const x=sx+(ex-sx)*progress,y=sy+(ey-sy)*progress;
+      ctx.globalAlpha=Math.max(0,1-age/720);ctx.strokeStyle='#ffd889';ctx.lineWidth=1.5;ctx.setLineDash([3,8]);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([]);
+      ctx.shadowColor='#ffe18b';ctx.shadowBlur=12;ctx.fillStyle='#fff7d6';ctx.beginPath();ctx.arc(x,y,3+2*(1-progress),0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      if(progress>.78){ctx.strokeStyle='#ffe18b99';ctx.lineWidth=1;ctx.beginPath();ctx.arc(ex,ey,7+(progress-.78)*34,0,Math.PI*2);ctx.stroke();}
+    }
+    for(const b of this.bursts){const age=(now-b.at)/1000,life=b.big?1.5:b.power>=2?.82:.48,x=width/2+b.x*radius,y=height/2+b.y*radius;ctx.globalAlpha=Math.max(0,1-age/life)*(b.big?.82:b.power>=2?.74:.42);
+      ctx.strokeStyle=b.power>=3?'#f7a2ff':'#ffe584';ctx.lineWidth=b.big?4:b.power>=2?2.2:1.1;for(let ring=0;ring<(b.big?7:b.power>=2?Math.min(5,1+b.power):1);ring++){ctx.beginPath();ctx.arc(x,y,8+ring*7+age*((b.big?85:68)+ring*(b.big?38:24)),0,Math.PI*2);ctx.stroke();}
+      for(const p of b.particles){ctx.fillStyle=p.color;ctx.fillRect(x+Math.cos(p.angle)*p.speed*age,y+Math.sin(p.angle)*p.speed*age+(b.big?60*age*age:0),p.size,p.size);}
+      if(b.label){ctx.globalAlpha=Math.max(0,1-age/(b.big?1.5:.65));ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`900 ${b.big?24:12+Math.min(4,b.power||1)*2}px ui-monospace,monospace`;ctx.shadowColor=b.power>=3?'#ed63ff':'#ffc84f';ctx.shadowBlur=14;ctx.fillStyle='#fff3bd';ctx.fillText(b.label,x,y-18-age*24);ctx.shadowBlur=0;}
+    }ctx.restore();
+  }
+}
+
+(()=>{
+  const dialog=document.createElement('dialog');dialog.id='diskPractice';
+  dialog.setAttribute('aria-labelledby','dpTitle');
+  dialog.innerHTML=`
+    <div id="dpArcadeBg" aria-hidden="true"><canvas id="dpStarfield" aria-hidden="true"></canvas></div><div class="dp-header"><strong id="dpTitle">ASTRAL TRIAL</strong><span id="dpHP" aria-label="HULL HP"></span><span class="dp-range" hidden aria-hidden="true"></span><button id="dpClose" type="button">EXIT</button></div>
+    <div class="dp-main">
+      <div class="dp-disk"><canvas id="dpCanvas" role="img" aria-label="PLAY THE PITCH AT THE ILLUMINATED POSITION"></canvas><div id="dpOrientation">ROTATE DEVICE FOR KEYBOARD MODE</div><div id="dpRadar" aria-label="FORWARD THREAT RADAR"><canvas id="dpRadarCanvas" aria-hidden="true"></canvas></div></div>
+      <aside class="dp-panel">
+        <p id="dpLastResult" role="status" hidden></p>
+        <div id="dpSettings"><p class="dp-help">宙域を選択し、航法核を起動。時限燃焼《クロノ・バーン》が尽きる前に共鳴座標を撃ち抜け。</p><div id="dpStagePicker"><div id="dpStages"></div></div><div id="dpStageInfo"><p id="dpStageHighScore"></p><p id="dpStageFlavor" class="dp-flavor"></p><p id="dpStageDescription" class="dp-help"></p></div></div>
+        <div id="dpProgress" hidden><div class="dp-time"><progress id="dpGauge" max="40" value="40" aria-label="TIME REMAINING"></progress><span id="dpTime" aria-hidden="true"></span></div><div id="dpCount"></div><div id="dpFeedback" role="status" aria-live="polite"></div><div id="dpResult"></div><p class="dp-help">CENTER = HIGHER PITCH<br>TEAL LINE = A</p></div>
+        <button id="dpStart" type="button">LAUNCH MISSION</button><button id="dpNext" type="button" hidden>NEXT SECTOR</button>
+        <div id="dpMidiStatus">SCREEN KEYS + MIDI INPUT READY</div>
+      </aside>
+    </div>
+    <section id="dpGameOverPrompt" class="dp-gameover-prompt" hidden aria-live="assertive">
+      <div id="dpGameOverMessage" class="dp-gameover-message"></div>
+      <div class="dp-gameover-actions"><button id="dpGameOverRetry" type="button">RETRY MISSION</button><button id="dpGameOverSelect" type="button">SECTOR SELECT</button></div>
+    </section>
+    <div id="dpKeyboard" aria-label="TWO-OCTAVE KEYBOARD"></div>`;
+  document.body.append(dialog);
+  const $=id=>dialog.querySelector('#'+id);
+  const launch=document.createElement('button');launch.id='openDiskPractice';launch.type='button';launch.textContent='ASTRAL TRIAL';launch.setAttribute('aria-haspopup','dialog');
+  document.getElementById('purposeNav').append(launch);
+  const canvas=$('dpCanvas'), c=canvas.getContext('2d'), session=new DiskPracticeSession();
+  const stars=new DiskPracticeStars(dialog),radar=new DiskPracticeRadar(dialog),practiceSynthGain=.11;
+  const arcadeBg=$('dpArcadeBg'),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let synth=null,voice=null,raf=0,rotation=0,lastFrame=0,lastVisualFrame=0,sceneClock=0,feedbackUntil=0,feedbackKind='',lastFocus=null,lastBackdropGeometry='';
+  const backdropPaint={lastPaint:0};
+  function advanceSceneClock(now){
+    const elapsed=lastVisualFrame?Math.min(64,Math.max(0,now-lastVisualFrame)):16;
+    lastVisualFrame=now;
+    if(!sceneClock)sceneClock=now;
+    else sceneClock+=elapsed*(dialog.classList.contains('dp-gameover')?.1:1);
+    return sceneClock;
+  }
+  function resetSceneClock(now=performance.now()){
+    sceneClock=now;lastVisualFrame=now;lastFrame=now;stars.last=now;
+  }
+  function duckPracticeSynth(){
+    const context=ensureCtx(),master=synth?.master;if(!master)return;
+    const now=context.currentTime;master.gain.cancelScheduledValues(now);master.gain.setTargetAtTime(.028,now,.004);master.gain.setTargetAtTime(practiceSynthGain,now+.18,.055);
+  }
+  const music=new DiskPracticeMusic(dialog,ensureCtx);
+  const effects=new DiskPracticeEffects(dialog,ensureCtx,()=>{music.duck();duckPracticeSynth();});
+  let round=null;
+  const messageDeck=new DiskPracticeMessageDeck();
+  let activeGameOverMessage=null;
+  const stages=diskPracticeStages();let selected=stages[0],cleared={};
+  const stageStorageKey='tv:disk-stages:v4';
+  function migrateStageProgress(saved){
+    const migrated={};
+    const copy=(destination,source)=>{if(saved?.cleared?.[source])migrated[destination]=saved.cleared[source];};
+    for(let part=1;part<=8;part++)copy(`1-${part}`,`1-${part}`);
+    ['2-1','2-4','3-1','3-4','3-5','3-6','3-7','3-8'].forEach((source,index)=>copy(`2-${index+1}`,source));
+    for(let part=1;part<=8;part++){copy(`3-${part}`,`4-${part}`);copy(`4-${part}`,`5-${part}`);}
+    const [world,part]=String(saved?.selected||'1-1').split('-').map(Number);
+    let selectedId='1-1';
+    if(world===1)selectedId=`1-${Math.min(8,Math.max(1,part||1))}`;
+    else if(world===2)selectedId=part<=3?'2-1':part===4?'2-2':'2-3';
+    else if(world===3)selectedId=`2-${Math.min(8,Math.max(3,part||3))}`;
+    else if(world===4)selectedId=`3-${Math.min(8,Math.max(1,part||1))}`;
+    else if(world===5)selectedId=`4-${Math.min(8,Math.max(1,part||1))}`;
+    return {selected:selectedId,cleared:migrated};
+  }
+  try{
+    let saved=JSON.parse(localStorage.getItem(stageStorageKey)||'null');
+    if(!saved){const previous=JSON.parse(localStorage.getItem('tv:disk-stages:v3')||'null');if(previous){saved=migrateStageProgress(previous);localStorage.setItem(stageStorageKey,JSON.stringify(saved));}}
+    if(saved){selected=stages.find(s=>s.id===saved.selected)||selected;cleared=saved.cleared||{};}
+  }catch{}
+  const config=()=>selected;
+  function save(){try{localStorage.setItem(stageStorageKey,JSON.stringify({selected:selected.id,cleared}));}catch{}}
+  const practiceCopy={
+    ja:{exit:'終了',select:'宙域選択',launch:'作戦開始',retry:'再出撃',next:'次の宙域',breach:'船体崩壊 // システム停止',shipDown:'撃沈 // 船体反応なし',timeout:'時間切れ // 信号消失',match:'光った位置と同じ高さを弾け'},
+    en:{exit:'EXIT',select:'SECTOR SELECT',launch:'LAUNCH MISSION',retry:'RETRY MISSION',next:'NEXT SECTOR',breach:'HULL BREACH // SYSTEM OFFLINE',shipDown:'SHIP DOWN // HULL EMPTY',timeout:'TIMEOUT // SIGNAL LOST',match:'MATCH THE ILLUMINATED PITCH'}
+  };
+  const practiceLanguage=()=>lang==='ja'?'ja':'en';
+  const pc=key=>practiceCopy[practiceLanguage()][key];
+  function wrapGameOverText(text,kind){
+    if(practiceLanguage()!=='ja'||kind==='protagonist'||kind==='dialogue')return text;
+    if(/^[「『〈［《].*[」』〉］》]$/s.test(text))return text;
+    const pair={command:['「','」'],operator:['『','』'],technical:['〈','〉'],ai:['［','］'],rival:['《','》'],unknown:['《','》'],ally:['『','』']}[kind];
+    return pair?`${pair[0]}${text}${pair[1]}`:text;
+  }
+  function renderGameOverMessage(){
+    const message=activeGameOverMessage,root=$('dpGameOverMessage');
+    if(!message){root.replaceChildren();return;}
+    const localized=message[practiceLanguage()]||message.en,lines=localized.split('\n');
+    root.dataset.kind=message.kind;root.replaceChildren();
+    if(message.kind==='dialogue'&&lines.length>1){
+      const caller=document.createElement('span');caller.className='dp-radio-caller';caller.textContent=lines[0];
+      const hero=document.createElement('span');hero.className='dp-radio-hero';hero.textContent=lines.slice(1).join(' ');root.append(caller,hero);
+    }else root.textContent=wrapGameOverText(localized,message.kind);
+  }
+  function hideGameOverPrompt(){activeGameOverMessage=null;$('dpGameOverPrompt').hidden=true;$('dpGameOverMessage').replaceChildren();}
+  function showGameOverPrompt(){
+    activeGameOverMessage=messageDeck.next();renderGameOverMessage();
+    $('dpGameOverPrompt').hidden=false;$('dpGameOverRetry').focus({preventScroll:true});
+  }
+  function applyPracticeLanguage(){
+    const choosing=dialog.classList.contains('choosing');
+    $('dpGameOverRetry').textContent=pc('retry');$('dpGameOverSelect').textContent=pc('select');
+    effects.gameOverOverlay.dataset.label=pc('breach');
+    $('dpNext').textContent=pc('next');
+    if(choosing){$('dpClose').textContent=pc('exit');$('dpStart').textContent=pc('launch');}
+    else $('dpClose').textContent=pc('select');
+    renderGameOverMessage();
+  }
+  function renderStages(){
+    const stageRoot=$('dpStages');
+    if(stageRoot.children.length!==stages.length){
+      const fragment=document.createDocumentFragment();
+      for(const stage of stages){
+        const button=document.createElement('button');button.type='button';button.dataset.stageId=stage.id;
+        const number=document.createElement('span');number.textContent=stage.id;
+        const badge=document.createElement('small');badge.className='dp-clear-badge';badge.setAttribute('aria-label','CLEARED');badge.hidden=true;
+        button.append(number,badge);button.addEventListener('click',()=>{selected=stage;save();renderStages();});fragment.append(button);
+      }
+      stageRoot.replaceChildren(fragment);
+    }
+    const clearedCount=stages.filter(stage=>cleared[stage.id]).length;
+    $('dpTitle').textContent=`ASTRAL TRIAL · ${clearedCount} / ${stages.length} CLEAR`;
+    stages.forEach((stage,index)=>{
+      const button=stageRoot.children[index],badge=button.querySelector('.dp-clear-badge');
+      const record=cleared[stage.id];
+      button.classList.toggle('is-cleared',Boolean(record));badge.hidden=!record;badge.textContent=record?(record.stars?'★'.repeat(Math.min(3,record.stars)):'★'):'';
+      button.setAttribute('aria-pressed',String(selected.id===stage.id));
+      button.setAttribute('aria-label',`${stage.id} ${stage.title} ${stage.notes.length} NOTES ${stage.seconds} SECONDS PER NOTE ${stage.hiddenCount} HIDDEN DIRECTIONS${cleared[stage.id]?' CLEARED':''}`);
+    });
+    const record=cleared[selected.id];
+    const keyboardMode={all:'全部表示',white:'白鍵のみ',anchors:'Cのみ',none:'非表示'}[selected.keyboardLabelMode||(selected.keyboardLabels?'all':'none')];
+    $('dpStageHighScore').textContent=`HIGH SCORE // ${record?.bestScore?record.bestScore.toLocaleString('en-US'):'---'}`;
+    $('dpStageFlavor').innerHTML=selected.flavor;
+    $('dpStageDescription').textContent=`${selected.id} · ${selected.title} · ${selected.notes.length}音 · 1音${selected.seconds}秒 · 非表示方位 ${selected.hiddenCount}/12 · 鍵盤音名 ${keyboardMode} · ${selected.rotationDegrees?`星図回転 ±${selected.rotationDegrees}°`:'星図固定'}${record?` · 突破済み${record.bestCombo?` · 最大連続 ${record.bestCombo}`:''}${record.bestSeconds?` · 最短 ${record.bestSeconds.toFixed(1)}秒`:''}`:''}`;
+  }
+  function stopSounds(){synth?.allNotesOff();voice?.allNotesOff();}
+  function releaseAll(){stopSounds();session.held.clear();updateHeld();}
+  function updateHeld(){
+    const notes=new Set(session.held.values());
+    dialog.querySelectorAll('[data-midi]').forEach(k=>k.classList.toggle('pressed',notes.has(Number(k.dataset.midi))));
+  }
+  function soundOn(midi,velocity){
+    const context=ensureCtx();if(context.state==='suspended') context.resume().catch(()=>{});
+    if(!synth){synth=new PolySynth(context);synth.master.gain.value=practiceSynthGain;}
+    const previous=voicePreferences.enabled;voicePreferences.enabled=false;
+    try{synth.noteOn(midi,velocity);}finally{voicePreferences.enabled=previous;}
+  }
+
+  function siegeMessage(){
+    const count=session.arrivedCount,damage=session.lastDamage;
+    const report=count>=4?'TACTICAL SITUATION: ABSURD':count===3?'BRIDGE DENIES RESPONSIBILITY':count===2?'THIS IS GETTING PERSONAL':`${count} HOSTILE FIRING`;
+    return `${count} ${count===1?'HOSTILE':'HOSTILES'} FIRING // HULL -${damage} // ${report}`;
+  }
+
+  function press(id,midi,velocity=0.85){
+    if(session.held.has(id)) return;
+    const wasHeld=Array.from(session.held.values()).includes(midi);
+    const expected=session.target;
+    const result=session.press(id,midi,performance.now());
+    if(!wasHeld) soundOn(midi,velocity);
+    updateHeld();
+    if(result==='gameover'){effects.enemyReached(session.lastExpired,session.base,rotation,session.lastDamage);finishUI();return;}
+    if(result==='escaped'){
+      effects.enemyReached(session.lastExpired,session.base,rotation,session.lastDamage);feedbackKind='wrong';feedbackUntil=performance.now()+600;
+      $('dpFeedback').textContent=siegeMessage();updateScore();return;
+    }
+    if(result==='wrong'){
+      effects.miss(midi,session.base,rotation);
+      feedbackKind='wrong';feedbackUntil=performance.now()+600;
+      $('dpFeedback').textContent=midi%12===expected%12?'SAME CLASS // CHECK OCTAVE':'AIM LOST';
+    }else if(result==='correct' || result==='finished'){
+      effects.hit(midi,session.base,rotation,session.combo,session.lastPoints);
+      feedbackKind='correct';feedbackUntil=performance.now()+350;
+      $('dpFeedback').textContent=session.combo>=2?`${session.combo} COMBO // +${session.lastPoints.toLocaleString('en-US')}`:`LOCK CONFIRMED // +${session.lastPoints.toLocaleString('en-US')}`;
+      updateScore();
+      if(result==='finished') finishUI();
+    }
+    if(session.active) updateScore();
+  }
+  function release(id){
+    const midi=session.held.get(id);session.release(id);
+    if(midi!=null && !Array.from(session.held.values()).includes(midi)){synth?.noteOff(midi);voice?.noteOff(midi);}
+    updateHeld();
+  }
+  function updateScore(){
+    const score=session.score||0;
+    $('dpCount').textContent=`${session.hits} / ${session.total}　MISSES ${session.misses}　SCORE ${score.toLocaleString('en-US')}`;
+    $('dpHP').textContent=`HP ${'◆'.repeat(session.lives)}${'◇'.repeat(session.maxLives-session.lives)}`;
+    dialog.classList.toggle('dp-hull-damaged',session.active&&session.lives===2);
+    music.setProgress(session.hits,session.total);
+    effects.setHullWarning(session.lives,session.active);
+    const target=session.target;
+    canvas.setAttribute('aria-label',round?.level===0 && target!=null
+      ? `TARGET: ${PITCH_CLASS_LABELS[target%12]}${Math.floor(target/12)-1}`
+      : 'PLAY THE PITCH AT THE ILLUMINATED POSITION');
+  }
+  function updateGauge(){
+    $('dpGauge').max=session.maxTime||40;
+    $('dpGauge').value=Math.max(0,session.remaining||0);
+    $('dpGauge').classList.toggle('low',session.remaining<=(session.maxTime||40)*0.25);
+    const text=`${(session.remaining||0).toFixed(1)}s`;
+    if($('dpTime').textContent!==text) $('dpTime').textContent=text;
+  }
+  function finishUI(){
+    updateScore();updateGauge();releaseAll();music.stop();effects.finish(session);
+    $('dpFeedback').textContent=session.outcome==='cleared'?`${round.id} CLEAR // SECTOR BREACHED`:session.outcome==='gameover'?pc('shipDown'):pc('timeout');
+    const seconds=((session.finishedAt-session.startedAt)/1000).toFixed(1);
+    const attempts=session.hits+session.misses;
+    const score=session.score||0;
+    $('dpResult').textContent=`SCORE ${score.toLocaleString('en-US')} · ${session.hits} / ${session.total} NOTES · ${seconds}s · ACCURACY ${attempts?Math.round(100*session.hits/attempts):0}% · MISSES ${session.misses}`;
+    if(session.outcome==='cleared'){
+      const old=typeof cleared[round.id]==='object'?cleared[round.id]:{};
+      const stars=session.misses===0?3:(session.hits/(session.hits+session.misses)>=.9?2:1);
+      const record={stars:Math.max(old.stars||0,stars),bestCombo:Math.max(old.bestCombo||0,session.bestCombo||session.hits),bestSeconds:Math.min(old.bestSeconds||Infinity,(session.finishedAt-session.startedAt)/1000),clears:(old.clears||0)+1};
+      if(score>0 || old.bestScore)record.bestScore=Math.max(old.bestScore||0,score);
+      cleared[round.id]=record;save();
+    }
+    const gameOver=session.outcome==='gameover';
+    if(gameOver)sceneClock=session.finishedAt||performance.now();
+    $('dpStart').hidden=gameOver;$('dpStart').textContent=pc('retry');
+    const stageIndex=stages.findIndex(stage=>stage.id===round.id),hasNext=session.outcome==='cleared'&&stageIndex>=0&&stageIndex<stages.length-1;
+    $('dpNext').hidden=!hasNext;dialog.classList.toggle('dp-has-next',hasNext);
+    if(gameOver)showGameOverPrompt();
+  }
+  function buildKeyboard(){
+    const cfg=round||config(), root=$('dpKeyboard');root.replaceChildren();
+    const whites=[0,2,4,5,7,9,11], whiteCount=14;
+    for(let n=cfg.base;n<cfg.base+24;n++){
+      const pc=n%12,oct=Math.floor((n-cfg.base)/12),isWhite=whites.includes(pc);
+      const before=whites.filter(p=>p<pc).length+oct*7;
+      const button=document.createElement('button');button.type='button';button.dataset.midi=String(n);
+      button.className=isWhite?'dp-white':'dp-black';
+      const width=isWhite?100/whiteCount:100/whiteCount*0.62;
+      button.style.width=`${width}%`;
+      button.style.left=`${isWhite?(oct*7+whites.indexOf(pc))*100/whiteCount:before*100/whiteCount-width/2}%`;
+      const name=PITCH_CLASS_LABELS[pc]+(Math.floor(n/12)-1);
+      button.setAttribute('aria-label',name);
+      const labelMode=cfg.keyboardLabelMode||(cfg.keyboardLabels?'all':'none');
+      if(cfg.keyboardLabels&&(labelMode==='all'||(labelMode==='white'&&isWhite)||(labelMode==='anchors'&&pc===0))){
+        const label=document.createElement('span');label.textContent=name;
+        button.append(label);
+      }
+      button.addEventListener('pointerdown',ev=>{ev.preventDefault();button.setPointerCapture(ev.pointerId);press(`p:${ev.pointerId}`,n);});
+      for(const type of ['pointerup','pointercancel','lostpointercapture']) button.addEventListener(type,ev=>release(`p:${ev.pointerId}`));
+      button.addEventListener('keydown',ev=>{if((ev.key===' '||ev.key==='Enter')&&!ev.repeat){ev.preventDefault();press(`k:${n}`,n);}});
+      button.addEventListener('keyup',ev=>{if(ev.key===' '||ev.key==='Enter'){ev.preventDefault();release(`k:${n}`);}});
+      button.addEventListener('blur',()=>release(`k:${n}`));
+      root.append(button);
+    }
+  }
+  function setup(summary=''){
+    hideGameOverPrompt();
+    $('dpLastResult').textContent=summary;$('dpLastResult').hidden=!summary;
+    effects.reset();
+    resetSceneClock();
+    music.stop();
+    music.setProgress(0,1);dialog.classList.remove('dp-hull-damaged');
+    dialog.classList.add("choosing");
+    releaseAll();session.stop();round=null;rotation=0;feedbackUntil=0;
+    $('dpSettings').hidden=false;$('dpProgress').hidden=true;
+    $('dpStart').hidden=false;$('dpStart').textContent=pc('launch');
+    $('dpNext').hidden=true;dialog.classList.remove('dp-has-next');
+    $('dpClose').textContent=pc('exit');
+    $('dpHP').textContent='';
+    canvas.setAttribute('aria-label','PLAY THE PITCH AT THE ILLUMINATED POSITION');
+    renderStages();requestAnimationFrame(()=>{if(dialog.open&&dialog.classList.contains('choosing'))music.start('selection');});
+  }
+  function start(){
+    // Preserve physical held keys: starting a round never counts a key already down.
+    hideGameOverPrompt();
+    effects.reset();
+    resetSceneClock();
+    dialog.classList.remove("choosing");
+    effects.vibrate('prepare');
+    $('dpTitle').textContent='ASTRAL TRIAL';
+    $('dpClose').textContent=pc('select');
+    stopSounds();round=config();session.start(round,performance.now());
+    $('dpSettings').hidden=true;$('dpProgress').hidden=false;
+    $('dpStart').hidden=true;$('dpNext').hidden=true;dialog.classList.remove('dp-has-next');$('dpFeedback').textContent=pc('match');$('dpResult').textContent='';
+    feedbackKind='';feedbackUntil=0;updateScore();updateGauge();buildKeyboard();
+    const context=ensureCtx();context.resume().then(()=>music.start('mission')).catch(()=>{$('dpFeedback').textContent='AUDIO LINK SUSPENDED // TAP A KEY';});
+  }
+  function setPracticeOrientation(active){
+    const handler=window.webkit?.messageHandlers?.practiceOrientation;
+    if(!handler)return;
+    const result=handler.postMessage(active);
+    if(result?.catch)result.catch(()=>{
+      if(active)$('dpMidiStatus').textContent='ROTATE DEVICE // LANDSCAPE REQUIRED';
+    });
+  }
+  function open(){
+    lastFocus=document.activeElement;
+    player?.pause();
+    for(const activeSynth of [liveSynth,tapSynth,fileSynth]) activeSynth?.allNotesOff();
+    liveNotes.clear();tapNotes.clear();lockedTouchNotes.clear();lockedTouches.clear();
+    trainerOnInputChange();
+    for(const timer of tapNoteTimeouts.values()) clearTimeout(timer);tapNoteTimeouts.clear();
+    dialog.showModal();setPracticeOrientation(true);lastFrame=0;lastVisualFrame=0;sceneClock=0;setup();raf=requestAnimationFrame(drawPractice);
+  }
+  function close(){setPracticeOrientation(false);music.stop();effects.reset();releaseAll();session.stop();cancelAnimationFrame(raf);prevT=0;lastFocus?.focus();}
+  launch.addEventListener('click',open);$('dpClose').addEventListener('click',()=>{if(!dialog.classList.contains('choosing'))setup();else dialog.close();});dialog.addEventListener('close',close);
+  $('dpStart').addEventListener('click',start);
+  $('dpGameOverRetry').addEventListener('click',start);
+  $('dpGameOverSelect').addEventListener('click',()=>setup());
+  $('dpNext').addEventListener('click',()=>{const index=stages.findIndex(stage=>stage.id===round?.id);if(index<0||index>=stages.length-1)return;selected=stages[index+1];save();renderStages();start();});
+  document.getElementById('lang')?.addEventListener('change',applyPracticeLanguage);
+  applyPracticeLanguage();
+  // Cancel held audio on interruption; pause the round rather than scoring stale MIDI.
+  function interrupt(){if(dialog.open){setup();$('dpMidiStatus').textContent='INPUT INTERRUPTED // PRESS LAUNCH MISSION';}}
+  addEventListener('blur',interrupt);
+  addEventListener('pagehide',()=>{if(dialog.open)setPracticeOrientation(false);interrupt();});
+  addEventListener('beforeunload',()=>setPracticeOrientation(false));
+  function resumePracticeAudio(){
+    if(!dialog.open)return;
+    setPracticeOrientation(true);
+    const context=ensureCtx(),mode=dialog.classList.contains('choosing')?'selection':'mission';
+    const restart=()=>{if(dialog.open)music.start(mode);};
+    if(context.state==='suspended')context.resume().then(restart).catch(()=>{$('dpMidiStatus').textContent='AUDIO LINK SUSPENDED // TAP A KEY';});else restart();
+  }
+  addEventListener('focus',resumePracticeAudio);
+  addEventListener('pageshow',resumePracticeAudio);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){
+      if(dialog.open)setPracticeOrientation(false);
+      interrupt();
+    }else resumePracticeAudio();
+  });
+  function drawPractice(now){
+    if(!dialog.open) return;
+    const tickResult=session.tick(now);
+    if(tickResult==='gameover'){effects.enemyReached(session.lastExpired,session.base,rotation,session.lastDamage);finishUI();}
+    else if(tickResult==='escaped'){
+      effects.enemyReached(session.lastExpired,session.base,rotation,session.lastDamage);feedbackKind='wrong';feedbackUntil=now+600;
+      $('dpFeedback').textContent=siegeMessage();updateScore();
+    }
+    const visualNow=advanceSceneClock(now);
+    if(session.active) updateGauge();
+    const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+    const width=Math.max(1,Math.round(rect.width*dpr)),height=Math.max(1,Math.round(rect.height*dpr));
+    if(canvas.width!==width || canvas.height!==height){canvas.width=width;canvas.height=height;}
+    if(rect.width&&rect.height){
+      const bgRect=arcadeBg.getBoundingClientRect();
+      const lightX=Math.round(rect.left+rect.width/2-bgRect.left),lightY=Math.round(rect.top+rect.height/2-bgRect.top),geometry=`${lightX}:${lightY}`;
+      if(geometry!==lastBackdropGeometry){arcadeBg.style.setProperty('--dp-light-x',`${lightX}px`);arcadeBg.style.setProperty('--dp-light-y',`${lightY}px`);lastBackdropGeometry=geometry;}
+      // This property invalidates a full-screen paint, so keep it at the same
+      // 45 fps cadence as the decorative canvases.
+      if(!reducedMotion&&diskPracticeShouldPaint(backdropPaint,now))arcadeBg.style.setProperty('--dp-light-angle',`${20+visualNow*.018}deg`);
+    }
+    const cfg=round||config(),r=Math.max(12,Math.min(rect.width,rect.height)/2-30),cx=rect.width/2,cy=rect.height/2;
+    stars.draw(visualNow,canvas,now);
+    radar.draw(visualNow,session,cfg.base,rotation,now);
+    c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,rect.width,rect.height);
+    const desired=session.active?session.rotation:rotation;
+    const dt=lastFrame?Math.min(64,visualNow-lastFrame):16;lastFrame=visualNow;
+    let delta=desired-rotation;while(delta>Math.PI)delta-=2*Math.PI;while(delta< -Math.PI)delta+=2*Math.PI;
+    rotation+=delta*Math.min(1,dt/55);
+    if(session.active && now>=session.readyAt) rotation=desired;
+    effects.draw(c,rect.width,rect.height,visualNow);
+    c.lineWidth=1;c.strokeStyle='#384351';
+    for(const n of [cfg.base,cfg.base+12,cfg.base+24]){
+      c.beginPath();c.arc(cx,cy,diskPracticeRadius(n,cfg.base,r),0,Math.PI*2);c.stroke();
+    }
+    for(let pc=0;pc<12;pc++){
+      const angle=angleForMidiDraw(pc,rotation),cos=Math.cos(angle),sin=Math.sin(angle);
+      c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+(r+3)*cos,cy-(r+3)*sin);
+      c.strokeStyle=pc===9?'#36c7c1':'#34404e';c.lineWidth=pc===9?3:1;c.stroke();
+      if(diskPracticeLabelVisible(cfg.level,pc,session.target,cfg.hiddenCount)){
+        c.font='600 12px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#d4deec';
+        c.fillText(PITCH_CLASS_LABELS[pc],cx+(r+18)*cos,cy-(r+18)*sin);
+      }
+    }
+    c.textAlign='left';c.fillStyle='#8697ac';c.font='11px system-ui';
+    if(cfg.keyboardLabels){
+      c.fillText(`C${cfg.base/12-1}`,cx+4,cy+r-6);
+      c.fillText(`C${cfg.base/12}`,cx+4,cy+diskPracticeRadius(cfg.base+12,cfg.base,r)-6);
+    }
+    const drawSpaceEnemy=(n,scale,alpha,wrong=false,label=false,depth=0,countdown=null)=>{
+      if(n==null)return;
+      const angle=angleForMidiDraw(n,rotation),noteRadius=diskPracticeRadius(n,cfg.base,r);
+      const radialFactor=label?1:.18+depth*.62,x=cx+noteRadius*radialFactor*Math.cos(angle),y=cy-noteRadius*radialFactor*Math.sin(angle);
+      const pulse=1+.08*Math.sin(visualNow/120+n),shape=session.enemyShapes?.get(n)??0;
+      c.save();c.translate(x,y);c.rotate(-angle);c.globalAlpha=alpha;c.globalCompositeOperation='screen';c.shadowColor=wrong?'#ff617c':'#ffe46d';c.shadowBlur=24*scale;
+      c.strokeStyle=wrong?'#ff8495':'#ffe795';c.lineWidth=Math.max(1,2*scale);c.beginPath();c.arc(0,0,22*scale*pulse,0,2*Math.PI);c.stroke();
+      c.fillStyle=wrong?'#d94b6c':'#e6a83c';c.strokeStyle=wrong?'#ffd4dc':'#fff0a7';c.beginPath();
+      if(shape===1){c.moveTo(0,-18*scale*pulse);c.lineTo(16*scale*pulse,13*scale*pulse);c.lineTo(0,7*scale*pulse);c.lineTo(-16*scale*pulse,13*scale*pulse);}
+      else if(shape===2){for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;c.lineTo(Math.cos(a)*16*scale*pulse,Math.sin(a)*16*scale*pulse);}}
+      else if(shape===3){c.arc(0,0,15*scale*pulse,0,Math.PI*2);c.moveTo(-19*scale*pulse,0);c.lineTo(19*scale*pulse,0);}
+      else{c.moveTo(0,-17*scale*pulse);c.lineTo(14*scale*pulse,8*scale*pulse);c.lineTo(0,15*scale*pulse);c.lineTo(-14*scale*pulse,8*scale*pulse);}
+      c.closePath();c.fill();c.stroke();
+      c.shadowBlur=10*scale;c.fillStyle='#fff9dc';c.beginPath();c.arc(0,1,5*scale*pulse,0,2*Math.PI);c.fill();c.fillStyle=wrong?'#ff3c64':'#35f5e4';c.beginPath();c.arc(0,1,2.5*scale*pulse,0,2*Math.PI);c.fill();c.restore();
+      c.save();c.globalAlpha=alpha*.8;c.strokeStyle=wrong?'#ff617c99':'#ffe46d99';c.lineWidth=Math.max(1,scale);c.setLineDash([3,6]);c.beginPath();c.arc(x,y,29*scale*pulse,0,2*Math.PI);c.stroke();c.setLineDash([]);c.restore();
+      if(countdown!=null){
+        const charge=Math.max(0,Math.min(1,countdown)),ring=28*scale;
+        c.save();c.translate(x,y);c.globalAlpha=.52;c.lineWidth=1;c.strokeStyle='#d6bb68';c.beginPath();c.arc(0,0,ring,-Math.PI/2,-Math.PI/2+Math.PI*2*charge);c.stroke();c.restore();
+      }
+      if(label&&depth>.02){c.save();c.globalAlpha=alpha*.55;c.strokeStyle=wrong?'#ff617c55':'#ffe46d55';c.lineWidth=1;c.setLineDash([2,9]);c.beginPath();c.moveTo(cx,cy);c.lineTo(x,y);c.stroke();c.setLineDash([]);c.restore();}
+      if(label&&cfg.level===0){c.font='bold 11px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#17202b';c.fillText(PITCH_CLASS_LABELS[n%12],x,y);}
+    };
+    if(session.active&&session.queue?.length){
+      const depth=session.approach+Math.max(0,1-session.remaining/session.maxTime)*.9,charge=Math.max(0,1-session.remaining/session.maxTime);
+      drawSpaceEnemy(session.queue[2],.28,.18,false,false,.34);
+      drawSpaceEnemy(session.queue[1],.40,.32,false,false,.56);
+      drawSpaceEnemy(session.target,.58+Math.min(1,depth)*.26,.94,feedbackKind==='wrong'&&now<feedbackUntil,true,depth,charge);
+    }else if(session.target!=null){
+      drawSpaceEnemy(session.target,1,.98,feedbackKind==='wrong'&&now<feedbackUntil,true,0);
+    }else if(!round){
+      c.textAlign='center';c.font='12px ui-monospace,monospace';c.fillStyle='#a4b5cc';c.fillText('CENTER = HIGHER PITCH',cx,cy-8);
+    }
+    raf=requestAnimationFrame(drawPractice);
+  }
+  window.diskPractice={
+    releaseInputs:releaseAll,
+    isOpen:()=>dialog.open,tonic:()=>(round||config()).tonic,
+    handleMIDI(ev){
+      if(!dialog.open) return false;
+      const data=ev.data;if(!data || data.length<2) return true;
+      const command=data[0]&0xf0,channel=data[0]&15,note=data[1];
+      const source=ev.currentTarget?.id||ev.target?.id||'midi';const id=`m:${source}:${channel}:${note}`;
+      if(command===0x90 && data[2]>0){press(id,note,data[2]/127);$('dpMidiStatus').textContent='MIDI LINK ACTIVE';}
+      else if(command===0x80 || (command===0x90 && data[2]===0)) release(id);
+      else if(command===0xb0 && [120,123].includes(note)) releaseAll();
+      return true;
+    }
+  };
+})();
 </script>
